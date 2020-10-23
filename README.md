@@ -1,11 +1,11 @@
 # Computer Graphics 203.3710
 ## Students Team data
 
-Name: 'Your real name'  
-Student Number: 'Your student number'
+Name: Guy Kigelman
+Student Number: 313166290
 
-Name: 'Your real name'  
-Student Number: 'Your student number'
+Name: Yuval Tamir
+Student Number: 201277894
 
 ### Lecturer
 *Roi Poranne*
