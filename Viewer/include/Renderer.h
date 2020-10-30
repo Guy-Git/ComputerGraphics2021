@@ -21,6 +21,7 @@ private:
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
+	void Swap(int& X1, int& Y1, int& X2, int& Y2);
 
 	float* color_buffer_;
 	int viewport_width_;

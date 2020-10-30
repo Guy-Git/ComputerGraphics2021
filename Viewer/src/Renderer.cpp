@@ -33,123 +33,168 @@ void Renderer::PutPixel(int i, int j, const glm::vec3& color)
 
 void Renderer::DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color)
 {
-	int deltaX = p2.x - p1.x;
-	int deltaY = p2.y - p1.y;
+	int X1, Y1, X2, Y2, C, E;
+
+	X1 = p1.x;
+	Y1 = p1.y;
+	X2 = p2.x;
+	Y2 = p2.y;
+	E = -1;
+
+	int deltaX = X2 - X1;
+	int deltaY = Y2 - Y1;
+
+	if (X1 == X2)
+	{
+		while (Y1 <= Y2)
+		{
+			PutPixel(X1, Y1, color);
+			Y1 += 1;
+		}
+		while (Y2 <= Y1)
+		{
+			PutPixel(X1, Y1, color);
+			Y1 -= 1;
+		}
+		return;
+	}
 
 	float slope = (float)deltaY / (float)deltaX;
 
-	int X, Y, C, E;
+	C = Y1 - (slope * X1);
 
 	if (slope == 0)
 	{
-		X = p1.x;
-		Y = p1.y;
+		if (X1 > X2)
+			Swap(X1, Y1, X2, Y2);
 
-		while (X <= p2.x)
+		while (X1 <= X2)
 		{
-			PutPixel(X, Y, color);
+			PutPixel(X1, Y1, color);
 
-			X += 1;
+			X1 += 1;
 		}
 	}
-	else if (slope == 1) {
-		X = p1.x;
-		Y = p1.y;
+	else if (slope == 1)
+	{
+		if (X1 > X2)
+			Swap(X1, Y1, X2, Y2);
 
-		while (X <= p2.x)
+		while (X1 <= X2)
 		{
-			PutPixel(X, Y, color);
+			PutPixel(X1, Y1, color);
 
-			Y += 1;
-			X += 1;
+			Y1 += 1;
+			X1 += 1;
 		}
 	}
+
+	else if (slope == -1)
+	{
+		if (Y2 > Y1)
+			Swap(X1, Y1, X2, Y2);
+
+		while (Y2 <= Y1)
+		{
+			PutPixel(X1, Y1, color);
+
+			Y1 -= 1;
+			X1 += 1;
+		}
+	}
+
 	else if (slope > 0)
 	{
-		X = p1.x;
-		Y = p1.y;
-		E = -1;
-		C = Y - (slope * X);
+		if (X1 > X2)
+		{
+			Swap(X1, Y1, X2, Y2);
+			deltaX *= -1;
+			deltaY *= -1;
+		}
 
-		E = (2 * deltaY * X) + (2 * deltaX * C) - (2 * deltaX * Y) - 1;
+		E = (2 * deltaY * X1) + (2 * deltaX * C) - (2 * deltaX * Y1) - 1;
 
 		if (slope < 1)
 		{
-			while (X <= p2.x)
+			while (X1 <= X2)
 			{
 				if (E > 0)
 				{
-					Y += 1;
+					Y1 += 1;
 					E -= 2 * deltaX;
 				}
 
-				PutPixel(X, Y, color);
+				PutPixel(X1, Y1, color);
 
-				X += 1;
+				X1 += 1;
 				E += 2 * deltaY;
 			}
 		}
 		else if (slope > 1)
 		{
-			while (Y <= p2.y)
+			while (Y1 <= Y2)
 			{
 				if (E > 0)
 				{
-					X += 1;
+					X1 += 1;
 					E -= 2 * deltaY;
 				}
 
-				PutPixel(X, Y, color);
+				PutPixel(X1, Y1, color);
 
-				Y += 1;
+				Y1 += 1;
 				E += 2 * deltaX;
 			}
 		}
 
 	}
-	else if (slope < 0) 
+	else if (slope < 0)
 	{
-		X = p1.x;
-		Y = p1.y;
-		E = -1;
-		C = Y - (slope * X);
+		if (Y1 < Y2)
+		{
+			Swap(X1, Y1, X2, Y2);
+			deltaX *= -1;
+			deltaY *= -1;
+		}
 
-		E = (2 * deltaY * X) + (2 * deltaX * C) - (2 * deltaX * Y) - 1;
+		E = (2 * deltaY * X1) + (2 * deltaX * C) - (2 * deltaX * Y1) - 1;
 
 		if (slope > -1)
 		{
-			while (X <= p2.x)
+			while (X1 <= X2)
 			{
 				if (E > 0)
 				{
-					Y -= 1;
-					E += 2 * deltaX;
+					Y1 -= 1;
+					E -= 2 * deltaX;
 				}
 
-				PutPixel(X, Y, color);
+				PutPixel(X1, Y1, color);
 
-				X += 1;
+				X1 += 1;
 				E -= 2 * deltaY;
 			}
 		}
+
 		else if (slope < -1)
 		{
-			while (p2.y <= Y)
+			while (Y1 >= Y2)
 			{
 				if (E > 0)
 				{
-					X += 1;
+					X1 += 1;
 					E += 2 * deltaY;
 				}
 
-				PutPixel(X, Y, color);
+				PutPixel(X1, Y1, color);
 
-				Y -= 1;
+				Y1 -= 1;
 				E += 2 * deltaX;
 			}
 		}
 	}
 }
+
 
 void Renderer::CreateBuffers(int w, int h)
 {
@@ -289,29 +334,28 @@ void Renderer::Render(const Scene& scene)
 	int half_height = viewport_height_ / 2;
 	int thickness = 15;
 
-	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 500), glm::vec3(1, 0, 0)); // RED +0.5
+	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 500), glm::vec3(1, 0, 0)); // RED +0.5
 
 	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 600), glm::vec3(0, 0, 1)); // BLUE +1
 
 	DrawLine(glm::ivec2(400, 400), glm::ivec2(410, 500), glm::vec3(1, 0, 1)); // MEGENTA +10
 
-	//DrawLine(glm::ivec2(400, 400), glm::ivec2(200, 200), glm::vec3(1, 1, 1)); // WHITE -1
+	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 200), glm::vec3(1, 1, 1)); // WHITE -1
 
-	DrawLine(glm::ivec2(200, 500), glm::ivec2(400, 400), glm::vec3(0, 0, 0)); // BLACK -0.5
+	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 300), glm::vec3(0, 0, 0)); // BLACK -0.5
 
-	DrawLine(glm::ivec2(400, 400), glm::ivec2(500, 200), glm::vec3(0, 1, 1)); // CYAN -2
-
+	DrawLine(glm::ivec2(500, 200), glm::ivec2(400, 400), glm::vec3(0, 1, 1)); // CYAN -2
+	*/
 	// TODO - fix condition when p2 < p1
 
-	/*
-	for (int i = 0; i < viewport_width_; i++)
-	{
-		for (int j = half_height - thickness; j < half_height + thickness; j++)
-		{
-			PutPixel(i, j, glm::vec3(1, 1, 0));
-		}
-	}
 
+	float PI = 3.14159265358979323846;
+
+	for (int i = 0; i < 200; i++)
+	{
+		DrawLine(glm::ivec2(400, 400), glm::ivec2(400 + 200 * (sin((2 * PI * i) / 200)), 400 + 200 * (cos((2 * PI * i) / 200))), glm::vec3(0, 1, 1)); // CYAN -2
+	}
+	/*
 	for (int i = 0; i < viewport_height_; i++)
 	{
 		for (int j = half_width - thickness; j < half_width + thickness; j++)
@@ -330,4 +374,14 @@ int Renderer::GetViewportWidth() const
 int Renderer::GetViewportHeight() const
 {
 	return viewport_height_;
+}
+
+void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
+{
+	int tempX = X1;
+	int tempY = Y1;
+	X1 = X2;
+	Y1 = Y2;
+	X2 = tempX;
+	Y2 = tempY;
 }
