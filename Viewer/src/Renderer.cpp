@@ -334,6 +334,12 @@ void Renderer::Render(const Scene& scene)
 	int half_height = viewport_height_ / 2;
 	int thickness = 15;
 
+	int x0 = 400;
+	int y0 = 400;
+	int a = 200;
+	int r = 400;
+	float PI = 3.14159265358979323846;
+
 	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 500), glm::vec3(1, 0, 0)); // RED +0.5
 
 	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 600), glm::vec3(0, 0, 1)); // BLUE +1
@@ -346,24 +352,49 @@ void Renderer::Render(const Scene& scene)
 
 	DrawLine(glm::ivec2(500, 200), glm::ivec2(400, 400), glm::vec3(0, 1, 1)); // CYAN -2
 	*/
-	// TODO - fix condition when p2 < p1
+
+	for (int i = 0; i < 60; i++)
+	{
+
+		if (i < 5)
+		{
+			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
+
+			DrawLine(glm::ivec2(493, 520 - i), glm::ivec2(498, 520 - i), glm::vec3(0, 0, 0));
+			DrawLine(glm::ivec2(502, 520 - i), glm::ivec2(507, 520 - i), glm::vec3(0, 0, 0));
+
+			DrawLine(glm::ivec2(520, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
+		}
+		else if (i >= 5 && i < 15) {
+			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
+
+			DrawLine(glm::ivec2(492, 520 - i), glm::ivec2(508, 520 - i), glm::vec3(0, 0, 0));
+
+			DrawLine(glm::ivec2(520, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
+		}
+		else {
+			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
+		}
+
+		if (i > 30 && i < 42)
+		{
+			DrawLine(glm::ivec2(470, 520 - i), glm::ivec2(530, 520 - i), glm::vec3(0, 0, 0));
+		}
 
 
-	float PI = 3.14159265358979323846;
+	}
 
 	for (int i = 0; i < 200; i++)
 	{
-		DrawLine(glm::ivec2(400, 400), glm::ivec2(400 + 200 * (sin((2 * PI * i) / 200)), 400 + 200 * (cos((2 * PI * i) / 200))), glm::vec3(0, 1, 1)); // CYAN -2
+		DrawLine(glm::ivec2(0, 0), glm::ivec2(100 + r + 100 * (sin((2 * PI * i) / a)), 100 + r - 100 * (cos((2 * PI * i) / a))), glm::vec3(1, 1, 0));
 	}
-	/*
-	for (int i = 0; i < viewport_height_; i++)
+
+	// sanity check
+	/*for (int i = 0; i < 200; i++)
 	{
-		for (int j = half_width - thickness; j < half_width + thickness; j++)
-		{
-			PutPixel(j, i, glm::vec3(1, 0, 1));
-		}
-	}
-	*/
+		DrawLine(glm::ivec2(x0, y0), glm::ivec2(x0 + r * (sin((2 * PI * i) / a)), y0 + r * (cos((2 * PI * i) / a))), glm::vec3(0, 1, 1));
+	}*/
+
 }
 
 int Renderer::GetViewportWidth() const
