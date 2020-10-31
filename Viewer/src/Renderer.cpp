@@ -355,24 +355,19 @@ void Renderer::Render(const Scene& scene)
 
 	for (int i = 0; i < 60; i++)
 	{
-
-		if (i < 5)
+		if (i < 5) // horns 
 		{
 			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
-
 			DrawLine(glm::ivec2(493, 520 - i), glm::ivec2(498, 520 - i), glm::vec3(0, 0, 0));
 			DrawLine(glm::ivec2(502, 520 - i), glm::ivec2(507, 520 - i), glm::vec3(0, 0, 0));
-
 			DrawLine(glm::ivec2(520, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
 		}
-		else if (i >= 5 && i < 15) {
+		else if (i >= 5 && i < 15) { // head
 			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
-
 			DrawLine(glm::ivec2(492, 520 - i), glm::ivec2(508, 520 - i), glm::vec3(0, 0, 0));
-
 			DrawLine(glm::ivec2(520, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
 		}
-		else {
+		else { // body
 			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
 		}
 
@@ -380,8 +375,6 @@ void Renderer::Render(const Scene& scene)
 		{
 			DrawLine(glm::ivec2(470, 520 - i), glm::ivec2(530, 520 - i), glm::vec3(0, 0, 0));
 		}
-
-
 	}
 
 	for (int i = 0; i < 200; i++)
