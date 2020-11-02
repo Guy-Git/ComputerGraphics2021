@@ -127,8 +127,20 @@ if (slope == 0) {
 }
 ```
 
+```
+void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
+{
+	int tempX = X1;
+	int tempY = Y1;
+	X1 = X2;
+	Y1 = Y2;
+	X2 = tempX;
+	Y2 = tempY;
+}
+```
+
 2. A picture of the sanity check result  
 ![Alt text](./circle.jpeg)  
 
-3. Call batman! 
+3. Call batman!  
 ![Alt text](./batman.jpeg)  
