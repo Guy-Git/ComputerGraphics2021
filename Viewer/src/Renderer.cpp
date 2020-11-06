@@ -1,7 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <algorithm>
-
+#include "vector"
 #include "Renderer.h"
 #include "InitShader.h"
 
@@ -334,12 +334,21 @@ void Renderer::Render(const Scene& scene)
 	int half_height = viewport_height_ / 2;
 	int thickness = 15;
 
-	int x0 = 400;
-	int y0 = 400;
-	int a = 200;
-	int r = 200;
-	float PI = 3.14159265358979323846;
+	if (scene.GetModelCount() > 0)
+	{
+		MeshModel currentModel = scene.GetModel(0);
 
+		std::vector <glm::vec3> threePoints;
+		for (int i = 0; i < currentModel.GetFacesCount(); i++)
+		{
+			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
+			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
+			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
+
+			DrawTriangle(threePoints);
+			threePoints.clear();
+		}
+	}
 	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 500), glm::vec3(1, 0, 0)); // RED +0.5
 
 	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 600), glm::vec3(0, 0, 1)); // BLUE +1
@@ -360,7 +369,7 @@ void Renderer::Render(const Scene& scene)
 
 	for (int i = 0; i < 60; i++)
 	{
-		if (i < 5) // horns 
+		if (i < 5) // horns
 		{
 			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
 			DrawLine(glm::ivec2(493, 520 - i), glm::ivec2(498, 520 - i), glm::vec3(0, 0, 0));
@@ -408,3 +417,17 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	X2 = tempX;
 	Y2 = tempY;
 }
+
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions)
+{
+	int x0 = 200;
+	int y0 = 200;
+	glm::ivec2 p1 = glm::ivec2(x0 + (vertexPositions.at(0).x * 200), y0 + (vertexPositions.at(0).y * 200));
+	glm::ivec2 p2 = glm::ivec2(x0 + (vertexPositions.at(1).x * 200), y0 + (vertexPositions.at(1).y * 200));
+	glm::ivec2 p3 = glm::ivec2(x0 + (vertexPositions.at(2).x * 200), y0 + (vertexPositions.at(2).y * 200));
+
+	DrawLine(p1, p2, glm::vec3(0, 0, 0));
+	DrawLine(p2, p3, glm::vec3(0, 0, 0));
+	DrawLine(p1, p3, glm::vec3(0, 0, 0));
+}
+

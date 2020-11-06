@@ -185,7 +185,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				if (result == NFD_OKAY)
 				{
 					scene.AddModel(Utils::LoadMeshModel(outPath));
-					Utils::printVerticesAndFace(scene.GetModel(0));
+					//Utils::printVerticesAndFace(scene.GetModel(0));
 					free(outPath);
 				}
 				else if (result == NFD_CANCEL)

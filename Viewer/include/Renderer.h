@@ -1,5 +1,6 @@
 #pragma once
 #include "Scene.h"
+#include "vector"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
@@ -17,6 +18,7 @@ public:
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions);
 
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
