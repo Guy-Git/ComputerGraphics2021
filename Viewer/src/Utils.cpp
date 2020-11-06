@@ -105,3 +105,25 @@ std::string Utils::GetFileName(const std::string& filePath)
 
 	return filePath.substr(index + 1, len - index);
 }
+
+void Utils::printVerticesAndFace(MeshModel currentModel)
+{
+	for (int i = 0; i < currentModel.GetVerticesCount(); i++)
+	{
+		std::cout << currentModel.GetVertex(i).x << " : ";
+		std::cout << currentModel.GetVertex(i).y << " : ";
+		std::cout << currentModel.GetVertex(i).z;
+
+		std::cout << "\n";
+	}
+	std::cout << "---------------------------------------------------------\n";
+
+	for (int i = 0; i < currentModel.GetFacesCount(); i++)
+	{
+		std::cout << currentModel.GetFace(i).GetVertexIndex(0) << "//" << currentModel.GetFace(i).GetNormalIndex(0) << " ";
+		std::cout << currentModel.GetFace(i).GetVertexIndex(1) << "//" << currentModel.GetFace(i).GetNormalIndex(1) << " ";
+		std::cout << currentModel.GetFace(i).GetVertexIndex(2) << "//" << currentModel.GetFace(i).GetNormalIndex(2);
+
+		std::cout << "\n";
+	}
+}

@@ -337,7 +337,7 @@ void Renderer::Render(const Scene& scene)
 	int x0 = 400;
 	int y0 = 400;
 	int a = 200;
-	int r = 400;
+	int r = 200;
 	float PI = 3.14159265358979323846;
 
 	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 500), glm::vec3(1, 0, 0)); // RED +0.5
@@ -352,6 +352,11 @@ void Renderer::Render(const Scene& scene)
 
 	DrawLine(glm::ivec2(500, 200), glm::ivec2(400, 400), glm::vec3(0, 1, 1)); // CYAN -2
 	*/
+
+	/*for (int i = 0; i < 200; i++)
+	{
+		DrawLine(glm::ivec2(0, 0), glm::ivec2(100 + r + 100 * (sin((2 * PI * i) / a)), 100 + r - 100 * (cos((2 * PI * i) / a))), glm::vec3(1, 1, 0));
+	}
 
 	for (int i = 0; i < 60; i++)
 	{
@@ -376,18 +381,12 @@ void Renderer::Render(const Scene& scene)
 			DrawLine(glm::ivec2(470, 520 - i), glm::ivec2(530, 520 - i), glm::vec3(0, 0, 0));
 		}
 	}
-
+	// sanity check
 	for (int i = 0; i < 200; i++)
 	{
-		DrawLine(glm::ivec2(0, 0), glm::ivec2(100 + r + 100 * (sin((2 * PI * i) / a)), 100 + r - 100 * (cos((2 * PI * i) / a))), glm::vec3(1, 1, 0));
-	}
-
-	// sanity check
-	/*for (int i = 0; i < 200; i++)
-	{
 		DrawLine(glm::ivec2(x0, y0), glm::ivec2(x0 + r * (sin((2 * PI * i) / a)), y0 + r * (cos((2 * PI * i) / a))), glm::vec3(0, 1, 1));
-	}*/
-
+	}
+	*/
 }
 
 int Renderer::GetViewportWidth() const
