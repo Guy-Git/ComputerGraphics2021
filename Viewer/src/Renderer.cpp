@@ -420,11 +420,12 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 
 void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions)
 {
-	int x0 = 200;
-	int y0 = 200;
-	glm::ivec2 p1 = glm::ivec2(x0 + (vertexPositions.at(0).x * 200), y0 + (vertexPositions.at(0).y * 200));
-	glm::ivec2 p2 = glm::ivec2(x0 + (vertexPositions.at(1).x * 200), y0 + (vertexPositions.at(1).y * 200));
-	glm::ivec2 p3 = glm::ivec2(x0 + (vertexPositions.at(2).x * 200), y0 + (vertexPositions.at(2).y * 200));
+	int x0 = 400;
+	int y0 = 350;
+	int scale = 100;
+	glm::ivec2 p1 = glm::ivec2(x0 + (vertexPositions.at(0).x * scale), y0 + (vertexPositions.at(0).y * scale));
+	glm::ivec2 p2 = glm::ivec2(x0 + (vertexPositions.at(1).x * scale), y0 + (vertexPositions.at(1).y * scale));
+	glm::ivec2 p3 = glm::ivec2(x0 + (vertexPositions.at(2).x * scale), y0 + (vertexPositions.at(2).y * scale));
 
 	DrawLine(p1, p2, glm::vec3(0, 0, 0));
 	DrawLine(p2, p3, glm::vec3(0, 0, 0));

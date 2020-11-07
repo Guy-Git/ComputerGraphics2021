@@ -1,4 +1,4 @@
-# Teapot - 
+# 1. Teapot - 
 ### Vertices:  
 ```
 -1.16227 : 0.78691 : 0.14163
@@ -5732,3 +5732,11 @@
 1719//1916 1714//1911 1976//2184
 1975//2183 1719//1916 1976//2184
 ```
+
+# 2.  
+We performed this scaling by multipling each (x,y,0) value with a scale factor (scale factor == 100). 
+Also, we moved the coordinates (translation) from (0,0,0) to (x_0 + x, y_0 + y, 0).  
+We tried to position the Teapot in the middle of the window.
+
+# 3. Teapot mesh screenshot   
+![Alt text](./teapot_mesh.jpeg) 
