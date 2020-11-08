@@ -23,12 +23,14 @@ bool show_another_window = false;
 bool show_local_rotation_window = false;
 bool show_local_scale_window = false;
 bool show_local_translation_window = false;
-static float scale_factor_local = 0.0;
+static float scale_factor_local = 1.0;
+static float rotation_angle_local = 0;
 
 bool show_global_rotation_window = false;
 bool show_global_scale_window = false;
 bool show_global_translation_window = false;
-static float scale_factor_global = 0.0;
+static float scale_factor_global = 1.0;
+static float rotation_angle_global = 0;
 
 bool show_model_1_window = false;
 bool show_model_2_window = false;
@@ -53,8 +55,8 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 void Cleanup(GLFWwindow* window);
 void DrawImguiMenus(ImGuiIO& io, Scene& scene);
 void SwitchToDifferentModelView(int modelID);
-void ShowScaleRotateTranslationWindowsLocal();
-void ShowScaleRotateTranslationWindowsGlobal();
+void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
+void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
 
 /**
  * Function implementation
@@ -326,9 +328,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
    //	ImGui::End();
    //}
 
-	ShowScaleRotateTranslationWindowsLocal(); // all local windows declarations
+	ShowScaleRotateTranslationWindowsLocal(scene); // all local windows declarations
 
-	ShowScaleRotateTranslationWindowsGlobal(); // all global windows declarations
+	ShowScaleRotateTranslationWindowsGlobal(scene); // all global windows declarations
 
 	SwitchToDifferentModelView(model_selection);
 
@@ -386,7 +388,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		ImGui::SetNextWindowSize(ImVec2(250, 100));
 
 		ImGui::Begin("Warning!", &show_warning_window);
-		ImGui::Text("Model not loded to this selection \nPlease open model");
+		ImGui::Text("Model not loaded to this selection \nPlease open model!");
 
 		ImGui::End();
 	}
@@ -424,20 +426,23 @@ void SwitchToDifferentModelView(int modelID) {
 	}
 }
 
-void ShowScaleRotateTranslationWindowsLocal() {
+void ShowScaleRotateTranslationWindowsLocal(Scene &scene) {
 	if (show_local_rotation_window)
 	{
-		ImGui::SetNextWindowPos(ImVec2(150, 300));
-		ImGui::SetNextWindowSize(ImVec2(250, 200));
+		//ImGui::SetNextWindowPos(ImVec2(150, 300));
+		//ImGui::SetNextWindowSize(ImVec2(250, 200));
 		ImGui::Begin("Local Rotation Window", &show_local_rotation_window);
 		ImGui::Text("Rotation left or right");
 
-		if (ImGui::Button("rotate left")) {
-
+		if (ImGui::Button("rotate left")) 
+		{
+			rotation_angle_local -= 0.392699082;
+			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("rotate right")) {
-
+			rotation_angle_local += 0.392699082;
+			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Close Me")) {
@@ -448,12 +453,16 @@ void ShowScaleRotateTranslationWindowsLocal() {
 
 	if (show_local_scale_window)
 	{
-		ImGui::SetNextWindowPos(ImVec2(150, 300));
-		ImGui::SetNextWindowSize(ImVec2(250, 200));
-		ImGui::Begin("Local Scale Window", &show_local_scale_window);
+		//ImGui::SetNextWindowPos(ImVec2(150, 300));
+		//ImGui::SetNextWindowSize(ImVec2(250, 200));
+		ImGui::Begin("Local Scale Window", &show_local_scale_window, ImGuiWindowFlags_None);
 		ImGui::Text("Scale Model");
 
-		ImGui::SliderFloat("Scale factor", &scale_factor_local, 0.0f, 10.0f);
+		ImGui::SliderFloat("Scale factor", &scale_factor_local, 0.0f, 2.0f);
+		if (scale_factor_local != 1)
+		{
+			scene.GetActiveModel().SetScaleFactor(scale_factor_local);
+		}
 
 		if (ImGui::Button("Close Me")) {
 			show_local_scale_window = false;
@@ -488,7 +497,7 @@ void ShowScaleRotateTranslationWindowsLocal() {
 	}
 }
 
-void ShowScaleRotateTranslationWindowsGlobal() {
+void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 	if (show_global_rotation_window)
 	{
 		ImGui::SetNextWindowPos(ImVec2(150, 300));

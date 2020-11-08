@@ -347,7 +347,7 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints, scaleFactor);
+			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle());
 			threePoints.clear();
 		}
 	}
@@ -440,17 +440,49 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, double scale)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle)
 {
 	int x0 = 400;
 	int y0 = 350;
-	//int scale = 100;
-	glm::ivec2 p1 = glm::ivec2(x0 + (vertexPositions.at(0).x * scale), y0 + (vertexPositions.at(0).y * scale));
-	glm::ivec2 p2 = glm::ivec2(x0 + (vertexPositions.at(1).x * scale), y0 + (vertexPositions.at(1).y * scale));
-	glm::ivec2 p3 = glm::ivec2(x0 + (vertexPositions.at(2).x * scale), y0 + (vertexPositions.at(2).y * scale));
+	
+	glm::mat2 scaleMat = glm::mat2(scale, 0, 0, scale);
+	glm::mat2 rotationMat = glm::mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
+
+	glm::ivec2 p1 = glm::ivec2((vertexPositions.at(0).x), (vertexPositions.at(0).y));
+	glm::ivec2 p2 = glm::ivec2((vertexPositions.at(1).x), (vertexPositions.at(1).y));
+	glm::ivec2 p3 = glm::ivec2((vertexPositions.at(2).x), (vertexPositions.at(2).y));
+
+	p1 = scaleMat * p1;
+	p2 = scaleMat * p2;
+	p3 = scaleMat * p3;
+
+	p1 = rotationMat * p1;
+	p2 = rotationMat * p2;
+	p3 = rotationMat * p3;
+
+	p1.x += x0;
+	p1.y += y0;
+	p2.x += x0;
+	p2.y += y0;
+	p3.x += x0;
+	p3.y += y0;
 
 	DrawLine(p1, p2, glm::vec3(0, 0, 0));
 	DrawLine(p2, p3, glm::vec3(0, 0, 0));
 	DrawLine(p1, p3, glm::vec3(0, 0, 0));
 }
 
+
+void Renderer::ScaleLocal(const Scene& scene, float scaleFactor)
+{
+	const glm::mat3 scaleMat = glm::mat3(scaleFactor, 0.0, 0.0, 0.0, scaleFactor, 0.0, 0.0, 0.0, scaleFactor);
+	//std::vector<glm::vec3>& points;
+
+	for (int i = 0; i < scene.GetActiveModel().GetVerticesCount(); i++)
+	{
+		/*DrawTriangle()
+		point.x = scene.GetActiveModel().GetVertex(i).x;
+		point.y = scene.GetActiveModel().GetVertex(i).y;
+		*/
+	}
+}

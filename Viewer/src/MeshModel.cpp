@@ -4,7 +4,9 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	faces_(faces),
 	vertices_(vertices),
 	normals_(normals),
-	model_name_(model_name)
+	model_name_(model_name),
+	scaleFactor_(1),
+	rotateAngle_(0)
 {
 
 }
@@ -37,5 +39,25 @@ int MeshModel::GetVerticesCount() const
 const glm::vec3& MeshModel::GetVertex(int index) const
 {
 	return vertices_.at(index);
+}
+
+void MeshModel::SetScaleFactor(float scaleFactor)
+{
+	MeshModel::scaleFactor_ = scaleFactor;
+}
+
+float MeshModel::GetScaleFactor()
+{
+	return MeshModel::scaleFactor_;
+}
+
+void MeshModel::SetRotateAngle(float rotateAngle)
+{
+	MeshModel::rotateAngle_ = rotateAngle;
+}
+
+float MeshModel::GetRotateAngle()
+{
+	return MeshModel::rotateAngle_;
 }
 

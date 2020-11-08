@@ -15,11 +15,12 @@ public:
 	void ClearColorBuffer(const glm::vec3& color);
 	int GetViewportWidth() const;
 	int GetViewportHeight() const;
+	void Renderer::ScaleLocal(const Scene& scene, const float scaleFactor);
 	
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
-	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, double scale);
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle);
 
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
