@@ -5740,4 +5740,14 @@ Also, we moved the coordinates (translation) from (0,0,0) to (x_0 + x, y_0 + y, 
 We tried to position the Teapot in the middle of the window.
 
 # 3. Teapot mesh screenshot   
-![Alt text](./teapot_mesh.jpeg) 
+![Alt text](./teapot_mesh.jpeg)   
+
+# 4. GUI items   
+### Open models and switch between them   
+![Alt text](./open_model.png)    
+### Open menu for transformations  
+![Alt text](./menu.png)    
+### Some transformations...   
+![Alt text](./local_trans.png)     
+![Alt text](./local_scale.png)   
+ 
