@@ -19,7 +19,27 @@
  */
 bool show_demo_window = false;
 bool show_another_window = false;
+
 bool show_local_rotation_window = false;
+bool show_local_scale_window = false;
+bool show_local_translation_window = false;
+static float scale_factor_local = 0.0;
+
+bool show_global_rotation_window = false;
+bool show_global_scale_window = false;
+bool show_global_translation_window = false;
+static float scale_factor_global = 0.0;
+
+bool show_model_1_window = false;
+bool show_model_2_window = false;
+bool show_model_3_window = false;
+bool show_model_4_window = false;
+
+bool show_warning_window = false;
+bool show_model_selection_window = false;
+
+static int model_selection = 0;
+
 glm::vec4 clear_color = glm::vec4(0.8f, 0.8f, 0.8f, 1.00f);
 
 /**
@@ -32,6 +52,9 @@ void StartFrame();
 void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& io);
 void Cleanup(GLFWwindow* window);
 void DrawImguiMenus(ImGuiIO& io, Scene& scene);
+void SwitchToDifferentModelView(int modelID);
+void ShowScaleRotateTranslationWindowsLocal();
+void ShowScaleRotateTranslationWindowsGlobal();
 
 /**
  * Function implementation
@@ -44,7 +67,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 
 int main(int argc, char** argv)
 {
-	int windowWidth = 800, windowHeight = 800;
+	int windowWidth = 1000, windowHeight = 1000;
 	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, "Mesh Viewer");
 	if (!window)
 		return 1;
@@ -169,11 +192,6 @@ void Cleanup(GLFWwindow* window)
 
 void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 {
-	/**
-	 * MeshViewer menu
-	 */
-	//ImGui::Begin("MeshViewer Menu");
-
 	// Menu Bar
 	if (ImGui::BeginMainMenuBar())
 	{
@@ -186,6 +204,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				if (result == NFD_OKAY)
 				{
 					scene.AddModel(Utils::LoadMeshModel(outPath));
+
+					model_selection = scene.GetModelCount() - 1;
+
 					//Utils::printVerticesAndFace(scene.GetModel(0));
 					free(outPath);
 				}
@@ -195,7 +216,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				else
 				{
 				}
-
 			}
 			ImGui::EndMenu();
 		}
@@ -204,7 +224,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		{
 			if (ImGui::MenuItem("Translation"))
 			{
-
+				show_local_translation_window = true;
 			}
 
 			if (ImGui::MenuItem("Rotation"))
@@ -214,7 +234,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 			if (ImGui::MenuItem("Scale"))
 			{
-
+				show_local_scale_window = true;
 			}
 
 			ImGui::EndMenu();
@@ -224,89 +244,309 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		{
 			if (ImGui::MenuItem("Translation"))
 			{
-
+				show_global_translation_window = true;
 			}
 
 			if (ImGui::MenuItem("Rotation"))
 			{
-
+				show_global_rotation_window = true;
 			}
 
 			if (ImGui::MenuItem("Scale"))
 			{
-
+				show_global_scale_window = true;
 			}
 			ImGui::EndMenu();
 		}
-
-
-
-		// TODO: Add more menubar items (if you want to)
 		ImGui::EndMainMenuBar();
 	}
 
-	// Controls
-	//ImGui::ColorEdit3("Clear Color", (float*)&clear_color);
-	//// TODO: Add more controls as needed
+	// model selection window - position and window flag
+	ImGui::SetNextWindowPos(ImVec2(0, 850));
+	ImGui::SetNextWindowSize(ImVec2(310, 150));
 
-	//ImGui::End();
+	ImGui::Begin("Model selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
+	ImGui::RadioButton("Model #1", &model_selection, 0);
+	if (scene.GetModelCount() > 0)
+	{
+		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(0).GetModelName().c_str());
+	}
+	ImGui::RadioButton("Model #2", &model_selection, 1);
+	if (scene.GetModelCount() > 1)
+	{
+		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(1).GetModelName().c_str());
+	}
+	ImGui::RadioButton("Model #3", &model_selection, 2);
+	if (scene.GetModelCount() > 2)
+	{
+		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(2).GetModelName().c_str());
+	}
+	ImGui::RadioButton("Model #4", &model_selection, 3);
+	if (scene.GetModelCount() > 3)
+	{
+		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(3).GetModelName().c_str());
+	}
 
-	/**
-	 * Imgui demo - you can remove it once you are familiar with imgui
-	 */
+	ImGui::End();
 
-	 //1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-	//if (show_demo_window)
-	//	ImGui::ShowDemoWindow(&show_demo_window);
+	//1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+   //if (show_demo_window)
+   //	ImGui::ShowDemoWindow(&show_demo_window);
 
-	////2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-	//{
-	//	static float f = 0.0f;
-	//	static int counter = 0;
+   ////2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+   //{
+   //	static float f = 0.0f;
+   //	static int counter = 0;
 
-	//	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+   //	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-	//	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-	//	ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-	//	ImGui::Checkbox("Another Window", &show_another_window);
+   //	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+   //	ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+   //	ImGui::Checkbox("Another Window", &show_another_window);
 
-	//	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-	//	ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+   //	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+   //	ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-	//	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-	//		counter++;
-	//	ImGui::SameLine();
-	//	ImGui::Text("counter = %d", counter);
+   //	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+   //		counter++;
+   //	ImGui::SameLine();
+   //	ImGui::Text("counter = %d", counter);
 
-	//	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	//	ImGui::End();
-	//}
+   //	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+   //	ImGui::End();
+   //}
 
-	// 3. Show another simple window.
-	//if (show_another_window)
-	//{
-	//	ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-	//	ImGui::Text("Hello from another window!");
-	//	if (ImGui::Button("Close Me"))
-	//		show_another_window = false;
-	//	ImGui::End();
-	//}
+   // 3. Show another simple window.
+   //if (show_another_window)
+   //{
+   //	ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+   //	ImGui::Text("Hello from another window!");
+   //	if (ImGui::Button("Close Me"))
+   //		show_another_window = false;
+   //	ImGui::End();
+   //}
 
+	ShowScaleRotateTranslationWindowsLocal(); // all local windows declarations
+
+	ShowScaleRotateTranslationWindowsGlobal(); // all global windows declarations
+
+	SwitchToDifferentModelView(model_selection);
+
+	if (show_model_1_window)
+	{
+		if (scene.GetModelCount() > 0)
+		{
+			show_warning_window = false;
+			scene.SetActiveModelIndex(model_selection);
+		}
+		else {
+			show_warning_window = true;
+		}
+	}
+
+	if (show_model_2_window)
+	{
+		if (scene.GetModelCount() > 1)
+		{
+			show_warning_window = false;
+			scene.SetActiveModelIndex(model_selection);
+		}
+		else {
+			show_warning_window = true;
+		}
+	}
+
+	if (show_model_3_window)
+	{
+		if (scene.GetModelCount() > 2)
+		{
+			show_warning_window = false;
+			scene.SetActiveModelIndex(model_selection);
+		}
+		else {
+			show_warning_window = true;
+		}
+	}
+
+	if (show_model_4_window)
+	{
+		if (scene.GetModelCount() > 3)
+		{
+			show_warning_window = false;
+			scene.SetActiveModelIndex(model_selection);
+		}
+		else {
+			show_warning_window = true;
+		}
+	}
+
+	if (show_warning_window)
+	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 100));
+
+		ImGui::Begin("Warning!", &show_warning_window);
+		ImGui::Text("Model not loded to this selection \nPlease open model");
+
+		ImGui::End();
+	}
+}
+
+void SwitchToDifferentModelView(int modelID) {
+	switch (modelID)
+	{
+	case 0:
+		show_model_1_window = true;
+		show_model_2_window = false;
+		show_model_3_window = false;
+		show_model_4_window = false;
+		break;
+	case 1:
+		show_model_1_window = false;
+		show_model_2_window = true;
+		show_model_3_window = false;
+		show_model_4_window = false;
+		break;
+	case 2:
+		show_model_1_window = false;
+		show_model_2_window = false;
+		show_model_3_window = true;
+		show_model_4_window = false;
+		break;
+	case 3:
+		show_model_1_window = false;
+		show_model_2_window = false;
+		show_model_3_window = false;
+		show_model_4_window = true;
+		break;
+	default:
+		break;
+	}
+}
+
+void ShowScaleRotateTranslationWindowsLocal() {
 	if (show_local_rotation_window)
 	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 200));
 		ImGui::Begin("Local Rotation Window", &show_local_rotation_window);
 		ImGui::Text("Rotation left or right");
 
 		if (ImGui::Button("rotate left")) {
 
 		}
-
+		ImGui::SameLine();
 		if (ImGui::Button("rotate right")) {
 
 		}
-
+		ImGui::SameLine();
 		if (ImGui::Button("Close Me")) {
 			show_local_rotation_window = false;
+		}
+		ImGui::End();
+	}
+
+	if (show_local_scale_window)
+	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 200));
+		ImGui::Begin("Local Scale Window", &show_local_scale_window);
+		ImGui::Text("Scale Model");
+
+		ImGui::SliderFloat("Scale factor", &scale_factor_local, 0.0f, 10.0f);
+
+		if (ImGui::Button("Close Me")) {
+			show_local_scale_window = false;
+		}
+		ImGui::End();
+	}
+
+	if (show_local_translation_window)
+	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 200));
+		ImGui::Begin("Local Translation Window", &show_local_translation_window);
+		ImGui::Text("Move model with arrows");
+
+		if (ImGui::Button("/\\")) {
+
+		}
+		if (ImGui::Button("<")) {
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(">")) {
+
+		}
+		if (ImGui::Button("\\/")) {
+
+		}
+		if (ImGui::Button("Close Me")) {
+			show_local_translation_window = false;
+		}
+		ImGui::End();
+	}
+}
+
+void ShowScaleRotateTranslationWindowsGlobal() {
+	if (show_global_rotation_window)
+	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 200));
+		ImGui::Begin("Global Rotation Window", &show_global_rotation_window);
+		ImGui::Text("Rotation left or right");
+
+		if (ImGui::Button("rotate left")) {
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("rotate right")) {
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Close Me")) {
+			show_global_rotation_window = false;
+		}
+		ImGui::End();
+	}
+
+	if (show_global_scale_window)
+	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 200));
+		ImGui::Begin("Global Scale Window", &show_global_scale_window);
+		ImGui::Text("Scale Model");
+
+		ImGui::SliderFloat("Scale factor", &scale_factor_global, 0.0f, 10.0f);
+
+		if (ImGui::Button("Close Me")) {
+			show_global_scale_window = false;
+		}
+		ImGui::End();
+	}
+
+	if (show_global_translation_window)
+	{
+		ImGui::SetNextWindowPos(ImVec2(150, 300));
+		ImGui::SetNextWindowSize(ImVec2(250, 200));
+		ImGui::Begin("Global Translation Window", &show_global_translation_window);
+		ImGui::Text("Move model with arrows");
+
+		if (ImGui::Button("/\\")) {
+
+		}
+		if (ImGui::Button("<")) {
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(">")) {
+
+		}
+		if (ImGui::Button("\\/")) {
+
+		}
+		if (ImGui::Button("Close Me")) {
+			show_global_translation_window = false;
 		}
 		ImGui::End();
 	}

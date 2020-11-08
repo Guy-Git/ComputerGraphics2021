@@ -10,6 +10,7 @@ public:
 	Renderer(int viewportWidth, int viewportHeight);
 	virtual ~Renderer();
 	void Render(const Scene& scene);
+	double FindMaxXorYPointForScaleFactor(MeshModel& currentModel);
 	void SwapBuffers();
 	void ClearColorBuffer(const glm::vec3& color);
 	int GetViewportWidth() const;
@@ -18,7 +19,7 @@ public:
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
-	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions);
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, double scale);
 
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();

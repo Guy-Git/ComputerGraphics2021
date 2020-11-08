@@ -329,15 +329,17 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 
 void Renderer::Render(const Scene& scene)
 {
-	// TODO: Replace this code with real scene rendering code
 	int half_width = viewport_width_ / 2;
 	int half_height = viewport_height_ / 2;
 	int thickness = 15;
 
 	if (scene.GetModelCount() > 0)
 	{
-		MeshModel currentModel = scene.GetModel(0);
+		MeshModel currentModel = scene.GetActiveModel();
 
+		FindMaxXorYPointForScaleFactor(currentModel);
+
+		double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 		std::vector <glm::vec3> threePoints;
 		for (int i = 0; i < currentModel.GetFacesCount(); i++)
 		{
@@ -345,7 +347,7 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints);
+			DrawTriangle(threePoints, scaleFactor);
 			threePoints.clear();
 		}
 	}
@@ -398,6 +400,26 @@ void Renderer::Render(const Scene& scene)
 	*/
 }
 
+double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
+{
+	// find the max vertex point value to set the scale factor
+	double maxPointXValue = -INFINITY;
+	double maxPointYValue = -INFINITY;
+	for (int i = 0; i < currentModel.GetVerticesCount(); i++)
+	{
+		if (currentModel.GetVertex(i).x > maxPointXValue)
+		{
+			maxPointXValue = currentModel.GetVertex(i).x;
+		}
+		if (currentModel.GetVertex(i).y > maxPointYValue)
+		{
+			maxPointYValue = currentModel.GetVertex(i).y;
+		}
+	}
+
+	return maxPointXValue > maxPointYValue ? maxPointXValue : maxPointYValue;
+}
+
 int Renderer::GetViewportWidth() const
 {
 	return viewport_width_;
@@ -418,11 +440,11 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, double scale)
 {
 	int x0 = 400;
 	int y0 = 350;
-	int scale = 100;
+	//int scale = 100;
 	glm::ivec2 p1 = glm::ivec2(x0 + (vertexPositions.at(0).x * scale), y0 + (vertexPositions.at(0).y * scale));
 	glm::ivec2 p2 = glm::ivec2(x0 + (vertexPositions.at(1).x * scale), y0 + (vertexPositions.at(1).y * scale));
 	glm::ivec2 p3 = glm::ivec2(x0 + (vertexPositions.at(2).x * scale), y0 + (vertexPositions.at(2).y * scale));

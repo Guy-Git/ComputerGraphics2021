@@ -5734,7 +5734,8 @@
 ```
 
 # 2.  
-We performed this scaling by multipling each (x,y,0) value with a scale factor (scale factor == 100). 
+We performed this scaling by multipling each (x,y,0) value with a dynamic scale factor.  
+The scale factor was different for each model, and calculated like this: 400/(max point value from all vertexes).   
 Also, we moved the coordinates (translation) from (0,0,0) to (x_0 + x, y_0 + y, 0).  
 We tried to position the Teapot in the middle of the window.
 
