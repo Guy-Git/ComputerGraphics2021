@@ -5744,7 +5744,7 @@ We tried to position the Teapot in the middle of the window.
 
 # 4. GUI items   
 ### Open models and switch between them   
-![Alt text](./open_model.png)    
+![Alt text](./open_model.gif)    
 ### Open menu for transformations  
 ![Alt text](./menu.png)    
 ### Some transformations...   
