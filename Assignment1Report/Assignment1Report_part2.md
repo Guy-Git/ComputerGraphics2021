@@ -5748,6 +5748,6 @@ We tried to position the Teapot in the middle of the window.
 ### Open menu for transformations  
 ![Alt text](./menu.png)    
 ### Some transformations...   
-![Alt text](./local_trans.png)     
-![Alt text](./local_scale.png)   
+![Alt text](./local_trans.png =250x)     
+![Alt text](./local_scale.png =250x)   
  
