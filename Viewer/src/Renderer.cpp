@@ -4,6 +4,7 @@
 #include "vector"
 #include "Renderer.h"
 #include "InitShader.h"
+#include <iostream>
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
 #define Z_INDEX(width,x,y) ((x)+(y)*(width))
@@ -347,7 +348,7 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle());
+			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition());
 			threePoints.clear();
 		}
 	}
@@ -440,17 +441,19 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle, glm::vec2 position)
 {
 	int x0 = 400;
 	int y0 = 350;
 	
 	glm::mat2 scaleMat = glm::mat2(scale, 0, 0, scale);
 	glm::mat2 rotationMat = glm::mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
+	glm::mat3 positionMat = glm::mat3(1, 0, position.x, 0, 1, position.y, 0, 0, 1);
 
-	glm::ivec2 p1 = glm::ivec2((vertexPositions.at(0).x), (vertexPositions.at(0).y));
-	glm::ivec2 p2 = glm::ivec2((vertexPositions.at(1).x), (vertexPositions.at(1).y));
-	glm::ivec2 p3 = glm::ivec2((vertexPositions.at(2).x), (vertexPositions.at(2).y));
+
+	glm::vec2 p1 = glm::vec2((vertexPositions.at(0).x), (vertexPositions.at(0).y));
+	glm::vec2 p2 = glm::vec2((vertexPositions.at(1).x), (vertexPositions.at(1).y));
+	glm::vec2 p3 = glm::vec2((vertexPositions.at(2).x), (vertexPositions.at(2).y));
 
 	p1 = scaleMat * p1;
 	p2 = scaleMat * p2;
@@ -459,6 +462,20 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	p1 = rotationMat * p1;
 	p2 = rotationMat * p2;
 	p3 = rotationMat * p3;
+
+	/*glm::vec3 p1t = glm::vec3(p1.x, p1.y , 1);
+	glm::vec3 p2t = glm::vec3(p2.x, p2.y, 1);
+	glm::vec3 p3t = glm::vec3(p3.x, p3.y, 1);*/
+
+	/*p1t = positionMat * p1t;
+	p2t = positionMat * p2t;
+	p3t = positionMat * p3t;*/
+
+	//std::cout << p1t.x << ", " << p1t.y << ", " << p1t.z << "\n";
+
+	p1 = glm::vec2(p1.x + position.x, p1.y + position.y);
+	p2 = glm::vec2(p2.x + position.x, p2.y + position.y);
+	p3 = glm::vec2(p3.x + position.x, p3.y + position.y);
 
 	p1.x += x0;
 	p1.y += y0;

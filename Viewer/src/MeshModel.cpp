@@ -6,7 +6,8 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	normals_(normals),
 	model_name_(model_name),
 	scaleFactor_(1),
-	rotateAngle_(0)
+	rotateAngle_(0),
+	position_(0)
 {
 
 }
@@ -59,5 +60,15 @@ void MeshModel::SetRotateAngle(float rotateAngle)
 float MeshModel::GetRotateAngle()
 {
 	return MeshModel::rotateAngle_;
+}
+
+void MeshModel::SetNewPosition(glm::vec2 newPos)
+{
+	position_ = newPos;
+}
+
+glm::vec2 MeshModel::GetPosition()
+{
+	return position_;
 }
 

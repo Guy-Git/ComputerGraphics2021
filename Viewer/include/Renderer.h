@@ -20,7 +20,7 @@ public:
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
-	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle);
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle, glm::vec2 position);
 
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();

@@ -25,12 +25,14 @@ bool show_local_scale_window = false;
 bool show_local_translation_window = false;
 static float scale_factor_local = 1.0;
 static float rotation_angle_local = 0;
+static glm::vec2 transformation_local = glm::vec2(0);
 
 bool show_global_rotation_window = false;
 bool show_global_scale_window = false;
 bool show_global_translation_window = false;
 static float scale_factor_global = 1.0;
 static float rotation_angle_global = 0;
+static glm::vec2 transformation_global = glm::vec2(0);
 
 bool show_model_1_window = false;
 bool show_model_2_window = false;
@@ -434,13 +436,13 @@ void ShowScaleRotateTranslationWindowsLocal(Scene &scene) {
 		ImGui::Begin("Local Rotation Window", &show_local_rotation_window);
 		ImGui::Text("Rotation left or right");
 
-		if (ImGui::Button("rotate left")) 
+		if (ImGui::Button("Rotate Left")) 
 		{
 			rotation_angle_local -= 0.392699082;
 			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("rotate right")) {
+		if (ImGui::Button("Rotate Right")) {
 			rotation_angle_local += 0.392699082;
 			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
@@ -472,28 +474,33 @@ void ShowScaleRotateTranslationWindowsLocal(Scene &scene) {
 
 	if (show_local_translation_window)
 	{
-		ImGui::SetNextWindowPos(ImVec2(150, 300));
-		ImGui::SetNextWindowSize(ImVec2(250, 200));
 		ImGui::Begin("Local Translation Window", &show_local_translation_window);
 		ImGui::Text("Move model with arrows");
 
-		if (ImGui::Button("/\\")) {
-
+		if (ImGui::Button("/\\")) 
+		{
+			transformation_local.y+=20;
+			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 		if (ImGui::Button("<")) {
-
+			transformation_local.x -= 20;
+			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button(">")) {
-
+			transformation_local.x += 20;
+			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 		if (ImGui::Button("\\/")) {
-
+			transformation_local.y -= 20;
+			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 		if (ImGui::Button("Close Me")) {
 			show_local_translation_window = false;
 		}
 		ImGui::End();
+
+
 	}
 }
 

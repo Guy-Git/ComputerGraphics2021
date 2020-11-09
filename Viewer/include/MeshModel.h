@@ -17,6 +17,8 @@ public:
 	void MeshModel::SetScaleFactor(float scaleFactor);
 	void MeshModel::SetRotateAngle(float rotateAngle);
 	float MeshModel::GetRotateAngle();
+	void MeshModel::SetNewPosition(glm::vec2 newPos);
+	glm::vec2 MeshModel::GetPosition();
 
 	
 
@@ -28,4 +30,5 @@ private:
 
 	float scaleFactor_;
 	float rotateAngle_; //90 
+	glm::vec2 position_;
 };
