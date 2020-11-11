@@ -2,9 +2,12 @@
 #include "MeshModel.h"
 #include <string>
 
-Scene::Scene() :
+Scene::Scene():
 	active_camera_index_(0),
-	active_model_index_(0)
+	active_model_index_(0),
+	scaleFactor_(1),
+	rotateAngle_(0),
+	position_(0)
 {
 
 }
@@ -67,4 +70,34 @@ void Scene::SetActiveModelIndex(int index)
 int Scene::GetActiveModelIndex() const
 {
 	return active_model_index_;
+}
+
+void Scene::SetScaleFactor(float scaleFactor)
+{
+	Scene::scaleFactor_ = scaleFactor;
+}
+
+float Scene::GetScaleFactor() const
+{
+	return Scene::scaleFactor_;
+}
+
+void Scene::SetRotateAngle(float rotateAngle)
+{
+	Scene::rotateAngle_ = rotateAngle;
+}
+
+float Scene::GetRotateAngle() const
+{
+	return Scene::rotateAngle_;
+}
+
+void Scene::SetNewPosition(glm::vec2 newPos)
+{
+	position_ = newPos;
+}
+
+glm::vec2 Scene::GetPosition() const
+{
+	return position_;
 }

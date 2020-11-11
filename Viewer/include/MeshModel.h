@@ -20,8 +20,6 @@ public:
 	void MeshModel::SetNewPosition(glm::vec2 newPos);
 	glm::vec2 MeshModel::GetPosition();
 
-	
-
 private:
 	std::vector<Face> faces_;
 	std::vector<glm::vec3> vertices_;
@@ -29,6 +27,6 @@ private:
 	std::string model_name_;
 
 	float scaleFactor_;
-	float rotateAngle_; //90 
+	float rotateAngle_; 
 	glm::vec2 position_;
 };

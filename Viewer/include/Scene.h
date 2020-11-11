@@ -25,6 +25,13 @@ public:
 
 	void SetActiveModelIndex(int index);
 	int GetActiveModelIndex() const;
+
+	float Scene::GetScaleFactor() const;
+	void SetScaleFactor(float scaleFactor);
+	void SetRotateAngle(float rotateAngle);
+	float GetRotateAngle() const;
+	void SetNewPosition(glm::vec2 newPos);
+	glm::vec2 GetPosition() const;
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
@@ -32,4 +39,8 @@ private:
 
 	int active_camera_index_;
 	int active_model_index_;
+
+	float scaleFactor_;
+	float rotateAngle_;
+	glm::vec2 position_;
 };

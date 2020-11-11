@@ -348,7 +348,7 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition());
+			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(), scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
 			threePoints.clear();
 		}
 	}
@@ -441,52 +441,56 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float scale, float rotAngle, glm::vec2 position)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, float localRotAngle, glm::vec2 localPosition, 
+	float worldScale, float worldRotAngle, glm::vec2 worldPosition)
 {
 	int x0 = 400;
 	int y0 = 350;
-	
-	glm::mat2 scaleMat = glm::mat2(scale, 0, 0, scale);
-	glm::mat2 rotationMat = glm::mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
-	glm::mat3 positionMat = glm::mat3(1, 0, position.x, 0, 1, position.y, 0, 0, 1);
 
+	glm::mat3 localScaleMat = glm::mat3(localScale, 0, 0, 0, localScale, 0, 0, 0, 1);
+	glm::mat3 localRotationMat = glm::mat3(cos(localRotAngle), sin(localRotAngle), 0, -sin(localRotAngle), cos(localRotAngle), 0, 0, 0, 1);
+	glm::mat3 localPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, localPosition.x, localPosition.y, 1);
 
-	glm::vec2 p1 = glm::vec2((vertexPositions.at(0).x), (vertexPositions.at(0).y));
-	glm::vec2 p2 = glm::vec2((vertexPositions.at(1).x), (vertexPositions.at(1).y));
-	glm::vec2 p3 = glm::vec2((vertexPositions.at(2).x), (vertexPositions.at(2).y));
+	glm::mat3 worldScaleMat = glm::mat3(worldScale, 0, 0, 0, worldScale, 0, 0, 0, 1);
+	glm::mat3 worldRotationMat = glm::mat3(cos(worldRotAngle), sin(worldRotAngle), 0, -sin(worldRotAngle), cos(worldRotAngle), 0, 0, 0, 1);
+	glm::mat3 worldPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, worldPosition.x, worldPosition.y, 1);
 
-	p1 = scaleMat * p1;
-	p2 = scaleMat * p2;
-	p3 = scaleMat * p3;
+	glm::vec3 p1 = glm::vec3((vertexPositions.at(0).x), (vertexPositions.at(0).y), 1);
+	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), 1);
+	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), 1);
 
-	p1 = rotationMat * p1;
-	p2 = rotationMat * p2;
-	p3 = rotationMat * p3;
+	p1 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p1;
+	p2 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p2;
+	p3 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p3;
 
-	/*glm::vec3 p1t = glm::vec3(p1.x, p1.y , 1);
-	glm::vec3 p2t = glm::vec3(p2.x, p2.y, 1);
-	glm::vec3 p3t = glm::vec3(p3.x, p3.y, 1);*/
+	//p1 = rotationMat * p1;
+	//p2 = rotationMat * p2;
+	//p3 = rotationMat * p3;
 
-	/*p1t = positionMat * p1t;
-	p2t = positionMat * p2t;
-	p3t = positionMat * p3t;*/
+	///*glm::vec3 p1t = glm::vec3(p1.x, p1.y , 1);
+	//glm::vec3 p2t = glm::vec3(p2.x, p2.y, 1);
+	//glm::vec3 p3t = glm::vec3(p3.x, p3.y, 1);*/
 
-	//std::cout << p1t.x << ", " << p1t.y << ", " << p1t.z << "\n";
+	///*p1t = positionMat * p1t;
+	//p2t = positionMat * p2t;
+	//p3t = positionMat * p3t;*/
 
-	p1 = glm::vec2(p1.x + position.x, p1.y + position.y);
-	p2 = glm::vec2(p2.x + position.x, p2.y + position.y);
-	p3 = glm::vec2(p3.x + position.x, p3.y + position.y);
+	////std::cout << p1t.x << ", " << p1t.y << ", " << p1t.z << "\n";
 
-	p1.x += x0;
-	p1.y += y0;
-	p2.x += x0;
-	p2.y += y0;
-	p3.x += x0;
-	p3.y += y0;
+	glm::vec2 p1t = glm::vec2(p1.x, p1.y);
+	glm::vec2 p2t = glm::vec2(p2.x, p2.y);
+	glm::vec2 p3t = glm::vec2(p3.x, p3.y);
 
-	DrawLine(p1, p2, glm::vec3(0, 0, 0));
-	DrawLine(p2, p3, glm::vec3(0, 0, 0));
-	DrawLine(p1, p3, glm::vec3(0, 0, 0));
+	p1t.x += x0;
+	p1t.y += y0;
+	p2t.x += x0;
+	p2t.y += y0;
+	p3t.x += x0;
+	p3t.y += y0;
+
+	DrawLine(p1t, p2t, glm::vec3(0, 0, 0));
+	DrawLine(p2t, p3t, glm::vec3(0, 0, 0));
+	DrawLine(p1t, p3t, glm::vec3(0, 0, 0));
 }
 
 
@@ -503,3 +507,47 @@ void Renderer::ScaleLocal(const Scene& scene, float scaleFactor)
 		*/
 	}
 }
+
+//void get_average_grade()
+//{
+//	int length, id;
+//	printf("Enter length:\n");
+//	scanf("%d", &length); //get amount of exam booklets
+//	printf("Enter id:\n");
+//	scanf("%d", &id); //get student`s ID
+//
+//	if (length <= 19)
+//	{
+//		length++; // add 1 to the buffer size for the return value
+//		int buffer_length = length * sizeof(int); // take into account the size of int in bytes for the malloc
+//		int* buffer = (int*)malloc(buffer_length);
+//		int* grade = (int*)malloc(sizeof(int));
+//		/*malloc() –receives unsigned int with amount of bytes to be allocated, returns pointer to
+//		allocated space, or null if allocation failed*/
+//		int input = 0, course_id;
+//		unsigned int loop_stop = length;
+//		buffer[0] = 0; //reserve space for the return value
+//		for (int i = 1; i < loop_stop && (input != -1); i++)
+//		{ //Get exam booklet numbers from student
+//			printf("Enter exam booklet ID:");
+//			scanf("%d", &input);
+//			buffer[i] = input; //store booklet number in the buffer
+//		}
+//		course_id = get_course(buffer);
+//		buffer[0] = get_average(course_id); //get course average into the return slot in the buffer
+//		*grade = get_grade(id, course_id); //get student`s grade in this course
+//		if (*grade < 50)
+//		{ //if a student who failed the exam is checking his grade, make his grade 0
+//			set_grade(id, course_id, 0);
+//		}
+//		for (int i = 0; i < loop_stop; i++)
+//		{ //print the contents of the buffer
+//			if (buffer[i] >= 0 && buffer[i] <= 100)
+//			{
+//				printf("%d\n", buffer[i]);
+//				printf("Press Any Key to Continue\n");
+//				getchar();
+//			}
+//		}
+//	}
+//}
