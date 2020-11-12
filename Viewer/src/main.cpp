@@ -43,6 +43,7 @@ bool show_warning_window = false;
 bool show_model_selection_window = false;
 
 static int model_selection = 0;
+static int last_model_selection = 0;
 
 glm::vec4 clear_color = glm::vec4(0.8f, 0.8f, 0.8f, 1.00f);
 
@@ -57,6 +58,7 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 void Cleanup(GLFWwindow* window);
 void DrawImguiMenus(ImGuiIO& io, Scene& scene);
 void SwitchToDifferentModelView(int modelID);
+void ResetParametersValue(Scene& scene);
 void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
 
@@ -199,29 +201,32 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	// Menu Bar
 	if (ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::BeginMenu("File"))
+		if (scene.GetModelCount() < 4)
 		{
-			if (ImGui::MenuItem("Open", "CTRL+O"))
+			if (ImGui::BeginMenu("File"))
 			{
-				nfdchar_t* outPath = NULL;
-				nfdresult_t result = NFD_OpenDialog("obj;", NULL, &outPath);
-				if (result == NFD_OKAY)
+				if (ImGui::MenuItem("Open", "CTRL+O"))
 				{
-					scene.AddModel(Utils::LoadMeshModel(outPath));
+					nfdchar_t* outPath = NULL;
+					nfdresult_t result = NFD_OpenDialog("obj;", NULL, &outPath);
+					if (result == NFD_OKAY)
+					{
+						scene.AddModel(Utils::LoadMeshModel(outPath));
 
-					model_selection = scene.GetModelCount() - 1;
+						model_selection = scene.GetModelCount() - 1;
 
-					//Utils::printVerticesAndFace(scene.GetModel(0));
-					free(outPath);
+						//Utils::printVerticesAndFace(scene.GetModel(0));
+						free(outPath);
+					}
+					else if (result == NFD_CANCEL)
+					{
+					}
+					else
+					{
+					}
 				}
-				else if (result == NFD_CANCEL)
-				{
-				}
-				else
-				{
-				}
+				ImGui::EndMenu();
 			}
-			ImGui::EndMenu();
 		}
 
 		if (ImGui::BeginMenu("Local Trans."))
@@ -293,43 +298,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	ImGui::End();
 
-	//1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-   //if (show_demo_window)
-   //	ImGui::ShowDemoWindow(&show_demo_window);
-
-   ////2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-   //{
-   //	static float f = 0.0f;
-   //	static int counter = 0;
-
-   //	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-   //	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-   //	ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-   //	ImGui::Checkbox("Another Window", &show_another_window);
-
-   //	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-   //	ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-   //	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-   //		counter++;
-   //	ImGui::SameLine();
-   //	ImGui::Text("counter = %d", counter);
-
-   //	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-   //	ImGui::End();
-   //}
-
-   // 3. Show another simple window.
-   //if (show_another_window)
-   //{
-   //	ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-   //	ImGui::Text("Hello from another window!");
-   //	if (ImGui::Button("Close Me"))
-   //		show_another_window = false;
-   //	ImGui::End();
-   //}
-
 	ShowScaleRotateTranslationWindowsLocal(scene); // all local windows declarations
 
 	ShowScaleRotateTranslationWindowsGlobal(scene); // all global windows declarations
@@ -384,6 +352,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		}
 	}
 
+	ResetParametersValue(scene);
+
 	if (show_warning_window)
 	{
 		ImGui::SetNextWindowPos(ImVec2(150, 300));
@@ -428,15 +398,27 @@ void SwitchToDifferentModelView(int modelID) {
 	}
 }
 
-void ShowScaleRotateTranslationWindowsLocal(Scene &scene) {
+void ResetParametersValue(Scene& scene)
+{
+	if (scene.GetModelCount() > 0)
+	{
+		scale_factor_local = scene.GetActiveModel().GetScaleFactor();
+		rotation_angle_local = scene.GetActiveModel().GetRotateAngle();
+		transformation_local = scene.GetActiveModel().GetPosition();
+
+		scale_factor_global = scene.GetScaleFactor();
+		rotation_angle_global = scene.GetRotateAngle();
+		transformation_global = scene.GetPosition();
+	}
+}
+
+void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 	if (show_local_rotation_window)
 	{
-		//ImGui::SetNextWindowPos(ImVec2(150, 300));
-		//ImGui::SetNextWindowSize(ImVec2(250, 200));
 		ImGui::Begin("Local Rotation Window", &show_local_rotation_window);
 		ImGui::Text("Rotation left or right");
 
-		if (ImGui::Button("Rotate Left")) 
+		if (ImGui::Button("Rotate Left"))
 		{
 			rotation_angle_local += 0.392699082;
 			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
@@ -457,8 +439,6 @@ void ShowScaleRotateTranslationWindowsLocal(Scene &scene) {
 
 	if (show_local_scale_window)
 	{
-		//ImGui::SetNextWindowPos(ImVec2(150, 300));
-		//ImGui::SetNextWindowSize(ImVec2(250, 200));
 		ImGui::Begin("Local Scale Window", &show_local_scale_window, ImGuiWindowFlags_None);
 		ImGui::Text("Scale Model");
 
@@ -479,9 +459,9 @@ void ShowScaleRotateTranslationWindowsLocal(Scene &scene) {
 		ImGui::Begin("Local Translation Window", &show_local_translation_window);
 		ImGui::Text("Move model with arrows");
 
-		if (ImGui::Button("/\\")) 
+		if (ImGui::Button("/\\"))
 		{
-			transformation_local.y+=1;
+			transformation_local.y += 1;
 			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 		if (ImGui::Button("<")) {
@@ -554,20 +534,20 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 
 		if (ImGui::Button("/\\"))
 		{
-			transformation_global.y += 20;
+			transformation_global.y += 1;
 			scene.SetNewPosition(transformation_global);
 		}
 		if (ImGui::Button("<")) {
-			transformation_global.x -= 20;
+			transformation_global.x -= 1;
 			scene.SetNewPosition(transformation_global);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button(">")) {
-			transformation_global.x += 20;
+			transformation_global.x += 1;
 			scene.SetNewPosition(transformation_global);
 		}
 		if (ImGui::Button("\\/")) {
-			transformation_global.y -= 20;
+			transformation_global.y -= 1;
 			scene.SetNewPosition(transformation_global);
 		}
 

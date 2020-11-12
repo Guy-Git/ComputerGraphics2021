@@ -5,6 +5,7 @@
 #include "Renderer.h"
 #include "InitShader.h"
 #include <iostream>
+#include <glm/gtx/string_cast.hpp>
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
 #define Z_INDEX(width,x,y) ((x)+(y)*(width))
@@ -338,8 +339,6 @@ void Renderer::Render(const Scene& scene)
 	{
 		MeshModel currentModel = scene.GetActiveModel();
 
-		FindMaxXorYPointForScaleFactor(currentModel);
-
 		double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 		std::vector <glm::vec3> threePoints;
 		for (int i = 0; i < currentModel.GetFacesCount(); i++)
@@ -348,15 +347,16 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(), scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
+															scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
 			threePoints.clear();
 		}
 	}
-	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 500), glm::vec3(1, 0, 0)); // RED +0.5
+	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(1, 1, 1)); // X axis
 
-	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 600), glm::vec3(0, 0, 1)); // BLUE +1
+	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(1, 1, 1)); // Y axis
 
-	DrawLine(glm::ivec2(400, 400), glm::ivec2(410, 500), glm::vec3(1, 0, 1)); // MEGENTA +10
+	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(410, 500), glm::vec3(1, 0, 1)); // MEGENTA +10
 
 	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 200), glm::vec3(1, 1, 1)); // WHITE -1
 
@@ -441,15 +441,17 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, float localRotAngle, glm::vec2 localPosition, 
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, float localRotAngle, glm::vec2 localPosition,
 	float worldScale, float worldRotAngle, glm::vec2 worldPosition)
 {
-	int x0 = 400;
-	int y0 = 350;
+	int x0 = 500;
+	int y0 = 500;
 
 	glm::mat3 localScaleMat = glm::mat3(localScale, 0, 0, 0, localScale, 0, 0, 0, 1);
 	glm::mat3 localRotationMat = glm::mat3(cos(localRotAngle), sin(localRotAngle), 0, -sin(localRotAngle), cos(localRotAngle), 0, 0, 0, 1);
 	glm::mat3 localPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, localPosition.x, localPosition.y, 1);
+
+	//std::cout << glm::to_string(localRotationMat) << std::endl;
 
 	glm::mat3 worldScaleMat = glm::mat3(worldScale, 0, 0, 0, worldScale, 0, 0, 0, 1);
 	glm::mat3 worldRotationMat = glm::mat3(cos(worldRotAngle), sin(worldRotAngle), 0, -sin(worldRotAngle), cos(worldRotAngle), 0, 0, 0, 1);
@@ -459,23 +461,19 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), 1);
 	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), 1);
 
-	p1 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p1;
+	glm::mat3 transformation = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat;
+
+	p1 = transformation * p1;
+	p2 = transformation * p2;
+	p3 = transformation * p3;
+
+	/*p1 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p1;
 	p2 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p2;
-	p3 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p3;
+	p3 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p3;*/
 
-	//p1 = rotationMat * p1;
-	//p2 = rotationMat * p2;
-	//p3 = rotationMat * p3;
-
-	///*glm::vec3 p1t = glm::vec3(p1.x, p1.y , 1);
-	//glm::vec3 p2t = glm::vec3(p2.x, p2.y, 1);
-	//glm::vec3 p3t = glm::vec3(p3.x, p3.y, 1);*/
-
-	///*p1t = positionMat * p1t;
-	//p2t = positionMat * p2t;
-	//p3t = positionMat * p3t;*/
-
-	////std::cout << p1t.x << ", " << p1t.y << ", " << p1t.z << "\n";
+	/*p1 = localScaleMat * localRotationMat * localPositionMat * worldScaleMat * worldRotationMat * worldPositionMat * p1;
+	p2 = localScaleMat * localRotationMat * localPositionMat * worldScaleMat * worldRotationMat * worldPositionMat * p2;
+	p3 = localScaleMat * localRotationMat * localPositionMat * worldScaleMat * worldRotationMat * worldPositionMat * p3;*/
 
 	glm::vec2 p1t = glm::vec2(p1.x, p1.y);
 	glm::vec2 p2t = glm::vec2(p2.x, p2.y);
@@ -491,21 +489,6 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	DrawLine(p1t, p2t, glm::vec3(0, 0, 0));
 	DrawLine(p2t, p3t, glm::vec3(0, 0, 0));
 	DrawLine(p1t, p3t, glm::vec3(0, 0, 0));
-}
-
-
-void Renderer::ScaleLocal(const Scene& scene, float scaleFactor)
-{
-	const glm::mat3 scaleMat = glm::mat3(scaleFactor, 0.0, 0.0, 0.0, scaleFactor, 0.0, 0.0, 0.0, scaleFactor);
-	//std::vector<glm::vec3>& points;
-
-	for (int i = 0; i < scene.GetActiveModel().GetVerticesCount(); i++)
-	{
-		/*DrawTriangle()
-		point.x = scene.GetActiveModel().GetVertex(i).x;
-		point.y = scene.GetActiveModel().GetVertex(i).y;
-		*/
-	}
 }
 
 //void get_average_grade()
