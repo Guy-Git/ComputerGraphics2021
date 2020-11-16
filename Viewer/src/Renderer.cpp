@@ -451,8 +451,6 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	glm::mat3 localRotationMat = glm::mat3(cos(localRotAngle), sin(localRotAngle), 0, -sin(localRotAngle), cos(localRotAngle), 0, 0, 0, 1);
 	glm::mat3 localPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, localPosition.x, localPosition.y, 1);
 
-	//std::cout << glm::to_string(localRotationMat) << std::endl;
-
 	glm::mat3 worldScaleMat = glm::mat3(worldScale, 0, 0, 0, worldScale, 0, 0, 0, 1);
 	glm::mat3 worldRotationMat = glm::mat3(cos(worldRotAngle), sin(worldRotAngle), 0, -sin(worldRotAngle), cos(worldRotAngle), 0, 0, 0, 1);
 	glm::mat3 worldPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, worldPosition.x, worldPosition.y, 1);
@@ -466,14 +464,6 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	p1 = transformation * p1;
 	p2 = transformation * p2;
 	p3 = transformation * p3;
-
-	/*p1 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p1;
-	p2 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p2;
-	p3 = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat * p3;*/
-
-	/*p1 = localScaleMat * localRotationMat * localPositionMat * worldScaleMat * worldRotationMat * worldPositionMat * p1;
-	p2 = localScaleMat * localRotationMat * localPositionMat * worldScaleMat * worldRotationMat * worldPositionMat * p2;
-	p3 = localScaleMat * localRotationMat * localPositionMat * worldScaleMat * worldRotationMat * worldPositionMat * p3;*/
 
 	glm::vec2 p1t = glm::vec2(p1.x, p1.y);
 	glm::vec2 p2t = glm::vec2(p2.x, p2.y);
@@ -490,47 +480,3 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	DrawLine(p2t, p3t, glm::vec3(0, 0, 0));
 	DrawLine(p1t, p3t, glm::vec3(0, 0, 0));
 }
-
-//void get_average_grade()
-//{
-//	int length, id;
-//	printf("Enter length:\n");
-//	scanf("%d", &length); //get amount of exam booklets
-//	printf("Enter id:\n");
-//	scanf("%d", &id); //get student`s ID
-//
-//	if (length <= 19)
-//	{
-//		length++; // add 1 to the buffer size for the return value
-//		int buffer_length = length * sizeof(int); // take into account the size of int in bytes for the malloc
-//		int* buffer = (int*)malloc(buffer_length);
-//		int* grade = (int*)malloc(sizeof(int));
-//		/*malloc() –receives unsigned int with amount of bytes to be allocated, returns pointer to
-//		allocated space, or null if allocation failed*/
-//		int input = 0, course_id;
-//		unsigned int loop_stop = length;
-//		buffer[0] = 0; //reserve space for the return value
-//		for (int i = 1; i < loop_stop && (input != -1); i++)
-//		{ //Get exam booklet numbers from student
-//			printf("Enter exam booklet ID:");
-//			scanf("%d", &input);
-//			buffer[i] = input; //store booklet number in the buffer
-//		}
-//		course_id = get_course(buffer);
-//		buffer[0] = get_average(course_id); //get course average into the return slot in the buffer
-//		*grade = get_grade(id, course_id); //get student`s grade in this course
-//		if (*grade < 50)
-//		{ //if a student who failed the exam is checking his grade, make his grade 0
-//			set_grade(id, course_id, 0);
-//		}
-//		for (int i = 0; i < loop_stop; i++)
-//		{ //print the contents of the buffer
-//			if (buffer[i] >= 0 && buffer[i] <= 100)
-//			{
-//				printf("%d\n", buffer[i]);
-//				printf("Press Any Key to Continue\n");
-//				getchar();
-//			}
-//		}
-//	}
-//}

@@ -59,6 +59,7 @@ void Cleanup(GLFWwindow* window);
 void DrawImguiMenus(ImGuiIO& io, Scene& scene);
 void SwitchToDifferentModelView(int modelID);
 void ResetParametersValue(Scene& scene);
+void SetParametersValueChangingModels(Scene& scene);
 void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
 
@@ -275,6 +276,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	ImGui::SetNextWindowSize(ImVec2(310, 150));
 
 	ImGui::Begin("Model selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
+
 	ImGui::RadioButton("Model #1", &model_selection, 0);
 	if (scene.GetModelCount() > 0)
 	{
@@ -294,6 +296,10 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	if (scene.GetModelCount() > 3)
 	{
 		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(3).GetModelName().c_str());
+	}
+	if (ImGui::Button("Reset Current Model"))
+	{
+		ResetParametersValue(scene);
 	}
 
 	ImGui::End();
@@ -352,7 +358,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		}
 	}
 
-	ResetParametersValue(scene);
+	SetParametersValueChangingModels(scene);
 
 	if (show_warning_window)
 	{
@@ -398,7 +404,7 @@ void SwitchToDifferentModelView(int modelID) {
 	}
 }
 
-void ResetParametersValue(Scene& scene)
+void SetParametersValueChangingModels(Scene& scene)
 {
 	if (scene.GetModelCount() > 0)
 	{
@@ -409,6 +415,29 @@ void ResetParametersValue(Scene& scene)
 		scale_factor_global = scene.GetScaleFactor();
 		rotation_angle_global = scene.GetRotateAngle();
 		transformation_global = scene.GetPosition();
+	}
+}
+
+void ResetParametersValue(Scene& scene)
+{
+	if (scene.GetModelCount() > 0)
+	{
+		scene.GetActiveModel().SetScaleFactor(1);
+		scene.GetActiveModel().SetRotateAngle(0);
+		scene.GetActiveModel().SetNewPosition(glm::vec2(0, 0));
+
+		scale_factor_local = 1;
+		rotation_angle_local = 0;
+		transformation_local = glm::vec2(0);
+
+		scale_factor_global = 1;
+		rotation_angle_global = 0;
+		transformation_global = glm::vec2(0);
+
+
+		scene.SetScaleFactor(1);
+		scene.SetRotateAngle(0);
+		scene.SetNewPosition(glm::vec2(0, 0));
 	}
 }
 
@@ -534,20 +563,20 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 
 		if (ImGui::Button("/\\"))
 		{
-			transformation_global.y += 1;
+			transformation_global.y += 5;
 			scene.SetNewPosition(transformation_global);
 		}
 		if (ImGui::Button("<")) {
-			transformation_global.x -= 1;
+			transformation_global.x -= 5;
 			scene.SetNewPosition(transformation_global);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button(">")) {
-			transformation_global.x += 1;
+			transformation_global.x += 5;
 			scene.SetNewPosition(transformation_global);
 		}
 		if (ImGui::Button("\\/")) {
-			transformation_global.y -= 1;
+			transformation_global.y -= 5;
 			scene.SetNewPosition(transformation_global);
 		}
 
