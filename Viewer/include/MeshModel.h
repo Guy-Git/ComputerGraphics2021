@@ -20,6 +20,17 @@ public:
 	void MeshModel::SetNewPosition(glm::vec3 newPos);
 	glm::vec3 MeshModel::GetPosition();
 
+	void SetFaceNormalShown(bool isShown);
+	bool GetFaceNormalShown();
+	void SetVertexNormalShown(bool isShown);
+	bool GetVertexNormalShown();
+
+	const glm::vec3& MeshModel::GetVertexNormal(int index) const;
+
+	void SetBoundingBoxShown(bool isShown);
+
+	bool GetBoundingBoxShown();
+
 private:
 	std::vector<Face> faces_;
 	std::vector<glm::vec3> vertices_;
@@ -29,4 +40,8 @@ private:
 	float scaleFactor_;
 	glm::vec3 rotateAngle_;
 	glm::vec3 position_;
+
+	bool isFaceNormalShown_;
+	bool isVertexNormalShown_;
+	bool isBoundingBoxShown_;
 };

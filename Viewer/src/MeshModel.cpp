@@ -7,7 +7,10 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	model_name_(model_name),
 	scaleFactor_(1),
 	rotateAngle_(0),
-	position_(0)
+	position_(0),
+	isFaceNormalShown_(false),
+	isVertexNormalShown_(false),
+	isBoundingBoxShown_(false)
 {
 
 }
@@ -72,3 +75,37 @@ glm::vec3 MeshModel::GetPosition()
 	return position_;
 }
 
+void MeshModel::SetFaceNormalShown(bool isShown)
+{
+	isFaceNormalShown_ = isShown;
+}
+
+bool MeshModel::GetFaceNormalShown()
+{
+	return isFaceNormalShown_;
+}
+
+void MeshModel::SetVertexNormalShown(bool isShown)
+{
+	isVertexNormalShown_ = isShown;
+}
+
+bool MeshModel::GetVertexNormalShown()
+{
+	return isVertexNormalShown_;
+}
+
+const glm::vec3& MeshModel::GetVertexNormal(int index) const
+{
+	return normals_.at(index);
+}
+
+void MeshModel::SetBoundingBoxShown(bool isShown)
+{
+	isBoundingBoxShown_ = isShown;
+}
+
+bool MeshModel::GetBoundingBoxShown()
+{
+	return isBoundingBoxShown_;
+}

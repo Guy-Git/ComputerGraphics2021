@@ -10,6 +10,14 @@
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
 #define Z_INDEX(width,x,y) ((x)+(y)*(width))
 
+double maxPointXValue = -INFINITY;
+double maxPointYValue = -INFINITY;
+double maxPointZValue = -INFINITY;
+
+double minPointXValue = INFINITY;
+double minPointYValue = INFINITY;
+double minPointZValue = INFINITY;
+
 Renderer::Renderer(int viewport_width, int viewport_height) :
 	viewport_width_(viewport_width),
 	viewport_height_(viewport_height)
@@ -341,73 +349,42 @@ void Renderer::Render(const Scene& scene)
 
 		double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 		std::vector <glm::vec3> threePoints;
+
 		for (int i = 0; i < currentModel.GetFacesCount(); i++)
 		{
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
+			DrawTriangle(threePoints, currentModel,
+				scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
 				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
 
-			DrawVertexNormals(threePoints);
 			threePoints.clear();
+		}
+
+		if (currentModel.GetBoundingBoxShown())
+		{
+			DrawBoundingBox(currentModel);
 		}
 	}
 	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(1, 1, 1)); // X axis
 
 	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(1, 1, 1)); // Y axis
 
-	/*DrawLine(glm::ivec2(400, 400), glm::ivec2(410, 500), glm::vec3(1, 0, 1)); // MEGENTA +10
+	maxPointXValue = -INFINITY;
+	maxPointYValue = -INFINITY;
+	maxPointZValue = -INFINITY;
 
-	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 200), glm::vec3(1, 1, 1)); // WHITE -1
-
-	DrawLine(glm::ivec2(400, 400), glm::ivec2(600, 300), glm::vec3(0, 0, 0)); // BLACK -0.5
-
-	DrawLine(glm::ivec2(500, 200), glm::ivec2(400, 400), glm::vec3(0, 1, 1)); // CYAN -2
-	*/
-
-	/*for (int i = 0; i < 200; i++)
-	{
-		DrawLine(glm::ivec2(0, 0), glm::ivec2(100 + r + 100 * (sin((2 * PI * i) / a)), 100 + r - 100 * (cos((2 * PI * i) / a))), glm::vec3(1, 1, 0));
-	}
-
-	for (int i = 0; i < 60; i++)
-	{
-		if (i < 5) // horns
-		{
-			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
-			DrawLine(glm::ivec2(493, 520 - i), glm::ivec2(498, 520 - i), glm::vec3(0, 0, 0));
-			DrawLine(glm::ivec2(502, 520 - i), glm::ivec2(507, 520 - i), glm::vec3(0, 0, 0));
-			DrawLine(glm::ivec2(520, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
-		}
-		else if (i >= 5 && i < 15) { // head
-			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(480, 520 - i), glm::vec3(0, 0, 0));
-			DrawLine(glm::ivec2(492, 520 - i), glm::ivec2(508, 520 - i), glm::vec3(0, 0, 0));
-			DrawLine(glm::ivec2(520, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
-		}
-		else { // body
-			DrawLine(glm::ivec2(440 + i, 520 - i), glm::ivec2(560 - i, 520 - i), glm::vec3(0, 0, 0));
-		}
-
-		if (i > 30 && i < 42)
-		{
-			DrawLine(glm::ivec2(470, 520 - i), glm::ivec2(530, 520 - i), glm::vec3(0, 0, 0));
-		}
-	}
-	// sanity check
-	for (int i = 0; i < 200; i++)
-	{
-		DrawLine(glm::ivec2(x0, y0), glm::ivec2(x0 + r * (sin((2 * PI * i) / a)), y0 + r * (cos((2 * PI * i) / a))), glm::vec3(0, 1, 1));
-	}
-	*/
+	minPointXValue = INFINITY;
+	minPointYValue = INFINITY;
+	minPointZValue = INFINITY;
 }
 
 double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
 {
 	// find the max vertex point value to set the scale factor
-	double maxPointXValue = -INFINITY;
-	double maxPointYValue = -INFINITY;
+
 	for (int i = 0; i < currentModel.GetVerticesCount(); i++)
 	{
 		if (currentModel.GetVertex(i).x > maxPointXValue)
@@ -418,9 +395,36 @@ double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
 		{
 			maxPointYValue = currentModel.GetVertex(i).y;
 		}
+		if (currentModel.GetVertex(i).z > maxPointZValue)
+		{
+			maxPointZValue = currentModel.GetVertex(i).z;
+		}
+
+		if (currentModel.GetVertex(i).x < minPointXValue)
+		{
+			minPointXValue = currentModel.GetVertex(i).x;
+		}
+		if (currentModel.GetVertex(i).y < minPointYValue)
+		{
+			minPointYValue = currentModel.GetVertex(i).y;
+		}
+		if (currentModel.GetVertex(i).z < minPointZValue)
+		{
+			minPointZValue = currentModel.GetVertex(i).z;
+		}
 	}
 
-	return maxPointXValue > maxPointYValue ? maxPointXValue : maxPointYValue;
+	float returnValue = maxPointXValue > maxPointYValue ? maxPointXValue : maxPointYValue;
+
+	maxPointXValue = maxPointXValue * abs(400 / returnValue) + 500;
+	maxPointYValue = maxPointYValue * abs(400 / returnValue) + 500;
+	maxPointZValue = maxPointZValue * abs(400 / returnValue) + 500;
+
+	minPointXValue = minPointXValue * abs(400 / returnValue) + 500;
+	minPointYValue = minPointYValue * abs(400 / returnValue) + 500;
+	minPointZValue = minPointZValue * abs(400 / returnValue) + 500;
+
+	return returnValue;
 }
 
 int Renderer::GetViewportWidth() const
@@ -443,11 +447,13 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel,
+	float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 	float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition)
 {
 	int x0 = 500;
 	int y0 = 500;
+	int z0 = 500;
 
 	glm::mat4 localScaleMat = glm::mat4(localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, 1);
 	glm::mat4 localRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(localRotAngle.x), sin(localRotAngle.x), 0, 0, -sin(localRotAngle.x), cos(localRotAngle.x), 0, 0, 0, 0, 1);
@@ -472,32 +478,76 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	p2 = transformation * p2;
 	p3 = transformation * p3;
 
-	glm::vec2 p1t = glm::vec2(p1.x, p1.y);
-	glm::vec2 p2t = glm::vec2(p2.x, p2.y);
-	glm::vec2 p3t = glm::vec2(p3.x, p3.y);
+	glm::vec3 p1t = glm::vec3(p1.x, p1.y, p1.z);
+	glm::vec3 p2t = glm::vec3(p2.x, p2.y, p2.z);
+	glm::vec3 p3t = glm::vec3(p3.x, p3.y, p3.z);
 
 	p1t.x += x0;
 	p1t.y += y0;
+	p1t.z += z0;
 	p2t.x += x0;
 	p2t.y += y0;
+	p2t.z += z0;
 	p3t.x += x0;
 	p3t.y += y0;
+	p3t.z += z0;
 
 	DrawLine(p1t, p2t, glm::vec3(0, 0, 0));
 	DrawLine(p2t, p3t, glm::vec3(0, 0, 0));
 	DrawLine(p1t, p3t, glm::vec3(0, 0, 0));
+
+	std::vector <glm::vec3> threePoints;
+	threePoints.push_back(glm::vec3(p1t.x, p1t.y, p1t.z));
+	threePoints.push_back(glm::vec3(p2t.x, p2t.y, p2t.z));
+	threePoints.push_back(glm::vec3(p3t.x, p3t.y, p3t.z));
+
+	if (currentModel.GetVertexNormalShown())
+	{
+		DrawVertexNormals(threePoints);
+	}
+	if (currentModel.GetFaceNormalShown())
+	{
+		DrawFaceNormals(threePoints);
+	}
 }
 
 void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions)
 {
-	glm::vec3 p1 = glm::vec3((vertexPositions.at(0).x), (vertexPositions.at(0).y), 0);
-	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), 0);
-	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), 0);
+	DrawLine(vertexPositions.at(0), CalcNormal(vertexPositions), glm::vec3(0, 1, 0));
+}
 
-	glm::vec3 directionOfNorm = glm::cross((p2 - p1), (p3 - p1));
-	glm::vec3 norm = directionOfNorm / glm::length(directionOfNorm);
+void Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
+{
+	glm::vec3 triangleCentroid = glm::vec3((vertexPositions.at(0).x + vertexPositions.at(1).x + vertexPositions.at(2).x) / 3,
+		(vertexPositions.at(0).y + vertexPositions.at(1).y + vertexPositions.at(2).y) / 3,
+		(vertexPositions.at(0).z + vertexPositions.at(1).z + vertexPositions.at(2).z) / 3);
 
-	glm::vec2 norm2D = glm::vec2(norm.x, norm.y);
-	glm::vec2 p12D = glm::vec2(p1.x, p1.y);
+	DrawLine(triangleCentroid, CalcNormal(vertexPositions), glm::vec3(1, 1, 0));
+}
 
+glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
+{
+	glm::vec3 p1 = glm::vec3((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z));
+	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z));
+	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z));
+
+	glm::vec3 normalVector = glm::cross(p2 - p1, p3 - p1);
+	//normalVector = normalVector / glm::length(normalVector);
+
+	return normalVector;
+}
+
+void Renderer::DrawBoundingBox(MeshModel& model)
+{
+	//glm::vec3 maxX = glm::vec3(maxPointXValue, 0, 0);
+	//glm::vec3 maxY = glm::vec3(0, maxPointYValue, 0);
+	//glm::vec3 maxZ = glm::vec3(0, 0, maxPointYValue);
+
+	//glm::vec3 minX = glm::vec3(minPointXValue, 0, 0);
+	//glm::vec3 minY = glm::vec3(0, minPointYValue, 0);
+	//glm::vec3 minZ = glm::vec3(0, 0, minPointYValue);
+
+	//DrawLine(maxX,minX , glm::vec3(1, 0, 0));
+	//DrawLine(maxY,minY , glm::vec3(1, 0, 0));
+	//DrawLine(maxZ,minZ , glm::vec3(1, 0, 0));
 }

@@ -39,6 +39,10 @@ bool show_model_2_window = false;
 bool show_model_3_window = false;
 bool show_model_4_window = false;
 
+bool vertex_normal = false;
+bool face_normal = false;
+bool show_bounding_box = false;
+
 bool show_warning_window = false;
 bool show_model_selection_window = false;
 
@@ -62,6 +66,7 @@ void ResetParametersValue(Scene& scene);
 void SetParametersValueChangingModels(Scene& scene);
 void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
+void SetNormalsAndBoundingBox(const Scene& scene);
 
 /**
  * Function implementation
@@ -272,8 +277,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	// model selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, 850));
-	ImGui::SetNextWindowSize(ImVec2(310, 150));
+	ImGui::SetNextWindowPos(ImVec2(0, 820));
+	ImGui::SetNextWindowSize(ImVec2(320, 180));
 
 	ImGui::Begin("Model selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
@@ -301,6 +306,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	{
 		ResetParametersValue(scene);
 	}
+	ImGui::Checkbox("Show Vertex Normals", &vertex_normal);
+	ImGui::SameLine(); ImGui::Checkbox("Show Face Normals", &face_normal);
+	ImGui::Checkbox("Show Bounding Box", &show_bounding_box);
 
 	ImGui::End();
 
@@ -309,6 +317,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	ShowScaleRotateTranslationWindowsGlobal(scene); // all global windows declarations
 
 	SwitchToDifferentModelView(model_selection);
+
+	SetNormalsAndBoundingBox(scene);
 
 	if (show_model_1_window)
 	{
@@ -359,6 +369,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	SetParametersValueChangingModels(scene);
+
+
 
 	if (show_warning_window)
 	{
@@ -418,10 +430,26 @@ void SetParametersValueChangingModels(Scene& scene)
 	}
 }
 
+void SetNormalsAndBoundingBox(const Scene& scene)
+{
+	if (scene.GetModelCount() > 0)
+	{
+		scene.GetActiveModel().SetVertexNormalShown(vertex_normal);
+
+		scene.GetActiveModel().SetFaceNormalShown(face_normal);
+
+		scene.GetActiveModel().SetBoundingBoxShown(show_bounding_box);
+	}
+}
+
 void ResetParametersValue(Scene& scene)
 {
 	if (scene.GetModelCount() > 0)
 	{
+		vertex_normal = false;
+		face_normal = false;
+		show_bounding_box = false;
+
 		scene.GetActiveModel().SetScaleFactor(1);
 		scene.GetActiveModel().SetRotateAngle(glm::vec3(0, 0, 0));
 		scene.GetActiveModel().SetNewPosition(glm::vec3(0, 0, 0));
@@ -532,8 +560,6 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 			show_local_translation_window = false;
 		}
 		ImGui::End();
-
-
 	}
 }
 

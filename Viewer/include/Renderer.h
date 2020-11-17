@@ -20,9 +20,13 @@ public:
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
-	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel,
+		float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
-	void DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions);
+	void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions);
+	void DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions);
+	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);
+	void DrawBoundingBox(MeshModel& model);
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
