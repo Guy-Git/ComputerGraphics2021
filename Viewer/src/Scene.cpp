@@ -82,22 +82,22 @@ float Scene::GetScaleFactor() const
 	return Scene::scaleFactor_;
 }
 
-void Scene::SetRotateAngle(float rotateAngle)
+void Scene::SetRotateAngle(glm::vec3 rotateAngle)
 {
 	Scene::rotateAngle_ = rotateAngle;
 }
 
-float Scene::GetRotateAngle() const
+glm::vec3 Scene::GetRotateAngle() const
 {
 	return Scene::rotateAngle_;
 }
 
-void Scene::SetNewPosition(glm::vec2 newPos)
+void Scene::SetNewPosition(glm::vec3 newPos)
 {
 	position_ = newPos;
 }
 
-glm::vec2 Scene::GetPosition() const
+glm::vec3 Scene::GetPosition() const
 {
 	return position_;
 }

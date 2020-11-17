@@ -15,10 +15,10 @@ public:
 	const glm::vec3& MeshModel::GetVertex(int index) const;
 	float MeshModel::GetScaleFactor();
 	void MeshModel::SetScaleFactor(float scaleFactor);
-	void MeshModel::SetRotateAngle(float rotateAngle);
-	float MeshModel::GetRotateAngle();
-	void MeshModel::SetNewPosition(glm::vec2 newPos);
-	glm::vec2 MeshModel::GetPosition();
+	void MeshModel::SetRotateAngle(glm::vec3 rotateAngle);
+	glm::vec3 MeshModel::GetRotateAngle();
+	void MeshModel::SetNewPosition(glm::vec3 newPos);
+	glm::vec3 MeshModel::GetPosition();
 
 private:
 	std::vector<Face> faces_;
@@ -27,6 +27,6 @@ private:
 	std::string model_name_;
 
 	float scaleFactor_;
-	float rotateAngle_; 
-	glm::vec2 position_;
+	glm::vec3 rotateAngle_;
+	glm::vec3 position_;
 };

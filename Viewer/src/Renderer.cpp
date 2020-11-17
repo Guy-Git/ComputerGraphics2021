@@ -348,7 +348,9 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
 			DrawTriangle(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
-															scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+
+			DrawVertexNormals(threePoints);
 			threePoints.clear();
 		}
 	}
@@ -441,25 +443,30 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, float localRotAngle, glm::vec2 localPosition,
-	float worldScale, float worldRotAngle, glm::vec2 worldPosition)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+	float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition)
 {
 	int x0 = 500;
 	int y0 = 500;
 
-	glm::mat3 localScaleMat = glm::mat3(localScale, 0, 0, 0, localScale, 0, 0, 0, 1);
-	glm::mat3 localRotationMat = glm::mat3(cos(localRotAngle), sin(localRotAngle), 0, -sin(localRotAngle), cos(localRotAngle), 0, 0, 0, 1);
-	glm::mat3 localPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, localPosition.x, localPosition.y, 1);
+	glm::mat4 localScaleMat = glm::mat4(localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, 1);
+	glm::mat4 localRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(localRotAngle.x), sin(localRotAngle.x), 0, 0, -sin(localRotAngle.x), cos(localRotAngle.x), 0, 0, 0, 0, 1);
+	glm::mat4 localRotationMatY = glm::mat4(cos(localRotAngle.y), 0, sin(localRotAngle.y), 0, 0, 1, 0, 0, -sin(localRotAngle.y), 0, cos(localRotAngle.y), 0, 0, 0, 0, 1);
+	glm::mat4 localRotationMatZ = glm::mat4(cos(localRotAngle.z), sin(localRotAngle.z), 0, 0, -sin(localRotAngle.z), cos(localRotAngle.z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+	glm::mat4 localPositionMat = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, localPosition.x, localPosition.y, localPosition.z, 1);
 
-	glm::mat3 worldScaleMat = glm::mat3(worldScale, 0, 0, 0, worldScale, 0, 0, 0, 1);
-	glm::mat3 worldRotationMat = glm::mat3(cos(worldRotAngle), sin(worldRotAngle), 0, -sin(worldRotAngle), cos(worldRotAngle), 0, 0, 0, 1);
-	glm::mat3 worldPositionMat = glm::mat3(1, 0, 0, 0, 1, 0, worldPosition.x, worldPosition.y, 1);
+	glm::mat4 worldScaleMat = glm::mat4(worldScale, 0, 0, 0, 0, worldScale, 0, 0, 0, 0, worldScale, 0, 0, 0, 0, 1);
+	glm::mat4 worldRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(worldRotAngle.x), sin(worldRotAngle.x), 0, 0, -sin(worldRotAngle.x), cos(worldRotAngle.x), 0, 0, 0, 0, 1);
+	glm::mat4 worldRotationMatY = glm::mat4(cos(worldRotAngle.y), 0, sin(worldRotAngle.y), 0, 0, 1, 0, 0, -sin(worldRotAngle.y), 0, cos(worldRotAngle.y), 0, 0, 0, 0, 1);
+	glm::mat4 worldRotationMatZ = glm::mat4(cos(worldRotAngle.z), sin(worldRotAngle.z), 0, 0, -sin(worldRotAngle.z), cos(worldRotAngle.z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+	glm::mat4 worldPositionMat = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, worldPosition.x, worldPosition.y, worldPosition.z, 1);
 
-	glm::vec3 p1 = glm::vec3((vertexPositions.at(0).x), (vertexPositions.at(0).y), 1);
-	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), 1);
-	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), 1);
+	glm::vec4 p1 = glm::vec4((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z), 1);
+	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), 1);
+	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), 1);
 
-	glm::mat3 transformation = worldScaleMat * worldRotationMat * worldPositionMat * localScaleMat * localRotationMat * localPositionMat;
+	glm::mat4 transformation = worldScaleMat * worldRotationMatX * worldRotationMatY * worldRotationMatZ * worldPositionMat *
+		localScaleMat * localRotationMatX * localRotationMatY * localRotationMatZ * localPositionMat;
 
 	p1 = transformation * p1;
 	p2 = transformation * p2;
@@ -479,4 +486,18 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, float
 	DrawLine(p1t, p2t, glm::vec3(0, 0, 0));
 	DrawLine(p2t, p3t, glm::vec3(0, 0, 0));
 	DrawLine(p1t, p3t, glm::vec3(0, 0, 0));
+}
+
+void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions)
+{
+	glm::vec3 p1 = glm::vec3((vertexPositions.at(0).x), (vertexPositions.at(0).y), 0);
+	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), 0);
+	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), 0);
+
+	glm::vec3 directionOfNorm = glm::cross((p2 - p1), (p3 - p1));
+	glm::vec3 norm = directionOfNorm / glm::length(directionOfNorm);
+
+	glm::vec2 norm2D = glm::vec2(norm.x, norm.y);
+	glm::vec2 p12D = glm::vec2(p1.x, p1.y);
+
 }

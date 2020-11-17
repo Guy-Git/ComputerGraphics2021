@@ -24,15 +24,15 @@ bool show_local_rotation_window = false;
 bool show_local_scale_window = false;
 bool show_local_translation_window = false;
 static float scale_factor_local = 1.0;
-static float rotation_angle_local = 0;
-static glm::vec2 transformation_local = glm::vec2(0);
+static glm::vec3 rotation_angle_local = glm::vec3(0);
+static glm::vec3 transformation_local = glm::vec3(0);
 
 bool show_global_rotation_window = false;
 bool show_global_scale_window = false;
 bool show_global_translation_window = false;
 static float scale_factor_global = 1.0;
-static float rotation_angle_global = 0;
-static glm::vec2 transformation_global = glm::vec2(0);
+static glm::vec3 rotation_angle_global = glm::vec3(0);
+static glm::vec3 transformation_global = glm::vec3(0);
 
 bool show_model_1_window = false;
 bool show_model_2_window = false;
@@ -423,21 +423,21 @@ void ResetParametersValue(Scene& scene)
 	if (scene.GetModelCount() > 0)
 	{
 		scene.GetActiveModel().SetScaleFactor(1);
-		scene.GetActiveModel().SetRotateAngle(0);
-		scene.GetActiveModel().SetNewPosition(glm::vec2(0, 0));
+		scene.GetActiveModel().SetRotateAngle(glm::vec3(0, 0, 0));
+		scene.GetActiveModel().SetNewPosition(glm::vec3(0, 0, 0));
 
 		scale_factor_local = 1;
-		rotation_angle_local = 0;
-		transformation_local = glm::vec2(0);
+		rotation_angle_local = glm::vec3(0);;
+		transformation_local = glm::vec3(0);
 
 		scale_factor_global = 1;
-		rotation_angle_global = 0;
-		transformation_global = glm::vec2(0);
+		rotation_angle_global = glm::vec3(0);;
+		transformation_global = glm::vec3(0);
 
 
 		scene.SetScaleFactor(1);
-		scene.SetRotateAngle(0);
-		scene.SetNewPosition(glm::vec2(0, 0));
+		scene.SetRotateAngle(glm::vec3(0, 0, 0));
+		scene.SetNewPosition(glm::vec3(0, 0, 0));
 	}
 }
 
@@ -445,21 +445,43 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 	if (show_local_rotation_window)
 	{
 		ImGui::Begin("Local Rotation Window", &show_local_rotation_window);
-		ImGui::Text("Rotation left or right");
+		ImGui::Text("Choose axis and start rotate");
 
-		if (ImGui::Button("Rotate Left"))
+		if (ImGui::Button("Rotate Left X"))
 		{
-			rotation_angle_local += 0.392699082;
+			rotation_angle_local.x += 0.392699082;
 			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		ImGui::SameLine();
-		if (ImGui::Button("Rotate Right")) {
-			rotation_angle_local -= 0.392699082;
+		if (ImGui::Button("Rotate Right X")) {
+			rotation_angle_local.x -= 0.392699082;
+			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+		}
+
+		if (ImGui::Button("Rotate Left Y"))
+		{
+			rotation_angle_local.y += 0.392699082;
 			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Y")) {
+			rotation_angle_local.y -= 0.392699082;
+			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+		}
+		if (ImGui::Button("Rotate Left Z"))
+		{
+			rotation_angle_local.z += 0.392699082;
+			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Z")) {
+			rotation_angle_local.z -= 0.392699082;
+			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+		}
+
 		if (ImGui::Button("Close Me")) {
 			show_local_rotation_window = false;
 		}
@@ -488,24 +510,24 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::Begin("Local Translation Window", &show_local_translation_window);
 		ImGui::Text("Move model with arrows");
 
-		if (ImGui::Button("/\\"))
+		ImGui::SliderFloat("Move X", &transformation_local.x, -50.0f, 50.0f);
+		if (transformation_local.x != 0)
 		{
-			transformation_local.y += 1;
 			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
-		if (ImGui::Button("<")) {
-			transformation_local.x -= 1;
+
+		ImGui::SliderFloat("Move Y", &transformation_local.y, -50.0f, 50.0f);
+		if (transformation_local.y != 0)
+		{
 			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
-		ImGui::SameLine();
-		if (ImGui::Button(">")) {
-			transformation_local.x += 1;
+
+		ImGui::SliderFloat("Move Z", &transformation_local.z, -50.0f, 50.0f);
+		if (transformation_local.z != 0)
+		{
 			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
-		if (ImGui::Button("\\/")) {
-			transformation_local.y -= 1;
-			scene.GetActiveModel().SetNewPosition(transformation_local);
-		}
+
 		if (ImGui::Button("Close Me")) {
 			show_local_translation_window = false;
 		}
@@ -521,18 +543,39 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 		ImGui::Begin("Global Rotation Window", &show_global_rotation_window);
 		ImGui::Text("Rotation left or right");
 
-		if (ImGui::Button("Rotate Left"))
+		if (ImGui::Button("Rotate Left X"))
 		{
-			rotation_angle_global += 0.392699082;
+			rotation_angle_global.x += 0.392699082;
 			scene.SetRotateAngle(rotation_angle_global);
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Rotate Right"))
+		if (ImGui::Button("Rotate Right X"))
 		{
-			rotation_angle_global -= 0.392699082;
+			rotation_angle_global.x -= 0.392699082;
+			scene.SetRotateAngle(rotation_angle_global);
+		}
+		if (ImGui::Button("Rotate Left Y"))
+		{
+			rotation_angle_global.y += 0.392699082;
 			scene.SetRotateAngle(rotation_angle_global);
 		}
 		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Y"))
+		{
+			rotation_angle_global.y -= 0.392699082;
+			scene.SetRotateAngle(rotation_angle_global);
+		}
+		if (ImGui::Button("Rotate Left Z"))
+		{
+			rotation_angle_global.z += 0.392699082;
+			scene.SetRotateAngle(rotation_angle_global);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Z"))
+		{
+			rotation_angle_global.z -= 0.392699082;
+			scene.SetRotateAngle(rotation_angle_global);
+		}
 		if (ImGui::Button("Close Me")) {
 			show_global_rotation_window = false;
 		}
@@ -561,23 +604,22 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 		ImGui::Begin("Global Translation Window", &show_global_translation_window);
 		ImGui::Text("Move model with arrows");
 
-		if (ImGui::Button("/\\"))
+		ImGui::SliderFloat("Move X", &transformation_global.x, -50.0f, 50.0f);
+		if (transformation_global.x != 0)
 		{
-			transformation_global.y += 5;
-			scene.SetNewPosition(transformation_global);
+			scene.GetActiveModel().SetNewPosition(transformation_global);
 		}
-		if (ImGui::Button("<")) {
-			transformation_global.x -= 5;
-			scene.SetNewPosition(transformation_global);
+
+		ImGui::SliderFloat("Move Y", &transformation_global.y, -50.0f, 50.0f);
+		if (transformation_global.y != 0)
+		{
+			scene.GetActiveModel().SetNewPosition(transformation_global);
 		}
-		ImGui::SameLine();
-		if (ImGui::Button(">")) {
-			transformation_global.x += 5;
-			scene.SetNewPosition(transformation_global);
-		}
-		if (ImGui::Button("\\/")) {
-			transformation_global.y -= 5;
-			scene.SetNewPosition(transformation_global);
+
+		ImGui::SliderFloat("Move Z", &transformation_global.z, -50.0f, 50.0f);
+		if (transformation_global.z != 0)
+		{
+			scene.GetActiveModel().SetNewPosition(transformation_global);
 		}
 
 		if (ImGui::Button("Close Me")) {

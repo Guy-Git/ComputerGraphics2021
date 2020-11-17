@@ -52,22 +52,22 @@ float MeshModel::GetScaleFactor()
 	return MeshModel::scaleFactor_;
 }
 
-void MeshModel::SetRotateAngle(float rotateAngle)
+void MeshModel::SetRotateAngle(glm::vec3 rotateAngle)
 {
 	MeshModel::rotateAngle_ = rotateAngle;
 }
 
-float MeshModel::GetRotateAngle()
+glm::vec3 MeshModel::GetRotateAngle()
 {
 	return MeshModel::rotateAngle_;
 }
 
-void MeshModel::SetNewPosition(glm::vec2 newPos)
+void MeshModel::SetNewPosition(glm::vec3 newPos)
 {
 	position_ = newPos;
 }
 
-glm::vec2 MeshModel::GetPosition()
+glm::vec3 MeshModel::GetPosition()
 {
 	return position_;
 }

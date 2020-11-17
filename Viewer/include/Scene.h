@@ -28,10 +28,10 @@ public:
 
 	float Scene::GetScaleFactor() const;
 	void SetScaleFactor(float scaleFactor);
-	void SetRotateAngle(float rotateAngle);
-	float GetRotateAngle() const;
-	void SetNewPosition(glm::vec2 newPos);
-	glm::vec2 GetPosition() const;
+	void SetRotateAngle(glm::vec3 rotateAngle);
+	glm::vec3 GetRotateAngle() const;
+	void SetNewPosition(glm::vec3 newPos);
+	glm::vec3 GetPosition() const;
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
@@ -41,6 +41,6 @@ private:
 	int active_model_index_;
 
 	float scaleFactor_;
-	float rotateAngle_;
-	glm::vec2 position_;
+	glm::vec3 rotateAngle_;
+	glm::vec3 position_;
 };
