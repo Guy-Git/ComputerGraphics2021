@@ -49,7 +49,7 @@ bool show_model_selection_window = false;
 static int model_selection = 0;
 static int last_model_selection = 0;
 
-glm::vec4 clear_color = glm::vec4(0.8f, 0.8f, 0.8f, 1.00f);
+glm::vec4 clear_color = glm::vec4(0.26f, 0.26f, 0.26f, 1.00f);
 
 /**
  * Function declarations

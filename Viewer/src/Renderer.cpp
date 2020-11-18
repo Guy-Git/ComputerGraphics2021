@@ -339,9 +339,9 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 
 void Renderer::Render(const Scene& scene)
 {
-	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(1, 1, 1)); // X axis
+	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(0, 0, 0)); // X axis
 
-	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(1, 1, 1)); // Y axis
+	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(0, 0, 0)); // Y axis
 
 	if (scene.GetModelCount() > 0)
 	{
@@ -469,9 +469,9 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 
 void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions)
 {
-	DrawLine(vertexPositions.at(0), vertexPositions.at(1), glm::vec3(0, 0, 0));
-	DrawLine(vertexPositions.at(1), vertexPositions.at(2), glm::vec3(0, 0, 0));
-	DrawLine(vertexPositions.at(0), vertexPositions.at(2), glm::vec3(0, 0, 0));
+	DrawLine(vertexPositions.at(0), vertexPositions.at(1), glm::vec3(1, 1, 1));
+	DrawLine(vertexPositions.at(1), vertexPositions.at(2), glm::vec3(1, 1, 1));
+	DrawLine(vertexPositions.at(0), vertexPositions.at(2), glm::vec3(1, 1, 1));
 }
 
 glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
@@ -528,25 +528,38 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 
 void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions)
 {
+	double scaleFactor = 0.1;
+
 	glm::vec3 normalVector = CalcNormal(vertexPositions);
 
 	glm::vec3 normalEndPoint = glm::vec3(normalVector.x + vertexPositions.at(0).x,
 		normalVector.y + vertexPositions.at(0).y,
 		normalVector.z + vertexPositions.at(0).z);
 
-	DrawLine(vertexPositions.at(0), normalEndPoint, glm::vec3(1, 1, 0));
+	glm::vec3 scaleEndPoint = glm::vec3(vertexPositions.at(0).x + scaleFactor * (normalEndPoint.x - vertexPositions.at(0).x),
+		vertexPositions.at(0).y + scaleFactor * (normalEndPoint.y - vertexPositions.at(0).y),
+		vertexPositions.at(0).z + scaleFactor * (normalEndPoint.z - vertexPositions.at(0).z));
+
+	DrawLine(vertexPositions.at(0), scaleEndPoint, glm::vec3(1, 1, 0));
 }
 
 void Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
 {
+	double scaleFactor = 0.1;
+
 	glm::vec3 triangleCentroid = glm::vec3((vertexPositions.at(0).x + vertexPositions.at(1).x + vertexPositions.at(2).x) / 3,
 		(vertexPositions.at(0).y + vertexPositions.at(1).y + vertexPositions.at(2).y) / 3,
 		(vertexPositions.at(0).z + vertexPositions.at(1).z + vertexPositions.at(2).z) / 3);
 
 	glm::vec3 normalVector = CalcNormal(vertexPositions);
+
 	glm::vec3 normalEndPoint = glm::vec3(normalVector.x + triangleCentroid.x, normalVector.y + triangleCentroid.y, normalVector.z + triangleCentroid.z);
 
-	DrawLine(triangleCentroid, normalEndPoint, glm::vec3(0, 0, 1));
+	glm::vec3 scaleEndPoint = glm::vec3(triangleCentroid.x + scaleFactor * (normalEndPoint.x - triangleCentroid.x),
+		triangleCentroid.y + scaleFactor * (normalEndPoint.y - triangleCentroid.y),
+		triangleCentroid.z + scaleFactor * (normalEndPoint.z - triangleCentroid.z));
+
+	DrawLine(triangleCentroid, scaleEndPoint, glm::vec3(0, 0, 1));
 }
 
 glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
