@@ -277,8 +277,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	// model selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, 820));
-	ImGui::SetNextWindowSize(ImVec2(320, 180));
+	ImGui::SetNextWindowPos(ImVec2(0, 810));
+	ImGui::SetNextWindowSize(ImVec2(320, 190));
 
 	ImGui::Begin("Model selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 

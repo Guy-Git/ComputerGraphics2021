@@ -339,9 +339,9 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 
 void Renderer::Render(const Scene& scene)
 {
-	int half_width = viewport_width_ / 2;
-	int half_height = viewport_height_ / 2;
-	int thickness = 15;
+	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(1, 1, 1)); // X axis
+
+	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(1, 1, 1)); // Y axis
 
 	if (scene.GetModelCount() > 0)
 	{
@@ -349,6 +349,8 @@ void Renderer::Render(const Scene& scene)
 
 		double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 		std::vector <glm::vec3> threePoints;
+		std::vector <glm::vec3> threePointsAfterTransformations;
+		glm::mat4 transformationMatrix;
 
 		for (int i = 0; i < currentModel.GetFacesCount(); i++)
 		{
@@ -356,21 +358,32 @@ void Renderer::Render(const Scene& scene)
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			DrawTriangle(threePoints, currentModel,
-				scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
+			FindMaxValues(threePoints);
+
+			transformationMatrix = Transformations(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
 				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+
+			threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix);
+
+			DrawTriangle(threePointsAfterTransformations);
+
+			if (currentModel.GetVertexNormalShown())
+			{
+				DrawVertexNormals(threePointsAfterTransformations);
+			}
+			if (currentModel.GetFaceNormalShown())
+			{
+				DrawFaceNormals(threePointsAfterTransformations);
+			}
 
 			threePoints.clear();
 		}
 
 		if (currentModel.GetBoundingBoxShown())
 		{
-			DrawBoundingBox(currentModel);
+			DrawBoundingBox(currentModel, transformationMatrix);
 		}
 	}
-	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(1, 1, 1)); // X axis
-
-	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(1, 1, 1)); // Y axis
 
 	maxPointXValue = -INFINITY;
 	maxPointYValue = -INFINITY;
@@ -384,47 +397,54 @@ void Renderer::Render(const Scene& scene)
 double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
 {
 	// find the max vertex point value to set the scale factor
+	double maxPointXValueScale = -INFINITY;
+	double maxPointYValueScale = -INFINITY;
 
 	for (int i = 0; i < currentModel.GetVerticesCount(); i++)
 	{
-		if (currentModel.GetVertex(i).x > maxPointXValue)
+		if (currentModel.GetVertex(i).x > maxPointXValueScale)
 		{
-			maxPointXValue = currentModel.GetVertex(i).x;
+			maxPointXValueScale = currentModel.GetVertex(i).x;
 		}
-		if (currentModel.GetVertex(i).y > maxPointYValue)
+		if (currentModel.GetVertex(i).y > maxPointYValueScale)
 		{
-			maxPointYValue = currentModel.GetVertex(i).y;
-		}
-		if (currentModel.GetVertex(i).z > maxPointZValue)
-		{
-			maxPointZValue = currentModel.GetVertex(i).z;
-		}
-
-		if (currentModel.GetVertex(i).x < minPointXValue)
-		{
-			minPointXValue = currentModel.GetVertex(i).x;
-		}
-		if (currentModel.GetVertex(i).y < minPointYValue)
-		{
-			minPointYValue = currentModel.GetVertex(i).y;
-		}
-		if (currentModel.GetVertex(i).z < minPointZValue)
-		{
-			minPointZValue = currentModel.GetVertex(i).z;
+			maxPointYValueScale = currentModel.GetVertex(i).y;
 		}
 	}
 
-	float returnValue = maxPointXValue > maxPointYValue ? maxPointXValue : maxPointYValue;
+	return maxPointXValueScale > maxPointYValueScale ? maxPointXValueScale : maxPointYValueScale;
+}
 
-	maxPointXValue = maxPointXValue * abs(400 / returnValue) + 500;
-	maxPointYValue = maxPointYValue * abs(400 / returnValue) + 500;
-	maxPointZValue = maxPointZValue * abs(400 / returnValue) + 500;
+void Renderer::FindMaxValues(const std::vector<glm::vec3>& triangle)
+{
+	for (int i = 0; i < triangle.size(); i++)
+	{
+		if (triangle.at(i).x > maxPointXValue)
+		{
+			maxPointXValue = triangle.at(i).x;
+		}
+		if (triangle.at(i).y > maxPointYValue)
+		{
+			maxPointYValue = triangle.at(i).y;
+		}
+		if (triangle.at(i).z > maxPointZValue)
+		{
+			maxPointZValue = triangle.at(i).z;
+		}
 
-	minPointXValue = minPointXValue * abs(400 / returnValue) + 500;
-	minPointYValue = minPointYValue * abs(400 / returnValue) + 500;
-	minPointZValue = minPointZValue * abs(400 / returnValue) + 500;
-
-	return returnValue;
+		if (triangle.at(i).x < minPointXValue)
+		{
+			minPointXValue = triangle.at(i).x;
+		}
+		if (triangle.at(i).y < minPointYValue)
+		{
+			minPointYValue = triangle.at(i).y;
+		}
+		if (triangle.at(i).z < minPointZValue)
+		{
+			minPointZValue = triangle.at(i).z;
+		}
+	}
 }
 
 int Renderer::GetViewportWidth() const
@@ -447,13 +467,16 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel,
-	float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions)
+{
+	DrawLine(vertexPositions.at(0), vertexPositions.at(1), glm::vec3(0, 0, 0));
+	DrawLine(vertexPositions.at(1), vertexPositions.at(2), glm::vec3(0, 0, 0));
+	DrawLine(vertexPositions.at(0), vertexPositions.at(2), glm::vec3(0, 0, 0));
+}
+
+glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 	float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition)
 {
-	int x0 = 500;
-	int y0 = 500;
-	int z0 = 500;
 
 	glm::mat4 localScaleMat = glm::mat4(localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, 1);
 	glm::mat4 localRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(localRotAngle.x), sin(localRotAngle.x), 0, 0, -sin(localRotAngle.x), cos(localRotAngle.x), 0, 0, 0, 0, 1);
@@ -467,12 +490,19 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, MeshM
 	glm::mat4 worldRotationMatZ = glm::mat4(cos(worldRotAngle.z), sin(worldRotAngle.z), 0, 0, -sin(worldRotAngle.z), cos(worldRotAngle.z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 	glm::mat4 worldPositionMat = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, worldPosition.x, worldPosition.y, worldPosition.z, 1);
 
+	return worldScaleMat * worldRotationMatX * worldRotationMatY * worldRotationMatZ * worldPositionMat *
+		localScaleMat * localRotationMatX * localRotationMatY * localRotationMatZ * localPositionMat;
+}
+
+std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation)
+{
+	int x0 = 500;
+	int y0 = 500;
+	int z0 = 500;
+
 	glm::vec4 p1 = glm::vec4((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z), 1);
 	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), 1);
 	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), 1);
-
-	glm::mat4 transformation = worldScaleMat * worldRotationMatX * worldRotationMatY * worldRotationMatZ * worldPositionMat *
-		localScaleMat * localRotationMatX * localRotationMatY * localRotationMatZ * localPositionMat;
 
 	p1 = transformation * p1;
 	p2 = transformation * p2;
@@ -482,38 +512,29 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, MeshM
 	glm::vec3 p2t = glm::vec3(p2.x, p2.y, p2.z);
 	glm::vec3 p3t = glm::vec3(p3.x, p3.y, p3.z);
 
-	p1t.x += x0;
-	p1t.y += y0;
-	p1t.z += z0;
-	p2t.x += x0;
-	p2t.y += y0;
-	p2t.z += z0;
-	p3t.x += x0;
-	p3t.y += y0;
-	p3t.z += z0;
-
-	DrawLine(p1t, p2t, glm::vec3(0, 0, 0));
-	DrawLine(p2t, p3t, glm::vec3(0, 0, 0));
-	DrawLine(p1t, p3t, glm::vec3(0, 0, 0));
+	p1t.x += x0; p1t.y += y0; p1t.z += z0;
+	p2t.x += x0; p2t.y += y0; p2t.z += z0;
+	p3t.x += x0; p3t.y += y0; p3t.z += z0;
 
 	std::vector <glm::vec3> threePoints;
 	threePoints.push_back(glm::vec3(p1t.x, p1t.y, p1t.z));
 	threePoints.push_back(glm::vec3(p2t.x, p2t.y, p2t.z));
 	threePoints.push_back(glm::vec3(p3t.x, p3t.y, p3t.z));
 
-	if (currentModel.GetVertexNormalShown())
-	{
-		DrawVertexNormals(threePoints);
-	}
-	if (currentModel.GetFaceNormalShown())
-	{
-		DrawFaceNormals(threePoints);
-	}
+	//FindMaxValues(threePoints);
+
+	return threePoints;
 }
 
 void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions)
 {
-	DrawLine(vertexPositions.at(0), CalcNormal(vertexPositions), glm::vec3(0, 1, 0));
+	glm::vec3 normalVector = CalcNormal(vertexPositions);
+
+	glm::vec3 normalEndPoint = glm::vec3(normalVector.x + vertexPositions.at(0).x,
+		normalVector.y + vertexPositions.at(0).y,
+		normalVector.z + vertexPositions.at(0).z);
+
+	DrawLine(vertexPositions.at(0), normalEndPoint, glm::vec3(1, 1, 0));
 }
 
 void Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
@@ -522,7 +543,10 @@ void Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
 		(vertexPositions.at(0).y + vertexPositions.at(1).y + vertexPositions.at(2).y) / 3,
 		(vertexPositions.at(0).z + vertexPositions.at(1).z + vertexPositions.at(2).z) / 3);
 
-	DrawLine(triangleCentroid, CalcNormal(vertexPositions), glm::vec3(1, 1, 0));
+	glm::vec3 normalVector = CalcNormal(vertexPositions);
+	glm::vec3 normalEndPoint = glm::vec3(normalVector.x + triangleCentroid.x, normalVector.y + triangleCentroid.y, normalVector.z + triangleCentroid.z);
+
+	DrawLine(triangleCentroid, normalEndPoint, glm::vec3(0, 0, 1));
 }
 
 glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
@@ -537,17 +561,61 @@ glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
 	return normalVector;
 }
 
-void Renderer::DrawBoundingBox(MeshModel& model)
+void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation)
 {
-	//glm::vec3 maxX = glm::vec3(maxPointXValue, 0, 0);
-	//glm::vec3 maxY = glm::vec3(0, maxPointYValue, 0);
-	//glm::vec3 maxZ = glm::vec3(0, 0, maxPointYValue);
+	int x0 = 500;
+	int y0 = 500;
+	int z0 = 500;
 
-	//glm::vec3 minX = glm::vec3(minPointXValue, 0, 0);
-	//glm::vec3 minY = glm::vec3(0, minPointYValue, 0);
-	//glm::vec3 minZ = glm::vec3(0, 0, minPointYValue);
+	glm::vec4 p1 = glm::vec4(maxPointXValue, maxPointYValue, maxPointZValue, 1);
+	glm::vec4 p2 = glm::vec4(minPointXValue, maxPointYValue, maxPointZValue, 1);
+	glm::vec4 p3 = glm::vec4(minPointXValue, minPointYValue, maxPointZValue, 1);
+	glm::vec4 p4 = glm::vec4(maxPointXValue, minPointYValue, maxPointZValue, 1);
 
-	//DrawLine(maxX,minX , glm::vec3(1, 0, 0));
-	//DrawLine(maxY,minY , glm::vec3(1, 0, 0));
-	//DrawLine(maxZ,minZ , glm::vec3(1, 0, 0));
+	glm::vec4 p5 = glm::vec4(maxPointXValue, maxPointYValue, minPointZValue, 1);
+	glm::vec4 p6 = glm::vec4(minPointXValue, maxPointYValue, minPointZValue, 1);
+	glm::vec4 p7 = glm::vec4(minPointXValue, minPointYValue, minPointZValue, 1);
+	glm::vec4 p8 = glm::vec4(maxPointXValue, minPointYValue, minPointZValue, 1);
+
+	p1 = transformation * p1;
+	p2 = transformation * p2;
+	p3 = transformation * p3;
+	p4 = transformation * p4;
+	p5 = transformation * p5;
+	p6 = transformation * p6;
+	p7 = transformation * p7;
+	p8 = transformation * p8;
+
+	glm::vec3 p1t = glm::vec3(p1.x, p1.y, p1.z);
+	glm::vec3 p2t = glm::vec3(p2.x, p2.y, p2.z);
+	glm::vec3 p3t = glm::vec3(p3.x, p3.y, p3.z);
+	glm::vec3 p4t = glm::vec3(p4.x, p4.y, p4.z);
+	glm::vec3 p5t = glm::vec3(p5.x, p5.y, p5.z);
+	glm::vec3 p6t = glm::vec3(p6.x, p6.y, p6.z);
+	glm::vec3 p7t = glm::vec3(p7.x, p7.y, p7.z);
+	glm::vec3 p8t = glm::vec3(p8.x, p8.y, p8.z);
+
+	p1t.x += x0; p1t.y += y0; p1t.z += z0;
+	p2t.x += x0; p2t.y += y0; p2t.z += z0;
+	p3t.x += x0; p3t.y += y0; p3t.z += z0;
+	p4t.x += x0; p4t.y += y0; p4t.z += z0;
+	p5t.x += x0; p5t.y += y0; p5t.z += z0;
+	p6t.x += x0; p6t.y += y0; p6t.z += z0;
+	p7t.x += x0; p7t.y += y0; p7t.z += z0;
+	p8t.x += x0; p8t.y += y0; p8t.z += z0;
+
+	DrawLine(p1t, p2t, glm::vec3(1, 0, 0));
+	DrawLine(p2t, p3t, glm::vec3(1, 0, 0));
+	DrawLine(p3t, p4t, glm::vec3(1, 0, 0));
+	DrawLine(p4t, p1t, glm::vec3(1, 0, 0));
+
+	DrawLine(p1t, p5t, glm::vec3(1, 0, 0));
+	DrawLine(p2t, p6t, glm::vec3(1, 0, 0));
+	DrawLine(p3t, p7t, glm::vec3(1, 0, 0));
+	DrawLine(p4t, p8t, glm::vec3(1, 0, 0));
+
+	DrawLine(p5t, p6t, glm::vec3(1, 0, 0));
+	DrawLine(p6t, p7t, glm::vec3(1, 0, 0));
+	DrawLine(p7t, p8t, glm::vec3(1, 0, 0));
+	DrawLine(p8t, p5t, glm::vec3(1, 0, 0));
 }

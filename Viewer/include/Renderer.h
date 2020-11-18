@@ -11,6 +11,7 @@ public:
 	virtual ~Renderer();
 	void Render(const Scene& scene);
 	double FindMaxXorYPointForScaleFactor(MeshModel& currentModel);
+	void FindMaxValues(const std::vector<glm::vec3>& triangle);
 	void SwapBuffers();
 	void ClearColorBuffer(const glm::vec3& color);
 	int GetViewportWidth() const;
@@ -20,13 +21,14 @@ public:
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
-	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel,
-		float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions);
+	glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
+	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation);
 	void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions);
 	void DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions);
 	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);
-	void DrawBoundingBox(MeshModel& model);
+	void DrawBoundingBox(MeshModel& model, glm::mat4 transformation);
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();
