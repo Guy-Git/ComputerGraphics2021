@@ -28,7 +28,7 @@ private:
 	void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions);
 	void DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions);
 	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);
-	void DrawBoundingBox(MeshModel& model, glm::mat4 transformation);
+	void DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene);
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();

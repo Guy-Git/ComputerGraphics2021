@@ -109,3 +109,13 @@ bool MeshModel::GetBoundingBoxShown()
 {
 	return isBoundingBoxShown_;
 }
+
+void MeshModel::SetMinMax(glm::vec4 minMaxVector)
+{
+	minMaxXY_ = minMaxVector;
+}
+
+glm::vec4 MeshModel::GetMinMax()
+{
+	return minMaxXY_;
+}

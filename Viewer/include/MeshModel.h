@@ -25,6 +25,9 @@ public:
 	void SetVertexNormalShown(bool isShown);
 	bool GetVertexNormalShown();
 
+	void SetMinMax(glm::vec4 minMaxVector);
+	glm::vec4 GetMinMax();
+
 	const glm::vec3& MeshModel::GetVertexNormal(int index) const;
 
 	void SetBoundingBoxShown(bool isShown);
@@ -44,4 +47,6 @@ private:
 	bool isFaceNormalShown_;
 	bool isVertexNormalShown_;
 	bool isBoundingBoxShown_;
+
+	glm::vec4 minMaxXY_; // (max X, min X, max y, min y)
 };

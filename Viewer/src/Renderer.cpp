@@ -379,10 +379,9 @@ void Renderer::Render(const Scene& scene)
 			threePoints.clear();
 		}
 
-		if (currentModel.GetBoundingBoxShown())
-		{
-			DrawBoundingBox(currentModel, transformationMatrix);
-		}
+
+		DrawBoundingBox(currentModel, transformationMatrix, scene);
+
 	}
 
 	maxPointXValue = -INFINITY;
@@ -399,6 +398,7 @@ double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
 	// find the max vertex point value to set the scale factor
 	double maxPointXValueScale = -INFINITY;
 	double maxPointYValueScale = -INFINITY;
+	double maxPointZValueScale = -INFINITY;
 
 	for (int i = 0; i < currentModel.GetVerticesCount(); i++)
 	{
@@ -410,9 +410,16 @@ double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
 		{
 			maxPointYValueScale = currentModel.GetVertex(i).y;
 		}
+		if (currentModel.GetVertex(i).z > maxPointZValueScale)
+		{
+			maxPointZValueScale = currentModel.GetVertex(i).z;
+		}
 	}
 
-	return maxPointXValueScale > maxPointYValueScale ? maxPointXValueScale : maxPointYValueScale;
+	double max1 = maxPointXValueScale > maxPointYValueScale ? maxPointXValueScale : maxPointYValueScale;
+	double max2 = max1 > maxPointZValueScale ? max1 : maxPointZValueScale;
+
+	return max2;
 }
 
 void Renderer::FindMaxValues(const std::vector<glm::vec3>& triangle)
@@ -521,8 +528,6 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 	threePoints.push_back(glm::vec3(p2t.x, p2t.y, p2t.z));
 	threePoints.push_back(glm::vec3(p3t.x, p3t.y, p3t.z));
 
-	//FindMaxValues(threePoints);
-
 	return threePoints;
 }
 
@@ -574,7 +579,7 @@ glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
 	return normalVector;
 }
 
-void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation)
+void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene)
 {
 	int x0 = 500;
 	int y0 = 500;
@@ -617,18 +622,23 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation)
 	p7t.x += x0; p7t.y += y0; p7t.z += z0;
 	p8t.x += x0; p8t.y += y0; p8t.z += z0;
 
-	DrawLine(p1t, p2t, glm::vec3(1, 0, 0));
-	DrawLine(p2t, p3t, glm::vec3(1, 0, 0));
-	DrawLine(p3t, p4t, glm::vec3(1, 0, 0));
-	DrawLine(p4t, p1t, glm::vec3(1, 0, 0));
+	if (scene.GetActiveModel().GetBoundingBoxShown())
+	{
+		DrawLine(p1t, p2t, glm::vec3(1, 0, 0));
+		DrawLine(p2t, p3t, glm::vec3(1, 0, 0));
+		DrawLine(p3t, p4t, glm::vec3(1, 0, 0));
+		DrawLine(p4t, p1t, glm::vec3(1, 0, 0));
 
-	DrawLine(p1t, p5t, glm::vec3(1, 0, 0));
-	DrawLine(p2t, p6t, glm::vec3(1, 0, 0));
-	DrawLine(p3t, p7t, glm::vec3(1, 0, 0));
-	DrawLine(p4t, p8t, glm::vec3(1, 0, 0));
+		DrawLine(p1t, p5t, glm::vec3(1, 0, 0));
+		DrawLine(p2t, p6t, glm::vec3(1, 0, 0));
+		DrawLine(p3t, p7t, glm::vec3(1, 0, 0));
+		DrawLine(p4t, p8t, glm::vec3(1, 0, 0));
 
-	DrawLine(p5t, p6t, glm::vec3(1, 0, 0));
-	DrawLine(p6t, p7t, glm::vec3(1, 0, 0));
-	DrawLine(p7t, p8t, glm::vec3(1, 0, 0));
-	DrawLine(p8t, p5t, glm::vec3(1, 0, 0));
+		DrawLine(p5t, p6t, glm::vec3(1, 0, 0));
+		DrawLine(p6t, p7t, glm::vec3(1, 0, 0));
+		DrawLine(p7t, p8t, glm::vec3(1, 0, 0));
+		DrawLine(p8t, p5t, glm::vec3(1, 0, 0));
+	}
+
+	//scene.GetActiveModel().SetMinMax(glm::vec4(p1t.x, p2t.x, p1t.y, p3t.y)); // (maxX, minX, maxY, minY)
 }

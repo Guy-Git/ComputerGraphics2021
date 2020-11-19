@@ -67,6 +67,7 @@ void SetParametersValueChangingModels(Scene& scene);
 void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
 void SetNormalsAndBoundingBox(const Scene& scene);
+bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
 
 /**
  * Function implementation
@@ -74,7 +75,15 @@ void SetNormalsAndBoundingBox(const Scene& scene);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
-	// TODO: Handle mouse scroll here
+
+	if (show_local_scale_window)
+	{
+		scale_factor_local += (-1)*yoffset;
+	}
+	if (show_global_scale_window)
+	{
+		scale_factor_global += (-1)*yoffset;
+	}
 }
 
 int main(int argc, char** argv)
@@ -154,6 +163,10 @@ void StartFrame()
 
 void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& io)
 {
+	if (scene.GetModelCount() > 0)
+	{
+		scene.GetActiveModel().SetScaleFactor(scale_factor_local);
+	}
 	ImGui::Render();
 	int frameBufferWidth, frameBufferHeight;
 	glfwMakeContextCurrent(window);
@@ -162,6 +175,22 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	if (frameBufferWidth != renderer.GetViewportWidth() || frameBufferHeight != renderer.GetViewportHeight())
 	{
 		// TODO: Set new aspect ratio
+	}
+
+	if (ImGui::IsMouseClicked(0))
+	{
+		if (scene.GetModelCount() > 0)
+		{
+			/*if (IsPositionInBoundingBox(io.MousePos.x, 1000 - io.MousePos.y, scene))
+			{
+				show_bounding_box = true;
+			}
+			else
+			{
+				show_bounding_box = false;
+			}
+			scene.GetActiveModel().SetBoundingBoxShown(show_bounding_box);*/
+		}
 	}
 
 	if (!io.WantCaptureKeyboard)
@@ -190,6 +219,16 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwMakeContextCurrent(window);
 	glfwSwapBuffers(window);
+}
+
+bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene)
+{
+	if (xPos <= scene.GetActiveModel().GetMinMax().x && xPos >= scene.GetActiveModel().GetMinMax().y &&
+		yPos <= scene.GetActiveModel().GetMinMax().z && yPos >= scene.GetActiveModel().GetMinMax().w)
+	{
+		return true;
+	}
+	return false;
 }
 
 void Cleanup(GLFWwindow* window)
