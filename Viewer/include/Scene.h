@@ -15,7 +15,7 @@ public:
 	MeshModel& GetModel(int index) const;
 	MeshModel& GetActiveModel() const;
 	
-	void AddCamera(const std::shared_ptr<Camera>& camera);
+	void Scene::AddCamera(const Camera& camera);
 	int GetCameraCount() const;
 	Camera& GetCamera(int index);
 	Camera& GetActiveCamera();
@@ -35,7 +35,7 @@ public:
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
-	std::vector<std::shared_ptr<Camera>> cameras_;
+	std::vector<Camera> cameras_;
 
 	int active_camera_index_;
 	int active_model_index_;

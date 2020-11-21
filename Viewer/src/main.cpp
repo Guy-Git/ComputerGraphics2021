@@ -47,6 +47,8 @@ bool show_warning_window = false;
 bool show_model_selection_window = false;
 
 static int model_selection = 0;
+static int camera_selection = 0;
+static int view_selection = -1;
 static int last_model_selection = 0;
 
 glm::vec4 clear_color = glm::vec4(0.26f, 0.26f, 0.26f, 1.00f);
@@ -88,7 +90,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 
 int main(int argc, char** argv)
 {
-	int windowWidth = 1000, windowHeight = 1000;
+	int windowWidth = 1500, windowHeight = 900;
 	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, "Mesh Viewer");
 	if (!window)
 		return 1;
@@ -99,7 +101,8 @@ int main(int argc, char** argv)
 
 	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
 	Scene scene = Scene();
-
+	Camera cam = Camera();
+	scene.AddCamera(cam);
 
 	ImGuiIO& io = SetupDearImgui(window);
 	glfwSetScrollCallback(window, ScrollCallback);
@@ -315,9 +318,43 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		ImGui::EndMainMenuBar();
 	}
 
+	// camera selection window - position and window flag
+	ImGui::SetNextWindowPos(ImVec2(0, 710));
+	ImGui::SetNextWindowSize(ImVec2(330, 200));
+
+	ImGui::Begin("Camera selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
+
+	ImGui::RadioButton("Camera #1", &camera_selection, 0);
+	ImGui::RadioButton("Camera #2", &camera_selection, 1);
+
+	if (ImGui::Button("Reset Current Camera"))
+	{
+		view_selection = -1;
+		scene.GetActiveCamera().ResetOrthographicTrans();
+		scene.GetActiveCamera().ResetPerspectiveTrans();
+	}
+
+	ImGui::RadioButton("Orthographic View", &view_selection, 0);
+	ImGui::SameLine();
+	ImGui::RadioButton("Perspective View", &view_selection, 1);
+
+	ImGui::End();
+
+	scene.SetActiveCameraIndex(camera_selection);
+
+	switch(view_selection)
+	{
+	case 0:
+		scene.GetActiveCamera().SetOrthographicTrans(0.5, -0.5, 0.5, -0.5, -0.1, -0.5);
+		break;
+	case 1:
+		scene.GetActiveCamera().SetPerspectiveTrans(-0.5, 0.5, -0.5, 0.5, 0.5, -0.5);
+		break;
+	}
+
 	// model selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, 810));
-	ImGui::SetNextWindowSize(ImVec2(320, 190));
+	ImGui::SetNextWindowPos(ImVec2(330, 710));
+	ImGui::SetNextWindowSize(ImVec2(330, 200));
 
 	ImGui::Begin("Model selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
@@ -408,7 +445,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	SetParametersValueChangingModels(scene);
-
 
 
 	if (show_warning_window)

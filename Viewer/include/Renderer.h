@@ -9,7 +9,7 @@ class Renderer
 public:
 	Renderer(int viewportWidth, int viewportHeight);
 	virtual ~Renderer();
-	void Render(const Scene& scene);
+	void Render(Scene& scene);
 	double FindMaxXorYPointForScaleFactor(MeshModel& currentModel);
 	void FindMaxValues(const std::vector<glm::vec3>& triangle);
 	void SwapBuffers();
@@ -24,7 +24,7 @@ private:
 	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions);
 	glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
-	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation);
+	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam);
 	void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions);
 	void DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions);
 	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);

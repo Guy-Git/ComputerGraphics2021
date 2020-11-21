@@ -337,11 +337,11 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 	}
 }
 
-void Renderer::Render(const Scene& scene)
+void Renderer::Render(Scene& scene)
 {
-	DrawLine(glm::ivec2(0, 500), glm::ivec2(1000, 500), glm::vec3(0, 0, 0)); // X axis
+	DrawLine(glm::ivec2(0, 450), glm::ivec2(1500, 450), glm::vec3(0, 0, 0)); // X axis
 
-	DrawLine(glm::ivec2(500, 1000), glm::ivec2(500, 0), glm::vec3(0, 0, 0)); // Y axis
+	DrawLine(glm::ivec2(750, 900), glm::ivec2(750, 0), glm::vec3(0, 0, 0)); // Y axis
 
 	if (scene.GetModelCount() > 0)
 	{
@@ -363,7 +363,7 @@ void Renderer::Render(const Scene& scene)
 			transformationMatrix = Transformations(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
 				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
 
-			threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix);
+			threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera());
 
 			DrawTriangle(threePointsAfterTransformations);
 
@@ -501,17 +501,21 @@ glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPosition
 		localScaleMat * localRotationMatX * localRotationMatY * localRotationMatZ * localPositionMat;
 }
 
-std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation)
+std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam)
 {
-	int x0 = 500;
-	int y0 = 500;
+	int x0 = 750;
+	int y0 = 450;
 	int z0 = 500;
+
+	glm::mat4 orthoMat = cam.GetOrthographicTrans();
+	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
+
 
 	glm::vec4 p1 = glm::vec4((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z), 1);
 	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), 1);
 	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), 1);
 
-	p1 = transformation * p1;
+	p1 = orthoMat * perspecMat * transformation * p1;
 	p2 = transformation * p2;
 	p3 = transformation * p3;
 
