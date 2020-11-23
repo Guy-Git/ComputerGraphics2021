@@ -505,19 +505,20 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 {
 	int x0 = 750;
 	int y0 = 450;
-	int z0 = 500;
+	int z0 = 0;
 
 	glm::mat4 orthoMat = cam.GetOrthographicTrans();
 	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
+	glm::mat4 view = cam.GetCameraLookAt();
 
 
 	glm::vec4 p1 = glm::vec4((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z), 1);
 	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), 1);
 	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), 1);
 
-	p1 = orthoMat * perspecMat * transformation * p1;
-	p2 = transformation * p2;
-	p3 = transformation * p3;
+	p1 = orthoMat * perspecMat * view * transformation * p1;
+	p2 = orthoMat * perspecMat * view * transformation * p2;
+	p3 = orthoMat * perspecMat * view * transformation * p3;
 
 	glm::vec3 p1t = glm::vec3(p1.x, p1.y, p1.z);
 	glm::vec3 p2t = glm::vec3(p2.x, p2.y, p2.z);

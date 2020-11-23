@@ -48,8 +48,23 @@ bool show_model_selection_window = false;
 
 static int model_selection = 0;
 static int camera_selection = 0;
-static int view_selection = -1;
+static int view_selection = 1;
 static int last_model_selection = 0;
+
+static float left = 0.1;
+static float right = 10.0;
+static float bottom = 0.1;
+static float top = 10.0;
+static float near_param = 0.1;
+static float far_param = 50.0;
+static float fov = 45.0;
+
+static float cameraZ = 1.0;
+static float cameraX = 0.0;
+
+static glm::vec3 cameraEye = glm::vec3(0.0, 0.0, cameraZ);
+static glm::vec3 cameraAt = glm::vec3(0.0, 0.0, 0.0);
+static glm::vec3 cameraUp = glm::vec3(0.0, 1.0, 0.0);
 
 glm::vec4 clear_color = glm::vec4(0.26f, 0.26f, 0.26f, 1.00f);
 
@@ -80,12 +95,18 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 
 	if (show_local_scale_window)
 	{
-		scale_factor_local += (-1)*yoffset;
+		scale_factor_local += (-1) * yoffset;
 	}
 	if (show_global_scale_window)
 	{
-		scale_factor_global += (-1)*yoffset;
+		scale_factor_global += (-1) * yoffset;
 	}
+
+	fov -= (float)yoffset;
+	if (fov < 1.0f)
+		fov = 1.0f;
+	if (fov > 180.0f)
+		fov = 180.0f;
 }
 
 int main(int argc, char** argv)
@@ -101,8 +122,9 @@ int main(int argc, char** argv)
 
 	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
 	Scene scene = Scene();
-	Camera cam = Camera();
+	/*Camera cam = Camera();
 	scene.AddCamera(cam);
+	scene.SetActiveCameraIndex(0);*/
 
 	ImGuiIO& io = SetupDearImgui(window);
 	glfwSetScrollCallback(window, ScrollCallback);
@@ -180,21 +202,15 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 		// TODO: Set new aspect ratio
 	}
 
-	if (ImGui::IsMouseClicked(0))
-	{
-		if (scene.GetModelCount() > 0)
-		{
-			/*if (IsPositionInBoundingBox(io.MousePos.x, 1000 - io.MousePos.y, scene))
-			{
-				show_bounding_box = true;
-			}
-			else
-			{
-				show_bounding_box = false;
-			}
-			scene.GetActiveModel().SetBoundingBoxShown(show_bounding_box);*/
-		}
-	}
+	//const float cameraSpeed = 0.05f; // adjust accordingly
+	//if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	//	cameraEye += glm::vec3(0.0f, 0.0f, 1.0f);
+	//if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	//	cameraEye -= glm::vec3(0.0f, 0.0f, 1.0f);
+	//if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	//	cameraEye -= glm::normalize(glm::cross(cameraAt, cameraUp)) * cameraSpeed;
+	//if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	//	cameraEye += glm::normalize(glm::cross(cameraAt, cameraUp)) * cameraSpeed;
 
 	if (!io.WantCaptureKeyboard)
 	{
@@ -319,8 +335,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	// camera selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, 710));
-	ImGui::SetNextWindowSize(ImVec2(330, 200));
+	ImGui::SetNextWindowPos(ImVec2(0, 610));
+	ImGui::SetNextWindowSize(ImVec2(330, 300));
 
 	ImGui::Begin("Camera selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
@@ -330,7 +346,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	if (ImGui::Button("Reset Current Camera"))
 	{
 		view_selection = -1;
-		scene.GetActiveCamera().ResetOrthographicTrans();
+		scene.GetActiveCamera().ResetProjectionsMatrix();
 		scene.GetActiveCamera().ResetPerspectiveTrans();
 	}
 
@@ -338,17 +354,49 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	ImGui::SameLine();
 	ImGui::RadioButton("Perspective View", &view_selection, 1);
 
+	ImGui::SliderFloat("Left", &left, 0.1, 20.0);
+	ImGui::SliderFloat("Right", &right, 0.1, 20.0);
+	ImGui::SliderFloat("Bottom", &bottom, 0.1, 20.0);
+	ImGui::SliderFloat("Top", &top, 0.1, 20.0);
+	ImGui::SliderFloat("Near", &near_param, -20.0, 20.0);
+	ImGui::SliderFloat("Far", &far_param, -20.0, 20.0);
+
+	ImGui::End();
+
+	ImGui::SetNextWindowPos(ImVec2(0, 400));
+	ImGui::SetNextWindowSize(ImVec2(330, 210));
+
+	ImGui::Begin("Camera Properties", &show_model_selection_window, ImGuiWindowFlags_NoMove);
+
+	ImGui::SliderFloat("Camera X", &cameraEye.x, 0.0, 5.0);
+	ImGui::SliderFloat("Camera Y", &cameraEye.y, 0.0, 5.0);
+	ImGui::SliderFloat("Camera Z", &cameraEye.z, 0.1, 20.0);
+
+	ImGui::SliderFloat("At X", &cameraAt.x, -20.0, 20.0);
+	ImGui::SliderFloat("At Y", &cameraAt.y, -20.0, 20.0);
+	ImGui::SliderFloat("At Z", &cameraAt.z, -20.0, 20.0);
+
 	ImGui::End();
 
 	scene.SetActiveCameraIndex(camera_selection);
 
-	switch(view_selection)
+	switch (view_selection)
 	{
 	case 0:
-		scene.GetActiveCamera().SetOrthographicTrans(0.5, -0.5, 0.5, -0.5, -0.1, -0.5);
+		scene.GetActiveCamera().ResetProjectionsMatrix();
+
+		scene.GetActiveCamera().SetOrthographicTrans(left, right, bottom, top, near_param, far_param);
+
+		scene.GetActiveCamera().SetCameraLookAt(cameraEye, cameraAt, cameraUp);
+
 		break;
 	case 1:
-		scene.GetActiveCamera().SetPerspectiveTrans(-0.5, 0.5, -0.5, 0.5, 0.5, -0.5);
+		scene.GetActiveCamera().ResetProjectionsMatrix();
+
+		scene.GetActiveCamera().SetPerspectiveTrans(fov, (1500.0 / 900.0), near_param, far_param);
+
+		scene.GetActiveCamera().SetCameraLookAt(cameraEye, cameraAt, cameraUp);
+
 		break;
 	}
 

@@ -1,5 +1,8 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <glm\ext\matrix_transform.hpp>
+#include <glm\ext\matrix_clip_space.hpp>
+
 
 class Camera
 {
@@ -7,15 +10,14 @@ public:
 	Camera();
 	virtual ~Camera();
 
-	void SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
-
+	void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
+	glm::mat4 Camera::GetCameraLookAt();
 	const glm::mat4x4& GetProjectionTransformation() const;
-	const glm::mat4x4& GetViewTransformation() const;
 	void Camera::SetOrthographicTrans(float left, float right, float bottom, float top, float near, float far);
 	glm::mat4 Camera::GetOrthographicTrans();
-	void Camera::SetPerspectiveTrans(float left, float right, float bottom, float top, float near, float far);
+	void Camera::SetPerspectiveTrans(float fov, float aspectRatio, float near, float far);
 	glm::mat4 Camera::GetPerspectiveTrans();
-	void Camera::ResetOrthographicTrans();
+	void Camera::ResetProjectionsMatrix();
 	void Camera::ResetPerspectiveTrans();
 
 private:
