@@ -32,6 +32,10 @@ public:
 	glm::vec3 GetRotateAngle() const;
 	void SetNewPosition(glm::vec3 newPos);
 	glm::vec3 GetPosition() const;
+
+	void SetWindowSizes(int height, int width);
+	float Scene::GetWidth() const;
+	float Scene::GetHeight() const;
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
@@ -43,4 +47,7 @@ private:
 	float scaleFactor_;
 	glm::vec3 rotateAngle_;
 	glm::vec3 position_;
+
+	float window_width_;
+	float window_height_;
 };

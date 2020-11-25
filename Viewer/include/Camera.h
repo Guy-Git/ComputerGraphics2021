@@ -20,6 +20,18 @@ public:
 	void Camera::ResetProjectionsMatrix();
 	void Camera::ResetPerspectiveTrans();
 
+	void Camera::SetCameraEye(glm::vec3 cameraEye);
+	glm::vec3 Camera::GetCameraEye();
+
+	void Camera::SetCameraAt(glm::vec3 cameraAt);
+	glm::vec3 Camera::GetCameraAt();
+
+	void Camera::SetCameraUp(glm::vec3 cameraUp);
+	glm::vec3 Camera::GetCameraUp();
+
+	void Camera::ResetCameraPosition();
+
+
 private:
 	glm::mat4x4 view_transformation_;
 	glm::mat4x4 projection_transformation_;
@@ -27,4 +39,7 @@ private:
 	glm::mat4x4 perspective_transformation_;
 	glm::mat4x4 zoom_transformation_;
 
+	glm::vec3 cameraEye_;
+	glm::vec3 cameraAt_;
+	glm::vec3 cameraUp_;
 };

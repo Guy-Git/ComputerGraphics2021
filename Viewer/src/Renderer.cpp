@@ -31,6 +31,15 @@ Renderer::~Renderer()
 	delete[] color_buffer_;
 }
 
+void Renderer::SetViewport(int height, int width)
+{
+	viewport_width_ = width;
+	viewport_height_ = height;
+
+	CreateBuffers(viewport_width_, viewport_height_);
+	CreateOpenGLBuffer();
+}
+
 void Renderer::PutPixel(int i, int j, const glm::vec3& color)
 {
 	if (i < 0) return; if (i >= viewport_width_) return;
@@ -50,6 +59,13 @@ void Renderer::DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::v
 	X2 = p2.x;
 	Y2 = p2.y;
 	E = -1;
+
+	int validatePoint = 30000;
+	if (X1 > validatePoint || X1 < -validatePoint || X2 > validatePoint || X2 < -validatePoint ||
+		Y1 > validatePoint || Y1 < -validatePoint || Y2 > validatePoint || Y2 < -validatePoint)
+	{
+		return;
+	}
 
 	int deltaX = X2 - X1;
 	int deltaY = Y2 - Y1;
@@ -339,9 +355,9 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 
 void Renderer::Render(Scene& scene)
 {
-	DrawLine(glm::ivec2(0, 450), glm::ivec2(1500, 450), glm::vec3(0, 0, 0)); // X axis
+	DrawLine(glm::ivec2(0, scene.GetHeight() / 2), glm::ivec2(scene.GetWidth(), scene.GetHeight() / 2), glm::vec3(0, 0, 0)); // X axis
 
-	DrawLine(glm::ivec2(750, 900), glm::ivec2(750, 0), glm::vec3(0, 0, 0)); // Y axis
+	DrawLine(glm::ivec2(scene.GetWidth() / 2, scene.GetHeight()), glm::ivec2(scene.GetWidth() / 2, 0), glm::vec3(0, 0, 0)); // Y axis
 
 	if (scene.GetModelCount() > 0)
 	{
@@ -363,7 +379,7 @@ void Renderer::Render(Scene& scene)
 			transformationMatrix = Transformations(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
 				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
 
-			threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera());
+			threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
 			DrawTriangle(threePointsAfterTransformations);
 
@@ -501,28 +517,29 @@ glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPosition
 		localScaleMat * localRotationMatX * localRotationMatY * localRotationMatZ * localPositionMat;
 }
 
-std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam)
+std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene)
 {
-	int x0 = 750;
-	int y0 = 450;
+	int x0 = scene.GetWidth() /2;
+	int y0 = scene.GetHeight() / 2;
 	int z0 = 0;
 
 	glm::mat4 orthoMat = cam.GetOrthographicTrans();
 	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
 	glm::mat4 view = cam.GetCameraLookAt();
 
+	float w = 1.0;
 
-	glm::vec4 p1 = glm::vec4((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z), 1);
-	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), 1);
-	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), 1);
+	glm::vec4 p1 = glm::vec4((vertexPositions.at(0).x), (vertexPositions.at(0).y), (vertexPositions.at(0).z), w);
+	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), w);
+	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), w);
 
 	p1 = orthoMat * perspecMat * view * transformation * p1;
 	p2 = orthoMat * perspecMat * view * transformation * p2;
 	p3 = orthoMat * perspecMat * view * transformation * p3;
 
-	glm::vec3 p1t = glm::vec3(p1.x, p1.y, p1.z);
-	glm::vec3 p2t = glm::vec3(p2.x, p2.y, p2.z);
-	glm::vec3 p3t = glm::vec3(p3.x, p3.y, p3.z);
+	glm::vec3 p1t = glm::vec3(p1.x / p1.w, p1.y / p1.w, p1.z / p1.w);
+	glm::vec3 p2t = glm::vec3(p2.x / p2.w, p2.y / p2.w, p2.z / p2.w);
+	glm::vec3 p3t = glm::vec3(p3.x / p3.w, p3.y / p3.w, p3.z / p3.w);
 
 	p1t.x += x0; p1t.y += y0; p1t.z += z0;
 	p2t.x += x0; p2t.y += y0; p2t.z += z0;

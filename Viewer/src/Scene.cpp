@@ -2,13 +2,16 @@
 #include "MeshModel.h"
 #include <string>
 
-Scene::Scene():
+Scene::Scene() :
 	active_camera_index_(0),
 	active_model_index_(0),
 	scaleFactor_(1),
 	rotateAngle_(0),
-	position_(0)
+	position_(0),
+	window_height_(900.0),
+	window_width_(1500.0)
 {
+	AddCamera(*(new Camera()));
 	AddCamera(*(new Camera()));
 }
 
@@ -100,4 +103,20 @@ void Scene::SetNewPosition(glm::vec3 newPos)
 glm::vec3 Scene::GetPosition() const
 {
 	return position_;
+}
+
+float Scene::GetWidth() const
+{
+	return window_width_;
+}
+
+float Scene::GetHeight() const
+{
+	return window_height_;
+}
+
+void Scene::SetWindowSizes(int height, int width)
+{
+	window_width_ = width;
+	window_height_ = height;
 }

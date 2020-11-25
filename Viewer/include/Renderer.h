@@ -16,6 +16,7 @@ public:
 	void ClearColorBuffer(const glm::vec3& color);
 	int GetViewportWidth() const;
 	int GetViewportHeight() const;
+	void SetViewport(int height, int width);
 	void Renderer::ScaleLocal(const Scene& scene, const float scaleFactor);
 	
 private:
@@ -24,7 +25,7 @@ private:
 	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions);
 	glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
-	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam);
+	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene);
 	void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions);
 	void DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions);
 	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);
