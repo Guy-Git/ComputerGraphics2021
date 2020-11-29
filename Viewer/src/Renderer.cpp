@@ -529,8 +529,21 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 	glm::mat4 orthoMat = cam.GetOrthographicTrans();
 	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
 	glm::mat4 view = cam.GetCameraLookAt();
-	//glm::mat4 camSelfRotate = glm::rotate(view, cam.getSelfAngle(), glm::vec3(0, 1, 0));
-	//glm::mat4 camSelfRotate = glm::translate(glm::rotate(glm::translate(view, glm::vec3(0, 0, 450.0)), cam.getSelfAngle(), glm::vec3(0, 1, 0)), glm::vec3(0, 0, -450.0));
+	
+	glm::mat4 cameraLocalRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getSelfAngle().x), sin(cam.getSelfAngle().x), 0, 0, -sin(cam.getSelfAngle().x), cos(cam.getSelfAngle().x), 0, 0, 0, 0, 1);
+	glm::mat4 cameraLocalRotationMatY = glm::mat4(cos(cam.getSelfAngle().y), 0, sin(cam.getSelfAngle().y), 0, 0, 1, 0, 0, -sin(cam.getSelfAngle().y), 0, cos(cam.getSelfAngle().y), 0, 0, 0, 0, 1);
+	glm::mat4 cameraLocalRotationMatZ = glm::mat4(cos(cam.getSelfAngle().z), sin(cam.getSelfAngle().z), 0, 0, -sin(cam.getSelfAngle().z), cos(cam.getSelfAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+	
+	glm::mat4 cameraWorldRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getWorldRotatingAngle().x), sin(cam.getWorldRotatingAngle().x), 0, 0, -sin(cam.getWorldRotatingAngle().x), cos(cam.getWorldRotatingAngle().x), 0, 0, 0, 0, 1);
+	glm::mat4 cameraWorldRotationMatY = glm::mat4(cos(cam.getWorldRotatingAngle().y), 0, sin(cam.getWorldRotatingAngle().y), 0, 0, 1, 0, 0, -sin(cam.getWorldRotatingAngle().y), 0, cos(cam.getWorldRotatingAngle().y), 0, 0, 0, 0, 1);
+	glm::mat4 cameraWorldRotationMatZ = glm::mat4(cos(cam.getWorldRotatingAngle().z), sin(cam.getWorldRotatingAngle().z), 0, 0, -sin(cam.getWorldRotatingAngle().z), cos(cam.getWorldRotatingAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+	glm::mat4 cameraLocalRotate = cameraLocalRotationMatX * cameraLocalRotationMatY * cameraLocalRotationMatZ;
+	glm::mat4 cameraWorldRotate = cameraWorldRotationMatX * cameraWorldRotationMatY * cameraWorldRotationMatZ;
+
+
+	cameraLocalRotate = glm::inverse(cameraLocalRotate);
+	cameraWorldRotate = glm::inverse(cameraWorldRotate);
 
 	float w = 1.0;
 
@@ -538,9 +551,9 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 	glm::vec4 p2 = glm::vec4((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z), w);
 	glm::vec4 p3 = glm::vec4((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z), w);
 
-	p1 = orthoMat * perspecMat * view * transformation * p1;
-	p2 = orthoMat * perspecMat * view * transformation * p2;
-	p3 = orthoMat * perspecMat * view * transformation * p3;
+	p1 = orthoMat * perspecMat * cameraLocalRotate * view * cameraWorldRotate * transformation * p1;
+	p2 = orthoMat * perspecMat * cameraLocalRotate * view * cameraWorldRotate * transformation * p2;
+	p3 = orthoMat * perspecMat * cameraLocalRotate * view * cameraWorldRotate * transformation * p3;
 
 	glm::vec3 p1t = glm::vec3(p1.x / p1.w, p1.y / p1.w, p1.z / p1.w);
 	glm::vec3 p2t = glm::vec3(p2.x / p2.w, p2.y / p2.w, p2.z / p2.w);
@@ -612,7 +625,21 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const
 	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
 	glm::mat4 view = cam.GetCameraLookAt();
 
-	transformation = orthoMat * perspecMat * view * transformation;
+	glm::mat4 cameraLocalRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getSelfAngle().x), sin(cam.getSelfAngle().x), 0, 0, -sin(cam.getSelfAngle().x), cos(cam.getSelfAngle().x), 0, 0, 0, 0, 1);
+	glm::mat4 cameraLocalRotationMatY = glm::mat4(cos(cam.getSelfAngle().y), 0, sin(cam.getSelfAngle().y), 0, 0, 1, 0, 0, -sin(cam.getSelfAngle().y), 0, cos(cam.getSelfAngle().y), 0, 0, 0, 0, 1);
+	glm::mat4 cameraLocalRotationMatZ = glm::mat4(cos(cam.getSelfAngle().z), sin(cam.getSelfAngle().z), 0, 0, -sin(cam.getSelfAngle().z), cos(cam.getSelfAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+	
+	glm::mat4 cameraWorldRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getWorldRotatingAngle().x), sin(cam.getWorldRotatingAngle().x), 0, 0, -sin(cam.getWorldRotatingAngle().x), cos(cam.getWorldRotatingAngle().x), 0, 0, 0, 0, 1);
+	glm::mat4 cameraWorldRotationMatY = glm::mat4(cos(cam.getWorldRotatingAngle().y), 0, sin(cam.getWorldRotatingAngle().y), 0, 0, 1, 0, 0, -sin(cam.getWorldRotatingAngle().y), 0, cos(cam.getWorldRotatingAngle().y), 0, 0, 0, 0, 1);
+	glm::mat4 cameraWorldRotationMatZ = glm::mat4(cos(cam.getWorldRotatingAngle().z), sin(cam.getWorldRotatingAngle().z), 0, 0, -sin(cam.getWorldRotatingAngle().z), cos(cam.getWorldRotatingAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+	glm::mat4 cameraLocalRotate = cameraLocalRotationMatX * cameraLocalRotationMatY * cameraLocalRotationMatZ;
+	glm::mat4 cameraWorldRotate = cameraWorldRotationMatX * cameraWorldRotationMatY * cameraWorldRotationMatZ;
+
+	cameraLocalRotate = glm::inverse(cameraLocalRotate);
+	cameraWorldRotate = glm::inverse(cameraWorldRotate);
+
+	transformation = orthoMat * perspecMat * cameraLocalRotate * view * cameraWorldRotate * transformation;
 
 	int x0 = scene.GetWidth()/2;
 	int y0 = scene.GetHeight()/2;

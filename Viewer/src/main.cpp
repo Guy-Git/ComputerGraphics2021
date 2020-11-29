@@ -23,13 +23,24 @@ bool show_another_window = false;
 bool show_local_rotation_window = false;
 bool show_local_scale_window = false;
 bool show_local_translation_window = false;
+
+bool camera_local_rotation_window = false;
+bool camera_local_translation_window = false;
+
 static float scale_factor_local = 1.0;
 static glm::vec3 rotation_angle_local = glm::vec3(0);
 static glm::vec3 transformation_local = glm::vec3(0);
 
+static glm::vec3 camera_rotation_angle_local = glm::vec3(0);
+static glm::vec3 camera_transformation_local = glm::vec3(0);
+static glm::vec3 camera_rotation_world = glm::vec3(0);
+
+
 bool show_global_rotation_window = false;
 bool show_global_scale_window = false;
 bool show_global_translation_window = false;
+bool camera_global_rotation_window = false;
+
 static float scale_factor_global = 1.0;
 static glm::vec3 rotation_angle_global = glm::vec3(0);
 static glm::vec3 transformation_global = glm::vec3(0);
@@ -59,16 +70,11 @@ static float near_param = -0.1;
 static float far_param = -50.0;
 static float fov = 45.0;
 
+static float cameraX = 0;
+static float cameraY = 0;
 static float cameraZ = 450.0;
-static float cameraX = 0.0;
-static float cameraY = 0.0;
 
-
-static float orthoZoom = 3.0;
-
-static float rotateCameraY = 0;
-//static float windowHeight = 900.0;
-//static float windowWidth = 1500.0;
+static float orthoZoom = 0.0;
 
 float lastX = 750, lastY = 450;
 bool firstMouse = true;
@@ -97,6 +103,8 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
 void SetNormalsAndBoundingBox(const Scene& scene);
 bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
+void CameraWindowsLocal(Scene& scene);
+void CameraWindowsWorld(Scene& scene);
 
 /**
  * Function implementation
@@ -234,16 +242,16 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed/6.0f;
+		cameraEyeBuffer -= glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed / 6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed/6.0f;
+		cameraEyeBuffer += glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed / 6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed/6.0f;
+		cameraEyeBuffer -= glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed / 6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed/6.0f;
+		cameraEyeBuffer += glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed / 6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		cameraEyeBuffer += glm::normalize(glm::cross(cameraAtBuffer, cameraUpBuffer)) * cameraSpeed;
@@ -265,6 +273,8 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	cameraX = cameraEyeBuffer.x;
 	cameraY = cameraEyeBuffer.y;
 	cameraZ = cameraEyeBuffer.z;
+
+	scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
 
 	renderer.SetViewport(scene.GetHeight(), scene.GetWidth());
 	renderer.ClearColorBuffer(clear_color);
@@ -329,7 +339,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			}
 		}
 
-		if (ImGui::BeginMenu("Local Trans."))
+		if (ImGui::BeginMenu("Model Local Trans."))
 		{
 			if (ImGui::MenuItem("Translation"))
 			{
@@ -349,7 +359,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("World Trans."))
+		if (ImGui::BeginMenu("Model World Trans."))
 		{
 			if (ImGui::MenuItem("Translation"))
 			{
@@ -365,14 +375,41 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			{
 				show_global_scale_window = true;
 			}
+
 			ImGui::EndMenu();
 		}
+
+		if (ImGui::BeginMenu("Camera Local Trans."))
+		{
+			if (ImGui::MenuItem("Rotate"))
+			{
+				camera_local_rotation_window = true;
+			}
+
+			if (ImGui::MenuItem("Translate"))
+			{
+				camera_local_translation_window = true;
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Camera World Trans."))
+		{
+			if (ImGui::MenuItem("Rotate"))
+			{
+				camera_global_rotation_window = true;
+			}
+
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
 	}
 
 	// camera selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, scene.GetHeight() - 250));
-	ImGui::SetNextWindowSize(ImVec2(330, 250));
+	ImGui::SetNextWindowPos(ImVec2(0, scene.GetHeight() - 200));
+	ImGui::SetNextWindowSize(ImVec2(330, 200));
 
 	ImGui::Begin("Camera selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
@@ -398,6 +435,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		cameraY = 0;
 		cameraZ = 450.0;
 		fov = 45.0;
+
 		//zoom
 
 	}
@@ -407,13 +445,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	if (view_selection == 1)
 		ImGui::SliderFloat("Fovy", &fov, 0.1, 100);
 	else
-		ImGui::SliderFloat("Zoom", &orthoZoom, 1, 5);
-
-	ImGui::SliderFloat("Camera X", &cameraX, -1500.0, 1500.0);
-	ImGui::SliderFloat("Camera Y", &cameraY, -1500.0, 1500.0);
-	ImGui::SliderFloat("Camera Z", &cameraZ, -1500.0, 1500.0);
-
-	scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
+		ImGui::SliderFloat("Zoom", &orthoZoom, -10, 10);
 
 	ImGui::End();
 
@@ -442,14 +474,9 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	switch (view_selection)
 	{
 	case 0:
-		/*if (right >= 0 && top >= 0)
-		{
-			right += orthoZoom;
-			top += orthoZoom;
-		}*/
 		scene.GetActiveCamera().ResetProjectionsMatrix();
 
-		scene.GetActiveCamera().SetOrthographicTrans(left, right, bottom, top, near_param, far_param);
+		scene.GetActiveCamera().SetOrthographicTrans(left, right + orthoZoom, bottom, top + orthoZoom, near_param, far_param);
 
 		scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
 			scene.GetActiveCamera().GetCameraAt(),
@@ -457,12 +484,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 		break;
 	case 1:
-
-
 		scene.GetActiveCamera().ResetProjectionsMatrix();
-
 		scene.GetActiveCamera().SetPerspectiveTrans(glm::radians(fov), 1, near_param, far_param);
-
 		scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
 			scene.GetActiveCamera().GetCameraAt(),
 			scene.GetActiveCamera().GetCameraUp());
@@ -501,6 +524,10 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	ShowScaleRotateTranslationWindowsGlobal(scene); // all global windows declarations
 
 	SwitchToDifferentModelView(model_selection);
+
+	CameraWindowsLocal(scene);
+
+	CameraWindowsWorld(scene);
 
 	SetNormalsAndBoundingBox(scene);
 
@@ -685,19 +712,19 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::Begin("Local Translation Window", &show_local_translation_window);
 		ImGui::Text("Move model with arrows");
 
-		ImGui::SliderFloat("Move X", &transformation_local.x, -50.0f, 50.0f);
+		ImGui::SliderFloat("Move X", &transformation_local.x, -10.0f, 10.0f);
 		if (transformation_local.x != 0)
 		{
 			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 
-		ImGui::SliderFloat("Move Y", &transformation_local.y, -50.0f, 50.0f);
+		ImGui::SliderFloat("Move Y", &transformation_local.y, -10.0f, 10.0f);
 		if (transformation_local.y != 0)
 		{
 			scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 
-		ImGui::SliderFloat("Move Z", &transformation_local.z, -50.0f, 50.0f);
+		ImGui::SliderFloat("Move Z", &transformation_local.z, -10.0f, 10.0f);
 		if (transformation_local.z != 0)
 		{
 			scene.GetActiveModel().SetNewPosition(transformation_local);
@@ -777,27 +804,130 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 		ImGui::Begin("Global Translation Window", &show_global_translation_window);
 		ImGui::Text("Move model with arrows");
 
-		ImGui::SliderFloat("Move X", &transformation_global.x, -50.0f, 50.0f);
+		ImGui::SliderFloat("Move X", &transformation_global.x, -200.0f, 200.0f);
 		if (transformation_global.x != 0)
 		{
-			scene.GetActiveModel().SetNewPosition(transformation_global);
+			scene.SetNewPosition(transformation_global);
 		}
 
-		ImGui::SliderFloat("Move Y", &transformation_global.y, -50.0f, 50.0f);
+		ImGui::SliderFloat("Move Y", &transformation_global.y, -200.0f, 200.0f);
 		if (transformation_global.y != 0)
 		{
-			scene.GetActiveModel().SetNewPosition(transformation_global);
+			scene.SetNewPosition(transformation_global);
 		}
 
-		ImGui::SliderFloat("Move Z", &transformation_global.z, -50.0f, 50.0f);
+		ImGui::SliderFloat("Move Z", &transformation_global.z, -200.0f, 200.0f);
 		if (transformation_global.z != 0)
 		{
-			scene.GetActiveModel().SetNewPosition(transformation_global);
+			scene.SetNewPosition(transformation_global);
 		}
 
 		if (ImGui::Button("Close Me")) {
 			show_global_translation_window = false;
 		}
+		ImGui::End();
+	}
+}
+
+void CameraWindowsLocal(Scene& scene)
+{
+	if (camera_local_rotation_window)
+	{
+		ImGui::Begin("Camera Local Rotation", &camera_local_rotation_window);
+
+		if (ImGui::Button("Rotate Left X"))
+		{
+			camera_rotation_angle_local.x += 0.392699082;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right X"))
+		{
+			camera_rotation_angle_local.x -= 0.392699082;
+		}
+
+		if (ImGui::Button("Rotate Left Y"))
+		{
+			camera_rotation_angle_local.y += 0.392699082;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Y"))
+		{
+			camera_rotation_angle_local.y -= 0.392699082;
+		}
+
+		if (ImGui::Button("Rotate Left Z"))
+		{
+			camera_rotation_angle_local.z += 0.392699082;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Z"))
+		{
+			camera_rotation_angle_local.z -= 0.392699082;
+		}
+
+		if (ImGui::Button("Close Me")) 
+		{
+			camera_local_rotation_window = false;
+		}
+
+		scene.GetActiveCamera().setSelfAngle(camera_rotation_angle_local);
+		ImGui::End();
+	}
+
+	if (camera_local_translation_window)
+	{
+		ImGui::Begin("Camera Local Translation", &camera_local_translation_window);
+
+		ImGui::SliderFloat("Camera X", &cameraX, -1500.0, 1500.0);
+		ImGui::SliderFloat("Camera Y", &cameraY, -1500.0, 1500.0);
+		ImGui::SliderFloat("Camera Z", &cameraZ, -1500.0, 1500.0);
+
+		scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
+		ImGui::End();
+	}
+}
+
+void CameraWindowsWorld(Scene& scene)
+{
+	if (camera_global_rotation_window)
+	{
+		ImGui::Begin("Camera World Rotation", &camera_global_rotation_window);
+
+		if (ImGui::Button("Rotate Left X"))
+		{
+			camera_rotation_world.x += 0.392699082;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right X"))
+		{
+			camera_rotation_world.x -= 0.392699082;
+		}
+		if (ImGui::Button("Rotate Left Y"))
+		{
+			camera_rotation_world.y += 0.392699082;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Y"))
+		{
+			camera_rotation_world.y -= 0.392699082;
+		}
+		if (ImGui::Button("Rotate Left Z"))
+		{
+			camera_rotation_world.z += 0.392699082;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate Right Z"))
+		{
+			camera_rotation_world.z -= 0.392699082;
+		}
+		if (ImGui::Button("Close Me")) {
+			show_global_rotation_window = false;
+		}
+
+		scene.GetActiveCamera().setWorldRotatingAngle(camera_rotation_world);
 		ImGui::End();
 	}
 }

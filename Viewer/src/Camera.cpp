@@ -5,10 +5,13 @@ Camera::Camera()
 	//orthographic_transformation_ = glm::mat4(1);
 	perspective_transformation_ = glm::mat4(1);
 	view_transformation_ = glm::mat4(1);
+	selfAngle_= glm::vec3(0);
+	worldRotatingAngle_ = glm::vec3(0);
 
 	cameraEye_ = glm::vec3(0.0f, 0.0f, 450.0f);
 	cameraAt_ = glm::vec3(0.0f, 0.0f, 0.0f);
 	cameraUp_ = glm::vec3(0.0f, 1.0f, 0.0f);
+
 }
 
 Camera::~Camera()
@@ -98,14 +101,26 @@ void Camera::ResetCameraPosition()
 	cameraEye_ = glm::vec3(0.0f, 0.0f, 450.0f);
 	cameraAt_ = glm::vec3(0.0f, 0.0f, 0.0f);
 	cameraUp_ = glm::vec3(0.0f, 1.0f, 0.0f);
+	selfAngle_ = glm::vec3(0);
+	worldRotatingAngle_ = glm::vec3(0);
 }
 
-void Camera::setSelfAngle(float newAngle)
+void Camera::setSelfAngle(glm::vec3 newAngle)
 {
 	selfAngle_ = newAngle;
 }
 
-float Camera::getSelfAngle()
+glm::vec3 Camera::getSelfAngle()
 {
-	return glm::radians(selfAngle_);
+	return selfAngle_;
+}
+
+void Camera::setWorldRotatingAngle(glm::vec3 newAngle)
+{
+	worldRotatingAngle_ = newAngle;
+}
+
+glm::vec3 Camera::getWorldRotatingAngle()
+{
+	return worldRotatingAngle_;
 }

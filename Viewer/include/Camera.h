@@ -31,9 +31,11 @@ public:
 
 	void Camera::ResetCameraPosition();
 
-	void Camera::setSelfAngle(float newAngle);
+	void Camera::setSelfAngle(glm::vec3 newAngle);
+	glm::vec3 Camera::getSelfAngle();
 
-	float Camera::getSelfAngle();
+	void Camera::setWorldRotatingAngle(glm::vec3 newAngle);
+	glm::vec3 Camera::getWorldRotatingAngle();
 
 
 private:
@@ -47,5 +49,7 @@ private:
 	glm::vec3 cameraAt_;
 	glm::vec3 cameraUp_;
 
-	float selfAngle_;
+	glm::vec3 selfAngle_;
+	glm::vec3 worldRotatingAngle_;
+
 };
