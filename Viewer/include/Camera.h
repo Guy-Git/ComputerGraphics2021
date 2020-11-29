@@ -31,6 +31,10 @@ public:
 
 	void Camera::ResetCameraPosition();
 
+	void Camera::setSelfAngle(float newAngle);
+
+	float Camera::getSelfAngle();
+
 
 private:
 	glm::mat4x4 view_transformation_;
@@ -42,4 +46,6 @@ private:
 	glm::vec3 cameraEye_;
 	glm::vec3 cameraAt_;
 	glm::vec3 cameraUp_;
+
+	float selfAngle_;
 };

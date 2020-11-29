@@ -361,52 +361,55 @@ void Renderer::Render(Scene& scene)
 
 	if (scene.GetModelCount() > 0)
 	{
-		MeshModel currentModel = scene.GetActiveModel();
-
-		double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
-		std::vector <glm::vec3> threePoints;
-		std::vector <glm::vec3> threePointsAfterTransformations;
-		glm::mat4 transformationMatrix;
-
-		for (int i = 0; i < currentModel.GetFacesCount(); i++)
+		for (size_t i = 0; i < scene.GetModelCount(); i++)
 		{
-			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
-			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
-			threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
-			FindMaxValues(threePoints);
+			MeshModel currentModel = scene.GetModel(i);
+			double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
+			std::vector <glm::vec3> threePoints;
+			std::vector <glm::vec3> threePointsAfterTransformations;
+			glm::mat4 transformationMatrix;
 
-			transformationMatrix = Transformations(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
-				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
-
-			threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
-
-			DrawTriangle(threePointsAfterTransformations);
-
-			if (currentModel.GetVertexNormalShown())
+			for (int i = 0; i < currentModel.GetFacesCount(); i++)
 			{
-				DrawVertexNormals(threePointsAfterTransformations);
-			}
-			if (currentModel.GetFaceNormalShown())
-			{
-				DrawFaceNormals(threePointsAfterTransformations);
+				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
+				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
+				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
+
+				FindMaxValues(threePoints);
+
+				transformationMatrix = Transformations(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
+					scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+
+				threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
+
+				DrawTriangle(threePointsAfterTransformations);
+
+				if (currentModel.GetVertexNormalShown())
+				{
+					DrawVertexNormals(threePointsAfterTransformations);
+				}
+				if (currentModel.GetFaceNormalShown())
+				{
+					DrawFaceNormals(threePointsAfterTransformations);
+				}
+
+				threePoints.clear();
 			}
 
-			threePoints.clear();
+
+			DrawBoundingBox(currentModel, transformationMatrix, scene, scene.GetActiveCamera());
+
+
+		maxPointXValue = -INFINITY;
+		maxPointYValue = -INFINITY;
+		maxPointZValue = -INFINITY;
+
+		minPointXValue = INFINITY;
+		minPointYValue = INFINITY;
+		minPointZValue = INFINITY;
 		}
-
-
-		DrawBoundingBox(currentModel, transformationMatrix, scene);
-
 	}
-
-	maxPointXValue = -INFINITY;
-	maxPointYValue = -INFINITY;
-	maxPointZValue = -INFINITY;
-
-	minPointXValue = INFINITY;
-	minPointYValue = INFINITY;
-	minPointZValue = INFINITY;
 }
 
 double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
@@ -519,13 +522,15 @@ glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPosition
 
 std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene)
 {
-	int x0 = scene.GetWidth() /2;
+	int x0 = scene.GetWidth() / 2;
 	int y0 = scene.GetHeight() / 2;
 	int z0 = 0;
 
 	glm::mat4 orthoMat = cam.GetOrthographicTrans();
 	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
 	glm::mat4 view = cam.GetCameraLookAt();
+	//glm::mat4 camSelfRotate = glm::rotate(view, cam.getSelfAngle(), glm::vec3(0, 1, 0));
+	//glm::mat4 camSelfRotate = glm::translate(glm::rotate(glm::translate(view, glm::vec3(0, 0, 450.0)), cam.getSelfAngle(), glm::vec3(0, 1, 0)), glm::vec3(0, 0, -450.0));
 
 	float w = 1.0;
 
@@ -601,10 +606,16 @@ glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
 	return normalVector;
 }
 
-void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene)
+void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene, Camera& cam)
 {
-	int x0 = 500;
-	int y0 = 500;
+	glm::mat4 orthoMat = cam.GetOrthographicTrans();
+	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
+	glm::mat4 view = cam.GetCameraLookAt();
+
+	transformation = orthoMat * perspecMat * view * transformation;
+
+	int x0 = scene.GetWidth()/2;
+	int y0 = scene.GetHeight()/2;
 	int z0 = 500;
 
 	glm::vec4 p1 = glm::vec4(maxPointXValue, maxPointYValue, maxPointZValue, 1);
@@ -626,14 +637,14 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const
 	p7 = transformation * p7;
 	p8 = transformation * p8;
 
-	glm::vec3 p1t = glm::vec3(p1.x, p1.y, p1.z);
-	glm::vec3 p2t = glm::vec3(p2.x, p2.y, p2.z);
-	glm::vec3 p3t = glm::vec3(p3.x, p3.y, p3.z);
-	glm::vec3 p4t = glm::vec3(p4.x, p4.y, p4.z);
-	glm::vec3 p5t = glm::vec3(p5.x, p5.y, p5.z);
-	glm::vec3 p6t = glm::vec3(p6.x, p6.y, p6.z);
-	glm::vec3 p7t = glm::vec3(p7.x, p7.y, p7.z);
-	glm::vec3 p8t = glm::vec3(p8.x, p8.y, p8.z);
+	glm::vec3 p1t = glm::vec3(p1.x/p1.w, p1.y/p1.w, p1.z/p1.w);
+	glm::vec3 p2t = glm::vec3(p2.x/p2.w, p2.y/p2.w, p2.z/p2.w);
+	glm::vec3 p3t = glm::vec3(p3.x/p3.w, p3.y/p3.w, p3.z/p3.w);
+	glm::vec3 p4t = glm::vec3(p4.x/p4.w, p4.y/p4.w, p4.z/p4.w);
+	glm::vec3 p5t = glm::vec3(p5.x/p5.w, p5.y/p5.w, p5.z/p5.w);
+	glm::vec3 p6t = glm::vec3(p6.x/p6.w, p6.y/p6.w, p6.z/p6.w);
+	glm::vec3 p7t = glm::vec3(p7.x/p7.w, p7.y/p7.w, p7.z/p7.w);
+	glm::vec3 p8t = glm::vec3(p8.x/p8.w, p8.y/p8.w, p8.z/p8.w);
 
 	p1t.x += x0; p1t.y += y0; p1t.z += z0;
 	p2t.x += x0; p2t.y += y0; p2t.z += z0;

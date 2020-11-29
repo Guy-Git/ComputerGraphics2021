@@ -57,11 +57,16 @@ static float bottom = 0.1;
 static float top = 10.0;
 static float near_param = -0.1;
 static float far_param = -50.0;
-static float fov = 1.0;
+static float fov = 45.0;
 
-static float cameraZ = 1.0;
+static float cameraZ = 450.0;
 static float cameraX = 0.0;
+static float cameraY = 0.0;
 
+
+static float orthoZoom = 3.0;
+
+static float rotateCameraY = 0;
 //static float windowHeight = 900.0;
 //static float windowWidth = 1500.0;
 
@@ -222,23 +227,23 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 		scene.SetWindowSizes(frameBufferHeight, frameBufferWidth);
 	}
 
-	const float cameraSpeed = 5.0f; // adjust accordingly
+	const float cameraSpeed = 100.0f; // adjust accordingly
 	if (cameraAtBuffer.x == 0.0 && cameraAtBuffer.y == 0.0 && cameraAtBuffer.z == 0.0)
 	{
 		cameraAtBuffer = glm::vec3(0.0, 0.0, 0.1);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::vec3(0.0f, 0.0f, 10.0f);
+		cameraEyeBuffer -= glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed/6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::vec3(0.0f, 0.0f, 10.0f);
+		cameraEyeBuffer += glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed/6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::vec3(0.0f, 10.0f, 0.0f);
+		cameraEyeBuffer -= glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed/6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::vec3(0.0f, 10.0f, 0.0f);
+		cameraEyeBuffer += glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed/6.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		cameraEyeBuffer += glm::normalize(glm::cross(cameraAtBuffer, cameraUpBuffer)) * cameraSpeed;
@@ -257,8 +262,9 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 		}
 	}
 
-	scene.GetActiveCamera().SetCameraEye(cameraEyeBuffer);
-	scene.GetActiveCamera().SetCameraAt(cameraAtBuffer);
+	cameraX = cameraEyeBuffer.x;
+	cameraY = cameraEyeBuffer.y;
+	cameraZ = cameraEyeBuffer.z;
 
 	renderer.SetViewport(scene.GetHeight(), scene.GetWidth());
 	renderer.ClearColorBuffer(clear_color);
@@ -365,8 +371,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	// camera selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, scene.GetHeight() - 200));
-	ImGui::SetNextWindowSize(ImVec2(330, 200));
+	ImGui::SetNextWindowPos(ImVec2(0, scene.GetHeight() - 250));
+	ImGui::SetNextWindowSize(ImVec2(330, 250));
 
 	ImGui::Begin("Camera selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
@@ -388,29 +394,30 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	if (ImGui::Button("Reset Camera Position"))
 	{
 		scene.GetActiveCamera().ResetCameraPosition();
+		cameraX = 0;
+		cameraY = 0;
+		cameraZ = 450.0;
+		fov = 45.0;
+		//zoom
+
 	}
 
-	/*ImGui::SliderFloat("Left", &left, 0.1, 20.0);
-	ImGui::SliderFloat("Right", &right, 0.1, 20.0);
-	ImGui::SliderFloat("Bottom", &bottom, 0.1, 20.0);
-	ImGui::SliderFloat("Top", &top, 0.1, 20.0);
-	ImGui::SliderFloat("Near", &near_param, -100.0, 50.0);
-	ImGui::SliderFloat("Far", &far_param, -100.1, 50.0);*/
+	/*ImGui::SliderFloat("Rotate Y:", &rotateCameraY, -180, 180);
+	scene.GetActiveCamera().setSelfAngle(rotateCameraY);*/
+	if (view_selection == 1)
+		ImGui::SliderFloat("Fovy", &fov, 0.1, 100);
+	else
+		ImGui::SliderFloat("Zoom", &orthoZoom, 1, 5);
+
+	ImGui::SliderFloat("Camera X", &cameraX, -1500.0, 1500.0);
+	ImGui::SliderFloat("Camera Y", &cameraY, -1500.0, 1500.0);
+	ImGui::SliderFloat("Camera Z", &cameraZ, -1500.0, 1500.0);
+
+	scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
 
 	ImGui::End();
 
-	/*ImGui::SetNextWindowPos(ImVec2(0, 400));
-	ImGui::SetNextWindowSize(ImVec2(330, 210));
-
-	ImGui::Begin("Camera Properties", &show_model_selection_window, ImGuiWindowFlags_NoMove);
-
-	glm::vec3 cameraEyeBuffer = scene.GetActiveCamera().GetCameraEye();
-
-	ImGui::SliderFloat("Camera X", &cameraEyeBuffer.x, -1500.0, 1500.0);
-	ImGui::SliderFloat("Camera Y", &cameraEyeBuffer.y, -1500.0, 1500.0);
-	ImGui::SliderFloat("Camera Z", &cameraEyeBuffer.z, -1500.0, 1500.0);
-
-	scene.GetActiveCamera().SetCameraEye(cameraEyeBuffer);
+	/*
 
 	glm::vec3 cameraAtBuffer = scene.GetActiveCamera().GetCameraAt();
 
@@ -435,6 +442,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	switch (view_selection)
 	{
 	case 0:
+		/*if (right >= 0 && top >= 0)
+		{
+			right += orthoZoom;
+			top += orthoZoom;
+		}*/
 		scene.GetActiveCamera().ResetProjectionsMatrix();
 
 		scene.GetActiveCamera().SetOrthographicTrans(left, right, bottom, top, near_param, far_param);
@@ -445,9 +457,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 		break;
 	case 1:
+
+
 		scene.GetActiveCamera().ResetProjectionsMatrix();
 
-		scene.GetActiveCamera().SetPerspectiveTrans(fov, (scene.GetHeight() / scene.GetWidth()), near_param, far_param);
+		scene.GetActiveCamera().SetPerspectiveTrans(glm::radians(fov), 1, near_param, far_param);
 
 		scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
 			scene.GetActiveCamera().GetCameraAt(),
@@ -472,16 +486,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	{
 		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(1).GetModelName().c_str());
 	}
-	ImGui::RadioButton("Model #3", &model_selection, 2);
-	if (scene.GetModelCount() > 2)
-	{
-		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(2).GetModelName().c_str());
-	}
-	ImGui::RadioButton("Model #4", &model_selection, 3);
-	if (scene.GetModelCount() > 3)
-	{
-		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(3).GetModelName().c_str());
-	}
 	if (ImGui::Button("Reset Current Model"))
 	{
 		ResetParametersValue(scene);
@@ -503,64 +507,16 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	if (show_model_1_window)
 	{
 		if (scene.GetModelCount() > 0)
-		{
-			show_warning_window = false;
 			scene.SetActiveModelIndex(model_selection);
-		}
-		else {
-			show_warning_window = true;
-		}
 	}
 
 	if (show_model_2_window)
 	{
 		if (scene.GetModelCount() > 1)
-		{
-			show_warning_window = false;
 			scene.SetActiveModelIndex(model_selection);
-		}
-		else {
-			show_warning_window = true;
-		}
-	}
-
-	if (show_model_3_window)
-	{
-		if (scene.GetModelCount() > 2)
-		{
-			show_warning_window = false;
-			scene.SetActiveModelIndex(model_selection);
-		}
-		else {
-			show_warning_window = true;
-		}
-	}
-
-	if (show_model_4_window)
-	{
-		if (scene.GetModelCount() > 3)
-		{
-			show_warning_window = false;
-			scene.SetActiveModelIndex(model_selection);
-		}
-		else {
-			show_warning_window = true;
-		}
 	}
 
 	SetParametersValueChangingModels(scene);
-
-
-	if (show_warning_window)
-	{
-		ImGui::SetNextWindowPos(ImVec2(scene.GetHeight() / 2, scene.GetWidth() / 2));
-		ImGui::SetNextWindowSize(ImVec2(250, 100));
-
-		ImGui::Begin("Warning!", &show_warning_window);
-		ImGui::Text("Model not loaded to this selection \nPlease open model!");
-
-		ImGui::End();
-	}
 }
 
 void ChangeCameraSelection(Scene& scene)
