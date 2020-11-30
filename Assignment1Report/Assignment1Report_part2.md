@@ -5740,19 +5740,22 @@ Also, we moved the coordinates (translation) from (0,0,0) to (x_0 + x, y_0 + y, 
 We tried to position the Teapot in the middle of the window.
 
 # 3. Teapot mesh screenshot   
-![Alt text](./teapot_mesh.jpeg)   
+<img src=./teapot_mesh.jpeg width=60%>  
 
 # 4. GUI items     
-### Open menu for transformations  
-![Alt text](./menu.png)    
+### Open menu for transformations   
+<img src=./menu.png width=60%>  
+
 ### Some transformations...   
-![Alt text](./local_trans.png)  
-![Alt text](./local_scale.png)   
+<img src=./local_trans.png width=60%>  
+<img src=./local_scale.png width=60%>  
 We created 6 (3 for world trasformation and 3 for model transformation) matrixes that representes Scale, Rotation and Transaltion  
 then we multiplied each point of the model like that: T = S_w * R_w * T_w * S_m * R_m * T_m * V_p.  
 
 # 5. Tranformation Example GIF (About a minute ;) ):  
-![Alt text](./Transformation_Example.gif)   
+<img src=./Transformation_Example.jpg width=60%>  
 
 # 6. Open models and switch between them:   
 ![Alt text](./open_model.gif)  
+<img src=./switchmodel1.jpg width=60%>  
+<img src=./switchmodel2.jpg width=60%>  
