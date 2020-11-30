@@ -28,9 +28,9 @@ T1_world x T2_model
 <img src=./5b.jpeg width=60%> 
 
 # 6. Compare camera rotations
-- ### Rotation of the camera in the camera frame around the y (up) axis:   
+- Rotation of the camera in the camera frame around the y (up) axis:   
 <img src=./6a.jpeg width=60%> 
-- ### Rotation of the camera in the world frame around the y (up) axis:   
+- Rotation of the camera in the world frame around the y (up) axis:   
 <img src=./6b.jpeg width=60%> 
   
 # 7. Camera position is at (300, 300, 300)  

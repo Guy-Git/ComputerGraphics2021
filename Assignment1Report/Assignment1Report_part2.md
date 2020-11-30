@@ -5752,10 +5752,9 @@ We tried to position the Teapot in the middle of the window.
 We created 6 (3 for world trasformation and 3 for model transformation) matrixes that representes Scale, Rotation and Transaltion  
 then we multiplied each point of the model like that: T = S_w * R_w * T_w * S_m * R_m * T_m * V_p.  
 
-# 5. Tranformation Example GIF (About a minute ;) ):  
+# 5. Tranformation Example:
 <img src=./Transformation_Example.jpg width=60%>  
 
 # 6. Open models and switch between them:   
-![Alt text](./open_model.gif)  
 <img src=./switchmodel1.jpg width=60%>  
 <img src=./switchmodel2.jpg width=60%>  
