@@ -5753,8 +5753,8 @@ We created 6 (3 for world trasformation and 3 for model transformation) matrixes
 then we multiplied each point of the model like that: T = S_w * R_w * T_w * S_m * R_m * T_m * V_p.  
 
 # 5. Tranformation Example:
-<img src=./Transformation_Example.png width=60%>  
+<img src=./Transformation_Example.jpg width=60%>  
 
 # 6. Open models and switch between them:   
-<img src=./switchmodel1.png width=60%>  
-<img src=./switchmodel2.png width=60%>  
+<img src=./switchmodel1.jpg width=60%>  
+<img src=./switchmodel2.jpg width=60%>  
