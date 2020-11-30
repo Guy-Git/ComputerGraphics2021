@@ -5754,7 +5754,9 @@ then we multiplied each point of the model like that: T = S_w * R_w * T_w * S_m 
 
 # 5. Tranformation Example:
 <img src=./Transformation_Example.jpg width=60%>  
+<img src=./Transformation_Example.gif width=60%>  
 
 # 6. Open models and switch between them:   
 <img src=./switchmodel1.jpg width=60%>  
-<img src=./switchmodel2.jpg width=60%>  
+<img src=./switchmodel2.jpg width=60%>   
+<img src=./open_model.gif width=60%>   
