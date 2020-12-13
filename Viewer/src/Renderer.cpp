@@ -18,6 +18,8 @@ double minPointXValue = INFINITY;
 double minPointYValue = INFINITY;
 double minPointZValue = INFINITY;
 
+static float zBuff[1500][900] = { INFINITY };
+
 Renderer::Renderer(int viewport_width, int viewport_height) :
 	viewport_width_(viewport_width),
 	viewport_height_(viewport_height)
@@ -252,7 +254,7 @@ void Renderer::InitOpenGLRendering()
 	// Creates a unique identifier for a buffer.
 	glGenBuffers(1, &buffer);
 
-	// (-1, 1)____(1, 1)
+	// (-1, 1)__(1, 1)
 	//	     |\  |
 	//	     | \ | <--- The exture is drawn over two triangles that stretch over the screen.
 	//	     |__\|
@@ -383,7 +385,7 @@ void Renderer::Render(Scene& scene)
 
 				threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
-				DrawTriangle(threePointsAfterTransformations);
+				DrawTriangle(threePointsAfterTransformations, i, currentModel);
 
 				if (currentModel.GetVertexNormalShown())
 				{
@@ -401,13 +403,13 @@ void Renderer::Render(Scene& scene)
 			DrawBoundingBox(currentModel, transformationMatrix, scene, scene.GetActiveCamera());
 
 
-		maxPointXValue = -INFINITY;
-		maxPointYValue = -INFINITY;
-		maxPointZValue = -INFINITY;
+			maxPointXValue = -INFINITY;
+			maxPointYValue = -INFINITY;
+			maxPointZValue = -INFINITY;
 
-		minPointXValue = INFINITY;
-		minPointYValue = INFINITY;
-		minPointZValue = INFINITY;
+			minPointXValue = INFINITY;
+			minPointYValue = INFINITY;
+			minPointZValue = INFINITY;
 		}
 	}
 }
@@ -493,11 +495,85 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel)
 {
-	DrawLine(vertexPositions.at(0), vertexPositions.at(1), glm::vec3(1, 1, 1));
-	DrawLine(vertexPositions.at(1), vertexPositions.at(2), glm::vec3(1, 1, 1));
-	DrawLine(vertexPositions.at(0), vertexPositions.at(2), glm::vec3(1, 1, 1));
+	//DrawLine(vertexPositions.at(0), vertexPositions.at(1), glm::vec3(1, 1, 1));
+	//DrawLine(vertexPositions.at(1), vertexPositions.at(2), glm::vec3(1, 1, 1));
+	//DrawLine(vertexPositions.at(0), vertexPositions.at(2), glm::vec3(1, 1, 1));
+
+	glm::vec3 v1 = vertexPositions.at(0);
+	glm::vec3 v2 = vertexPositions.at(1);
+	glm::vec3 v3 = vertexPositions.at(2);
+
+	float a1 = v2.x - v1.x;
+	float b1 = v2.y - v1.y;
+	float c1 = v2.z - v1.z;
+	float a2 = v3.x - v1.x;
+	float b2 = v3.y - v1.y;
+	float c2 = v3.z - v1.z;
+	float a = b1 * c2 - b2 * c1;
+	float b = a2 * c1 - a1 * c2;
+	float c = a1 * b2 - b1 * a2;
+	float d = (-a * v1.x - b * v1.y - c * v1.z);
+	float z;
+
+	//if() NOT Z-Buffer
+	int maxX = fmax(v1.x, fmax(v2.x, v3.x));
+	int minX = fmin(v1.x, fmin(v2.x, v3.x));
+	int maxY = fmax(v1.y, fmax(v2.y, v3.y));
+	int minY = fmin(v1.y, fmin(v2.y, v3.y));
+
+	glm::vec2 vs1 = glm::vec2(v2.x - v1.x, v2.y - v1.y);
+	glm::vec2 vs2 = glm::vec2(v3.x - v1.x, v3.y - v1.y);
+
+	int randomNum = 1 + (rand() % 9);
+	float color0 = float((faceID + randomNum) % 10) / 10.0;
+	randomNum = 1 + (rand() % 9);
+	float color1 = float((faceID + randomNum) % 10) / 10.0;
+	randomNum = 1 + (rand() % 9);
+	float color2 = float((faceID + randomNum) % 10) / 10.0;
+
+	/*
+	for (int x = minX; x <= maxX; x++)
+	{
+		for (int y = minY; y <= maxY; y++)
+		{
+			glm::vec2 q = glm::vec2(x - v1.x, y - v1.y);
+
+			float s = (q.x*vs2.y - q.y*vs2.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+
+			if ((s >= 0) && (t >= 0) && (s + t <= 1))
+			{ /* inside triangle
+				PutPixel(x, y, glm::vec3(color0, color1, color2));
+			}
+		}
+	}
+	*/
+
+	//else YES Z-Buffer
+
+	for (int x = minX; x <= maxX; x++)
+	{
+		for (int y = minY; y <= maxY; y++)
+		{
+			glm::vec2 q = glm::vec2(x - v1.x, y - v1.y);
+			float s = (q.x * vs2.y - q.y * vs2.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			if ((s >= 0) && (t >= 0) && (s + t <= 1))
+			{ /* inside triangle */
+				z = -(a * x + b * y + d) / c;
+				if (x > 0 && y > 0)
+				{
+					if (z < zBuff[x][y])
+					{
+						zBuff[x][y] = z;
+						PutPixel(x, y, glm::vec3(color0, color1, color2));
+					}
+				}
+			}
+		}
+	}
 }
 
 glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
@@ -529,11 +605,11 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 	glm::mat4 orthoMat = cam.GetOrthographicTrans();
 	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
 	glm::mat4 view = cam.GetCameraLookAt();
-	
+
 	glm::mat4 cameraLocalRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getSelfAngle().x), sin(cam.getSelfAngle().x), 0, 0, -sin(cam.getSelfAngle().x), cos(cam.getSelfAngle().x), 0, 0, 0, 0, 1);
 	glm::mat4 cameraLocalRotationMatY = glm::mat4(cos(cam.getSelfAngle().y), 0, sin(cam.getSelfAngle().y), 0, 0, 1, 0, 0, -sin(cam.getSelfAngle().y), 0, cos(cam.getSelfAngle().y), 0, 0, 0, 0, 1);
 	glm::mat4 cameraLocalRotationMatZ = glm::mat4(cos(cam.getSelfAngle().z), sin(cam.getSelfAngle().z), 0, 0, -sin(cam.getSelfAngle().z), cos(cam.getSelfAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-	
+
 	glm::mat4 cameraWorldRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getWorldRotatingAngle().x), sin(cam.getWorldRotatingAngle().x), 0, 0, -sin(cam.getWorldRotatingAngle().x), cos(cam.getWorldRotatingAngle().x), 0, 0, 0, 0, 1);
 	glm::mat4 cameraWorldRotationMatY = glm::mat4(cos(cam.getWorldRotatingAngle().y), 0, sin(cam.getWorldRotatingAngle().y), 0, 0, 1, 0, 0, -sin(cam.getWorldRotatingAngle().y), 0, cos(cam.getWorldRotatingAngle().y), 0, 0, 0, 0, 1);
 	glm::mat4 cameraWorldRotationMatZ = glm::mat4(cos(cam.getWorldRotatingAngle().z), sin(cam.getWorldRotatingAngle().z), 0, 0, -sin(cam.getWorldRotatingAngle().z), cos(cam.getWorldRotatingAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -628,7 +704,7 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const
 	glm::mat4 cameraLocalRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getSelfAngle().x), sin(cam.getSelfAngle().x), 0, 0, -sin(cam.getSelfAngle().x), cos(cam.getSelfAngle().x), 0, 0, 0, 0, 1);
 	glm::mat4 cameraLocalRotationMatY = glm::mat4(cos(cam.getSelfAngle().y), 0, sin(cam.getSelfAngle().y), 0, 0, 1, 0, 0, -sin(cam.getSelfAngle().y), 0, cos(cam.getSelfAngle().y), 0, 0, 0, 0, 1);
 	glm::mat4 cameraLocalRotationMatZ = glm::mat4(cos(cam.getSelfAngle().z), sin(cam.getSelfAngle().z), 0, 0, -sin(cam.getSelfAngle().z), cos(cam.getSelfAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-	
+
 	glm::mat4 cameraWorldRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getWorldRotatingAngle().x), sin(cam.getWorldRotatingAngle().x), 0, 0, -sin(cam.getWorldRotatingAngle().x), cos(cam.getWorldRotatingAngle().x), 0, 0, 0, 0, 1);
 	glm::mat4 cameraWorldRotationMatY = glm::mat4(cos(cam.getWorldRotatingAngle().y), 0, sin(cam.getWorldRotatingAngle().y), 0, 0, 1, 0, 0, -sin(cam.getWorldRotatingAngle().y), 0, cos(cam.getWorldRotatingAngle().y), 0, 0, 0, 0, 1);
 	glm::mat4 cameraWorldRotationMatZ = glm::mat4(cos(cam.getWorldRotatingAngle().z), sin(cam.getWorldRotatingAngle().z), 0, 0, -sin(cam.getWorldRotatingAngle().z), cos(cam.getWorldRotatingAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -641,8 +717,8 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const
 
 	transformation = orthoMat * perspecMat * cameraLocalRotate * view * cameraWorldRotate * transformation;
 
-	int x0 = scene.GetWidth()/2;
-	int y0 = scene.GetHeight()/2;
+	int x0 = scene.GetWidth() / 2;
+	int y0 = scene.GetHeight() / 2;
 	int z0 = 500;
 
 	glm::vec4 p1 = glm::vec4(maxPointXValue, maxPointYValue, maxPointZValue, 1);
@@ -664,14 +740,14 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const
 	p7 = transformation * p7;
 	p8 = transformation * p8;
 
-	glm::vec3 p1t = glm::vec3(p1.x/p1.w, p1.y/p1.w, p1.z/p1.w);
-	glm::vec3 p2t = glm::vec3(p2.x/p2.w, p2.y/p2.w, p2.z/p2.w);
-	glm::vec3 p3t = glm::vec3(p3.x/p3.w, p3.y/p3.w, p3.z/p3.w);
-	glm::vec3 p4t = glm::vec3(p4.x/p4.w, p4.y/p4.w, p4.z/p4.w);
-	glm::vec3 p5t = glm::vec3(p5.x/p5.w, p5.y/p5.w, p5.z/p5.w);
-	glm::vec3 p6t = glm::vec3(p6.x/p6.w, p6.y/p6.w, p6.z/p6.w);
-	glm::vec3 p7t = glm::vec3(p7.x/p7.w, p7.y/p7.w, p7.z/p7.w);
-	glm::vec3 p8t = glm::vec3(p8.x/p8.w, p8.y/p8.w, p8.z/p8.w);
+	glm::vec3 p1t = glm::vec3(p1.x / p1.w, p1.y / p1.w, p1.z / p1.w);
+	glm::vec3 p2t = glm::vec3(p2.x / p2.w, p2.y / p2.w, p2.z / p2.w);
+	glm::vec3 p3t = glm::vec3(p3.x / p3.w, p3.y / p3.w, p3.z / p3.w);
+	glm::vec3 p4t = glm::vec3(p4.x / p4.w, p4.y / p4.w, p4.z / p4.w);
+	glm::vec3 p5t = glm::vec3(p5.x / p5.w, p5.y / p5.w, p5.z / p5.w);
+	glm::vec3 p6t = glm::vec3(p6.x / p6.w, p6.y / p6.w, p6.z / p6.w);
+	glm::vec3 p7t = glm::vec3(p7.x / p7.w, p7.y / p7.w, p7.z / p7.w);
+	glm::vec3 p8t = glm::vec3(p8.x / p8.w, p8.y / p8.w, p8.z / p8.w);
 
 	p1t.x += x0; p1t.y += y0; p1t.z += z0;
 	p2t.x += x0; p2t.y += y0; p2t.z += z0;
