@@ -18,7 +18,7 @@ double minPointXValue = INFINITY;
 double minPointYValue = INFINITY;
 double minPointZValue = INFINITY;
 
-static float zBuff[1500][900] = { INFINITY };
+float** zBuff;
 
 Renderer::Renderer(int viewport_width, int viewport_height) :
 	viewport_width_(viewport_width),
@@ -176,6 +176,7 @@ void Renderer::DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::v
 		}
 
 	}
+
 	else if (slope < 0)
 	{
 		if (Y1 < Y2)
@@ -361,6 +362,18 @@ void Renderer::Render(Scene& scene)
 
 	DrawLine(glm::ivec2(scene.GetWidth() / 2, scene.GetHeight()), glm::ivec2(scene.GetWidth() / 2, 0), glm::vec3(0, 0, 0)); // Y axis
 
+	//Creation
+	zBuff = new float* [scene.GetWidth()]; // Rows
+
+	for (int i = 0; i < scene.GetWidth(); i++)
+	{
+		zBuff[i] = new float[scene.GetHeight()]; // Columns
+	}
+
+	for (int i = 0; i < scene.GetWidth(); i++)
+		for (int j = 0; j < scene.GetHeight(); j++)
+			zBuff[i][j] = -INFINITY;
+
 	if (scene.GetModelCount() > 0)
 	{
 		for (size_t i = 0; i < scene.GetModelCount(); i++)
@@ -385,7 +398,7 @@ void Renderer::Render(Scene& scene)
 
 				threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
-				DrawTriangle(threePointsAfterTransformations, i, currentModel);
+				DrawTriangle(threePointsAfterTransformations, i, currentModel, scene);
 
 				if (currentModel.GetVertexNormalShown())
 				{
@@ -412,6 +425,12 @@ void Renderer::Render(Scene& scene)
 			minPointZValue = INFINITY;
 		}
 	}
+
+	for (int i = 0; i < scene.GetHeight(); i++)
+	{
+		delete[] zBuff[i]; // Delete columns
+	}
+	delete[] zBuff; // Delete Rows
 }
 
 double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
@@ -495,11 +514,8 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene)
 {
-	//DrawLine(vertexPositions.at(0), vertexPositions.at(1), glm::vec3(1, 1, 1));
-	//DrawLine(vertexPositions.at(1), vertexPositions.at(2), glm::vec3(1, 1, 1));
-	//DrawLine(vertexPositions.at(0), vertexPositions.at(2), glm::vec3(1, 1, 1));
 
 	glm::vec3 v1 = vertexPositions.at(0);
 	glm::vec3 v2 = vertexPositions.at(1);
@@ -533,8 +549,7 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 	randomNum = 1 + (rand() % 9);
 	float color2 = float((faceID + randomNum) % 10) / 10.0;
 
-	/*
-	for (int x = minX; x <= maxX; x++)
+	/*for (int x = minX; x <= maxX; x++)
 	{
 		for (int y = minY; y <= maxY; y++)
 		{
@@ -544,15 +559,15 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
 
 			if ((s >= 0) && (t >= 0) && (s + t <= 1))
-			{ /* inside triangle
+			{ 
 				PutPixel(x, y, glm::vec3(color0, color1, color2));
 			}
 		}
 	}
-	*/
-
+	
+	
 	//else YES Z-Buffer
-
+	*/
 	for (int x = minX; x <= maxX; x++)
 	{
 		for (int y = minY; y <= maxY; y++)
@@ -561,11 +576,11 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 			float s = (q.x * vs2.y - q.y * vs2.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
 			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
 			if ((s >= 0) && (t >= 0) && (s + t <= 1))
-			{ /* inside triangle */
+			{
 				z = -(a * x + b * y + d) / c;
-				if (x > 0 && y > 0)
+				if (x > 0 && y > 0 && y < scene.GetHeight() && x < scene.GetWidth())
 				{
-					if (z < zBuff[x][y])
+					if (z >= zBuff[x][y])
 					{
 						zBuff[x][y] = z;
 						PutPixel(x, y, glm::vec3(color0, color1, color2));
