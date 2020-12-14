@@ -1,6 +1,6 @@
 # 1. Color-Buffer (You can see triangles overlapping):   
 
-<img src=./1_1a.jpeg width=60%>  
+<img src=./1_1a.jpeg width=45%>  
 
 # 2. Z-Buffer Vs Color-Buffer:   
 
