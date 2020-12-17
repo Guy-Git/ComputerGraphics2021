@@ -11,9 +11,16 @@ public:
 	Scene();
 
 	void AddModel(const std::shared_ptr<MeshModel>& mesh_model);
+	void Scene::AddLight(const std::shared_ptr<MeshModel>& mesh_model);
+
 	int GetModelCount() const;
 	MeshModel& GetModel(int index) const;
 	MeshModel& GetActiveModel() const;
+
+	int GetLightCount() const;
+	MeshModel& GetLight(int index) const;
+	MeshModel& GetActiveLight() const;
+	void Scene::SetActiveLightIndex(int index);
 	
 	void Scene::AddCamera(const Camera& camera);
 	int GetCameraCount() const;
@@ -39,10 +46,12 @@ public:
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
+	std::vector<std::shared_ptr<MeshModel>> lights_;
 	std::vector<Camera> cameras_;
 
 	int active_camera_index_;
 	int active_model_index_;
+	int active_light_index_;
 
 	float scaleFactor_;
 	glm::vec3 rotateAngle_;

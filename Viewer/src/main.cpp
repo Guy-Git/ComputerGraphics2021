@@ -27,6 +27,8 @@ bool show_local_translation_window = false;
 bool camera_local_rotation_window = false;
 bool camera_local_translation_window = false;
 
+bool light_translation_window = false;
+
 static float scale_factor_local = 1.0;
 static glm::vec3 rotation_angle_local = glm::vec3(0);
 static glm::vec3 transformation_local = glm::vec3(0);
@@ -54,10 +56,13 @@ bool vertex_normal = false;
 bool face_normal = false;
 bool show_bounding_box = false;
 
+bool rotate_light = false;
+
 bool show_warning_window = false;
 bool show_model_selection_window = false;
 
 static int model_selection = 0;
+static int light_selection = 0;
 static int camera_selection = 0;
 static int view_selection = 1;
 static int last_model_selection = 0;
@@ -73,6 +78,8 @@ static float fov = 45.0;
 static float cameraX = 0;
 static float cameraY = 0;
 static float cameraZ = 450.0;
+
+glm::vec3 light_transformation = glm::vec3(0);
 
 static float orthoZoom = 0.0;
 
@@ -96,15 +103,19 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 void Cleanup(GLFWwindow* window);
 void DrawImguiMenus(ImGuiIO& io, Scene& scene);
 void ChangeCameraSelection(Scene& scene);
+void ChangeLightSelection(Scene& scene);
 void SwitchToDifferentModelView(int modelID);
 void ResetParametersValue(Scene& scene);
+void ResetLightParametersValue(Scene& scene);
 void SetParametersValueChangingModels(Scene& scene);
+void SetParametersValueChangingLights(Scene& scene);
 void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
 void SetNormalsAndBoundingBox(const Scene& scene);
 bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
 void CameraWindowsLocal(Scene& scene);
 void CameraWindowsWorld(Scene& scene);
+void LightWindow(Scene& scene);
 
 /**
  * Function implementation
@@ -325,6 +336,10 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 						model_selection = scene.GetModelCount() - 1;
 
+						scene.GetModel(model_selection).SetColorOfMesh(glm::vec3(0.156, 0.592, 0.976));
+
+						scene.GetModel(model_selection).kindOfModel = 0;
+
 						//Utils::printVerticesAndFace(scene.GetModel(0));
 						free(outPath);
 					}
@@ -401,6 +416,15 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				camera_global_rotation_window = true;
 			}
 
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Light Trans."))
+		{
+			if (ImGui::MenuItem("Translation"))
+			{
+				light_translation_window = true;
+			}
 			ImGui::EndMenu();
 		}
 
@@ -519,6 +543,61 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	ImGui::End();
 
+	// light selection window - position and window flag
+	ImGui::SetNextWindowPos(ImVec2(660, scene.GetHeight() - 200));
+	ImGui::SetNextWindowSize(ImVec2(330, 200));
+
+	ImGui::Begin("Light selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
+
+	ImGui::RadioButton("Light #1", &light_selection, 0);
+	if (scene.GetLightCount() > 0)
+	{
+		ImGui::SameLine(); ImGui::Text("[LIGHT LOADED]");
+	}
+	ImGui::RadioButton("Light #2", &light_selection, 1);
+	if (scene.GetLightCount() > 1)
+	{
+		ImGui::SameLine(); ImGui::Text("[LIGHT LOADED]");
+	}
+	ChangeLightSelection(scene);
+
+	if (ImGui::Button("Reset Current light"))
+	{
+		ResetLightParametersValue(scene);
+	}
+
+	if (ImGui::Button("Add Point Of Light"))
+	{
+		scene.AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
+
+		light_selection = scene.GetLightCount() - 1;
+		
+		scene.GetLight(light_selection).SetColorOfMesh(glm::vec3(1, 1, 1));
+
+		scene.GetLight(light_selection).kindOfModel = 1; // point
+	}
+
+	if (ImGui::Button("Add Parallel Light"))
+	{
+		scene.AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
+
+		light_selection = scene.GetLightCount() - 1;
+
+		scene.GetLight(light_selection).SetColorOfMesh(glm::vec3(1, 1, 1));
+
+		scene.GetLight(light_selection).kindOfModel = 2; // parallel
+	}
+
+	ImGui::Checkbox("Rotate Light", &rotate_light);
+
+	if (rotate_light)
+	{
+		ResetParametersValue(scene);
+		scene.GetLight(light_selection).isLightRotating_ = rotate_light;
+	}
+
+	ImGui::End();
+
 	ShowScaleRotateTranslationWindowsLocal(scene); // all local windows declarations
 
 	ShowScaleRotateTranslationWindowsGlobal(scene); // all global windows declarations
@@ -528,6 +607,8 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	CameraWindowsLocal(scene);
 
 	CameraWindowsWorld(scene);
+
+	LightWindow(scene);
 
 	SetNormalsAndBoundingBox(scene);
 
@@ -544,6 +625,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	}
 
 	SetParametersValueChangingModels(scene);
+	SetParametersValueChangingLights(scene);
 }
 
 void ChangeCameraSelection(Scene& scene)
@@ -555,6 +637,18 @@ void ChangeCameraSelection(Scene& scene)
 	if (camera_selection == 1)
 	{
 		scene.SetActiveCameraIndex(1);
+	}
+}
+
+void ChangeLightSelection(Scene& scene)
+{
+	if (light_selection == 0)
+	{
+		scene.SetActiveLightIndex(0);
+	}
+	if (light_selection == 1)
+	{
+		scene.SetActiveLightIndex(1);
 	}
 }
 
@@ -604,6 +698,14 @@ void SetParametersValueChangingModels(Scene& scene)
 	}
 }
 
+void SetParametersValueChangingLights(Scene& scene)
+{
+	if (scene.GetLightCount() > 0)
+	{
+		light_transformation = scene.GetActiveLight().GetPosition();
+	}
+}
+
 void SetNormalsAndBoundingBox(const Scene& scene)
 {
 	if (scene.GetModelCount() > 0)
@@ -640,6 +742,15 @@ void ResetParametersValue(Scene& scene)
 		scene.SetScaleFactor(1);
 		scene.SetRotateAngle(glm::vec3(0, 0, 0));
 		scene.SetNewPosition(glm::vec3(0, 0, 0));
+	}
+}
+
+void ResetLightParametersValue(Scene& scene)
+{
+	if (scene.GetLightCount() > 0)
+	{
+		light_transformation = glm::vec3(0);
+		scene.GetActiveLight().SetNewPosition(light_transformation);
 	}
 }
 
@@ -710,7 +821,6 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 	if (show_local_translation_window)
 	{
 		ImGui::Begin("Local Translation Window", &show_local_translation_window);
-		ImGui::Text("Move model with arrows");
 
 		ImGui::SliderFloat("Move X", &transformation_local.x, -10.0f, 10.0f);
 		if (transformation_local.x != 0)
@@ -802,7 +912,6 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 	if (show_global_translation_window)
 	{
 		ImGui::Begin("Global Translation Window", &show_global_translation_window);
-		ImGui::Text("Move model with arrows");
 
 		ImGui::SliderFloat("Move X", &transformation_global.x, -200.0f, 200.0f);
 		if (transformation_global.x != 0)
@@ -868,7 +977,7 @@ void CameraWindowsLocal(Scene& scene)
 			camera_rotation_angle_local.z -= 0.392699082;
 		}
 
-		if (ImGui::Button("Close Me")) 
+		if (ImGui::Button("Close Me"))
 		{
 			camera_local_rotation_window = false;
 		}
@@ -928,6 +1037,25 @@ void CameraWindowsWorld(Scene& scene)
 		}
 
 		scene.GetActiveCamera().setWorldRotatingAngle(camera_rotation_world);
+		ImGui::End();
+	}
+}
+
+void LightWindow(Scene& scene)
+{
+	if (light_translation_window)
+	{
+		ImGui::Begin("Light Translation", &light_translation_window);
+
+		ImGui::SliderFloat("Light X", &light_transformation.x, -100.0, 100.0);
+		ImGui::SliderFloat("Light Y", &light_transformation.y, -100.0, 100.0);
+		ImGui::SliderFloat("Light Z", &light_transformation.z, -100.0, 100.0);
+
+		scene.GetActiveLight().SetNewPosition(light_transformation);
+
+		if (ImGui::Button("Close Me")) {
+			light_translation_window = false;
+		}
 		ImGui::End();
 	}
 }

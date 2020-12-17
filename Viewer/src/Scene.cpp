@@ -5,6 +5,7 @@
 Scene::Scene() :
 	active_camera_index_(0),
 	active_model_index_(0),
+	active_light_index_(0),
 	scaleFactor_(1),
 	rotateAngle_(0),
 	position_(0),
@@ -18,6 +19,26 @@ Scene::Scene() :
 void Scene::AddModel(const std::shared_ptr<MeshModel>& mesh_model)
 {
 	mesh_models_.push_back(mesh_model);
+}
+
+void Scene::AddLight(const std::shared_ptr<MeshModel>& mesh_model)
+{
+	lights_.push_back(mesh_model);
+}
+
+int Scene::GetLightCount() const
+{
+	return lights_.size();
+}
+
+MeshModel& Scene::GetLight(int index) const
+{
+	return *lights_[index];
+}
+
+MeshModel& Scene::GetActiveLight() const
+{
+	return *lights_[active_light_index_];
 }
 
 int Scene::GetModelCount() const
@@ -58,6 +79,11 @@ Camera& Scene::GetActiveCamera()
 void Scene::SetActiveCameraIndex(int index)
 {
 	active_camera_index_ = index;
+}
+
+void Scene::SetActiveLightIndex(int index)
+{
+	active_light_index_ = index;
 }
 
 int Scene::GetActiveCameraIndex() const

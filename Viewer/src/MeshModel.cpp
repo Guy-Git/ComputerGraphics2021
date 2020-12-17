@@ -10,7 +10,8 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	position_(0),
 	isFaceNormalShown_(false),
 	isVertexNormalShown_(false),
-	isBoundingBoxShown_(false)
+	isBoundingBoxShown_(false),
+	isLightRotating_(false)
 {
 
 }
@@ -118,4 +119,13 @@ void MeshModel::SetMinMax(glm::vec4 minMaxVector)
 glm::vec4 MeshModel::GetMinMax()
 {
 	return minMaxXY_;
+}
+
+void MeshModel::SetColorOfMesh(glm::vec3 colorOfMesh)
+{
+	colorOfMesh_ = colorOfMesh;
+}
+glm::vec3 MeshModel::GetColorOfMesh()
+{
+	return colorOfMesh_;
 }

@@ -6,6 +6,7 @@
 #include "InitShader.h"
 #include <iostream>
 #include <glm/gtx/string_cast.hpp>
+#include <GLFW\glfw3.h>
 
 #define INDEX(width,x,y,c) ((x)+(y)*(width))*3+(c)
 #define Z_INDEX(width,x,y) ((x)+(y)*(width))
@@ -374,6 +375,44 @@ void Renderer::Render(Scene& scene)
 		for (int j = 0; j < scene.GetHeight(); j++)
 			zBuff[i][j] = -INFINITY;
 
+	if (scene.GetLightCount() > 0)
+	{
+		for (int i = 0; i < scene.GetLightCount(); i++)
+		{
+			MeshModel currentLight = scene.GetLight(i);
+			double scaleFactor = abs(100 / FindMaxXorYPointForScaleFactor(currentLight));
+			std::vector <glm::vec3> threePoints;
+			std::vector <glm::vec3> threePointsAfterTransformations;
+			glm::mat4 transformationMatrix;
+
+			for (int i = 0; i < currentLight.GetFacesCount(); i++)
+			{
+				threePoints.push_back(currentLight.GetVertex(currentLight.GetFace(i).GetVertexIndex(0) - 1));
+				threePoints.push_back(currentLight.GetVertex(currentLight.GetFace(i).GetVertexIndex(1) - 1));
+				threePoints.push_back(currentLight.GetVertex(currentLight.GetFace(i).GetVertexIndex(2) - 1));
+
+				FindMaxValues(threePoints);
+
+				transformationMatrix = LightTransformations(threePoints, scaleFactor * currentLight.GetScaleFactor(), currentLight.GetPosition());
+				threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
+
+				DrawTriangle(threePointsAfterTransformations, i, currentLight, scene, scene.GetActiveLight().GetColorOfMesh());
+
+				if (currentLight.isLightRotating_)
+				{
+					double max = FindMaxXorYPointForScaleFactor(scene.GetActiveModel());
+
+					float lightX = 4.0 * sin(glfwGetTime()) + max;
+					float lightY = -0.3f;
+					float lightZ = 3.0 * cos(glfwGetTime()) + max;
+					currentLight.SetNewPosition(glm::vec3(lightX, lightY, lightZ));
+				}
+
+				threePoints.clear();
+			}
+		}
+	}
+
 	if (scene.GetModelCount() > 0)
 	{
 		for (size_t i = 0; i < scene.GetModelCount(); i++)
@@ -398,16 +437,23 @@ void Renderer::Render(Scene& scene)
 
 				threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
-				DrawTriangle(threePointsAfterTransformations, i, currentModel, scene);
+				glm::vec3 faceNormal = glm::vec3(1);
+				glm::vec3 vertexNormal = glm::vec3(1);
 
 				if (currentModel.GetVertexNormalShown())
 				{
-					DrawVertexNormals(threePointsAfterTransformations);
+					DrawVertexNormals(threePointsAfterTransformations, true);
 				}
 				if (currentModel.GetFaceNormalShown())
 				{
 					DrawFaceNormals(threePointsAfterTransformations);
 				}
+
+				vertexNormal = DrawVertexNormals(threePointsAfterTransformations, false);
+
+				glm::vec3 colorOfFace = CalcColorOfFace(scene, vertexNormal, transformationMatrix);
+
+				DrawTriangle(threePointsAfterTransformations, i, currentModel, scene, colorOfFace);
 
 				threePoints.clear();
 			}
@@ -431,6 +477,29 @@ void Renderer::Render(Scene& scene)
 		delete[] zBuff[i]; // Delete columns
 	}
 	delete[] zBuff; // Delete Rows
+}
+
+glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::mat4 transformationMatrix)
+{
+	if (scene.GetActiveCamera().GetPerspectiveTrans() != glm::mat4(1))
+	{
+		normal = glm::mat3((glm::inverse(transformationMatrix))) * normal;
+	}
+
+	if (scene.GetLightCount() > 0)
+	{
+
+		float ambientStrength = 0.1;
+		glm::vec3 ambient = ambientStrength * scene.GetActiveLight().GetColorOfMesh();
+
+		glm::vec3 lightDir = glm::normalize(scene.GetActiveLight().GetPosition() - scene.GetActiveModel().GetPosition());
+		float diff = fmax(glm::dot(normal, lightDir), 0.0);
+		glm::vec3 diffuse = diff * scene.GetActiveLight().GetColorOfMesh();
+		glm::vec3 lightChange = (ambient + diffuse) * scene.GetActiveModel().GetColorOfMesh();
+
+		return lightChange;
+	}
+	return scene.GetActiveModel().GetColorOfMesh();
 }
 
 double Renderer::FindMaxXorYPointForScaleFactor(MeshModel& currentModel)
@@ -514,7 +583,7 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color)
 {
 
 	glm::vec3 v1 = vertexPositions.at(0);
@@ -542,12 +611,12 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 	glm::vec2 vs1 = glm::vec2(v2.x - v1.x, v2.y - v1.y);
 	glm::vec2 vs2 = glm::vec2(v3.x - v1.x, v3.y - v1.y);
 
-	int randomNum = 1 + (rand() % 9);
+	/*int randomNum = 1 + (rand() % 9);
 	float color0 = float((faceID + randomNum) % 10) / 10.0;
 	randomNum = 1 + (rand() % 9);
 	float color1 = float((faceID + randomNum) % 10) / 10.0;
 	randomNum = 1 + (rand() % 9);
-	float color2 = float((faceID + randomNum) % 10) / 10.0;
+	float color2 = float((faceID + randomNum) % 10) / 10.0;*/
 
 	/*for (int x = minX; x <= maxX; x++)
 	{
@@ -559,13 +628,13 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
 
 			if ((s >= 0) && (t >= 0) && (s + t <= 1))
-			{ 
+			{
 				PutPixel(x, y, glm::vec3(color0, color1, color2));
 			}
 		}
 	}
-	
-	
+
+
 	//else YES Z-Buffer
 	*/
 	for (int x = minX; x <= maxX; x++)
@@ -583,7 +652,8 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 					if (z >= zBuff[x][y])
 					{
 						zBuff[x][y] = z;
-						PutPixel(x, y, glm::vec3(color0, color1, color2));
+						PutPixel(x, y, color);
+						//PutPixel(x, y, glm::vec3(0.156, 0.592, 0.976));
 					}
 				}
 			}
@@ -609,6 +679,14 @@ glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPosition
 
 	return worldScaleMat * worldRotationMatX * worldRotationMatY * worldRotationMatZ * worldPositionMat *
 		localScaleMat * localRotationMatX * localRotationMatY * localRotationMatZ * localPositionMat;
+}
+
+glm::mat4 Renderer::LightTransformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localPosition)
+{
+	glm::mat4 localScaleMat = glm::mat4(localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, localScale, 0, 0, 0, 0, 1);
+	glm::mat4 localPositionMat = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, localPosition.x, localPosition.y, localPosition.z, 1);
+
+	return localScaleMat * localPositionMat;
 }
 
 std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene)
@@ -662,9 +740,9 @@ std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& ver
 	return threePoints;
 }
 
-void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions)
+glm::vec3 Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions, bool drawOrReturn)
 {
-	double scaleFactor = 0.1;
+	double scaleFactor = 50;
 
 	glm::vec3 normalVector = CalcNormal(vertexPositions);
 
@@ -676,12 +754,17 @@ void Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions)
 		vertexPositions.at(0).y + scaleFactor * (normalEndPoint.y - vertexPositions.at(0).y),
 		vertexPositions.at(0).z + scaleFactor * (normalEndPoint.z - vertexPositions.at(0).z));
 
-	DrawLine(vertexPositions.at(0), scaleEndPoint, glm::vec3(1, 1, 0));
+	if (drawOrReturn)
+	{
+		DrawLine(vertexPositions.at(0), scaleEndPoint, glm::vec3(1, 1, 0));
+	}
+
+	return normalVector;
 }
 
-void Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
+glm::vec3 Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
 {
-	double scaleFactor = 0.1;
+	double scaleFactor = 50;
 
 	glm::vec3 triangleCentroid = glm::vec3((vertexPositions.at(0).x + vertexPositions.at(1).x + vertexPositions.at(2).x) / 3,
 		(vertexPositions.at(0).y + vertexPositions.at(1).y + vertexPositions.at(2).y) / 3,
@@ -696,6 +779,8 @@ void Renderer::DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions)
 		triangleCentroid.z + scaleFactor * (normalEndPoint.z - triangleCentroid.z));
 
 	DrawLine(triangleCentroid, scaleEndPoint, glm::vec3(0, 0, 1));
+
+	return normalVector;
 }
 
 glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
@@ -704,7 +789,7 @@ glm::vec3 Renderer::CalcNormal(const std::vector<glm::vec3>& vertexPositions)
 	glm::vec3 p2 = glm::vec3((vertexPositions.at(1).x), (vertexPositions.at(1).y), (vertexPositions.at(1).z));
 	glm::vec3 p3 = glm::vec3((vertexPositions.at(2).x), (vertexPositions.at(2).y), (vertexPositions.at(2).z));
 
-	glm::vec3 normalVector = glm::cross(p2 - p1, p3 - p1);
+	glm::vec3 normalVector = glm::normalize(glm::cross(p2 - p1, p3 - p1));
 	//normalVector = normalVector / glm::length(normalVector);
 
 	return normalVector;

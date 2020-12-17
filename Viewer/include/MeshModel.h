@@ -34,6 +34,12 @@ public:
 
 	bool GetBoundingBoxShown();
 
+	void SetColorOfMesh(glm::vec3 colorOfMesh);
+	glm::vec3 GetColorOfMesh();
+
+	int kindOfModel; // 0 - model, 1 - point, 2 - parallel 
+	bool isLightRotating_;
+
 private:
 	std::vector<Face> faces_;
 	std::vector<glm::vec3> vertices_;
@@ -44,9 +50,12 @@ private:
 	glm::vec3 rotateAngle_;
 	glm::vec3 position_;
 
+	glm::vec3 colorOfMesh_;
+
 	bool isFaceNormalShown_;
 	bool isVertexNormalShown_;
 	bool isBoundingBoxShown_;
+
 
 	glm::vec4 minMaxXY_; // (max X, min X, max y, min y)
 };
