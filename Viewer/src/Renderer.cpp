@@ -451,7 +451,7 @@ void Renderer::Render(Scene& scene)
 
 				vertexNormal = DrawVertexNormals(threePointsAfterTransformations, false);
 
-				glm::vec3 colorOfFace = CalcColorOfFace(scene, vertexNormal, transformationMatrix);
+				glm::vec3 colorOfFace = CalcColorOfFace(scene, vertexNormal, transformationMatrix); // TODO - perspective not working
 
 				DrawTriangle(threePointsAfterTransformations, i, currentModel, scene, colorOfFace);
 
@@ -483,7 +483,7 @@ glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::mat4 tr
 {
 	if (scene.GetActiveCamera().GetPerspectiveTrans() != glm::mat4(1))
 	{
-		normal = glm::mat3((glm::inverse(transformationMatrix))) * normal;
+		normal = glm::mat3(glm::transpose(glm::inverse(transformationMatrix))) * normal;
 	}
 
 	if (scene.GetLightCount() > 0)
