@@ -652,8 +652,7 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 					if (z >= zBuff[x][y])
 					{
 						zBuff[x][y] = z;
-						PutPixel(x, y, color);
-						//PutPixel(x, y, glm::vec3(0.156, 0.592, 0.976));
+						PutPixel(x, y, glm::vec3((zBuff[x][y] - 1.0041) / (1.0052 - 1.0041), (zBuff[x][y] - 1.0041) / (1.0052 - 1.0041), (zBuff[x][y] - 1.0041) / (1.0052 - 1.0041))); // (val - min) / (max - min)
 					}
 				}
 			}
