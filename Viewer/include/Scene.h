@@ -40,7 +40,7 @@ public:
 	void SetNewPosition(glm::vec3 newPos);
 	glm::vec3 GetPosition() const;
 
-	void SetWindowSizes(int height, int width);
+	void SetWindowSizes(int& height, int& width);
 	float Scene::GetWidth() const;
 	float Scene::GetHeight() const;
 	

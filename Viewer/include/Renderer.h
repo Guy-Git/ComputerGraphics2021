@@ -16,10 +16,10 @@ public:
 	void ClearColorBuffer(const glm::vec3& color);
 	int GetViewportWidth() const;
 	int GetViewportHeight() const;
-	void SetViewport(int height, int width);
+	void SetViewport(int height, int width, glm::vec3 color);
 	void Renderer::ScaleLocal(const Scene& scene, const float scaleFactor);
 
-	glm::vec3 CalcColorOfFace(Scene& scene, glm::vec3 faceNormal, glm::mat4 transformationMatrix);
+	glm::vec3 CalcColorOfFace(Scene& scene, glm::vec3 faceNormal, glm::vec3 lightPoint, glm::vec3 modelPoint);
 
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
@@ -31,8 +31,9 @@ private:
 	glm::mat4 Renderer::LightTransformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localPosition);
 
 	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene);
+	void Renderer::updatePosition(glm::mat4 transformation, Camera& cam, Scene& scene, bool isModelOrLight);
 	glm::vec3 Renderer::DrawVertexNormals(const std::vector<glm::vec3>& vertexPositions, bool drawOrReturn);
-	glm::vec3 DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions);
+	glm::vec3 DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions, bool drawOrReturn);
 	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);
 	void DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene, Camera& cam);
 	void CreateBuffers(int w, int h);

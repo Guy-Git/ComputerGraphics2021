@@ -88,7 +88,7 @@ bool firstMouse = true;
 float yaw = 0;
 float pitch = 0;
 
-glm::vec4 clear_color = glm::vec4(0.26f, 0.26f, 0.26f, 1.00f);
+glm::vec3 clear_color = glm::vec3(0.26f, 0.26f, 0.26f);
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
@@ -245,6 +245,7 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	{
 		scene.SetWindowSizes(frameBufferHeight, frameBufferWidth);
 	}
+	renderer.SetViewport(scene.GetHeight(), scene.GetWidth(), clear_color);
 
 	const float cameraSpeed = 100.0f; // adjust accordingly
 	if (cameraAtBuffer.x == 0.0 && cameraAtBuffer.y == 0.0 && cameraAtBuffer.z == 0.0)
@@ -287,8 +288,6 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 
 	scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
 
-	renderer.SetViewport(scene.GetHeight(), scene.GetWidth());
-	renderer.ClearColorBuffer(clear_color);
 	renderer.Render(scene);
 	renderer.SwapBuffers();
 

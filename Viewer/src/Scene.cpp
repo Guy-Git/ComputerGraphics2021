@@ -141,7 +141,7 @@ float Scene::GetHeight() const
 	return window_height_;
 }
 
-void Scene::SetWindowSizes(int height, int width)
+void Scene::SetWindowSizes(int& height, int& width)
 {
 	window_width_ = width;
 	window_height_ = height;
