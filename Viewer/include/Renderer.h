@@ -24,7 +24,8 @@ public:
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
-	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color);
+	void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color, std::vector <glm::vec3> vertexNormals);
+	void DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color);
 	glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
 
@@ -36,6 +37,8 @@ private:
 	glm::vec3 DrawFaceNormals(const std::vector<glm::vec3>& vertexPositions, bool drawOrReturn);
 	glm::vec3 CalcNormal(const std::vector<glm::vec3>& vertexPositions);
 	void DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene, Camera& cam);
+	float Area(float dX0, float dY0, float dX1, float dY1, float dX2, float dY2);
+	glm::vec3 GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0, float dY0, float dX1, float dY1, float dX2, float dY2, float px, float py);
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();

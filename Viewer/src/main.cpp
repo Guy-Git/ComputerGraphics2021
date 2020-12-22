@@ -37,6 +37,7 @@ static glm::vec3 camera_rotation_angle_local = glm::vec3(0);
 static glm::vec3 camera_transformation_local = glm::vec3(0);
 static glm::vec3 camera_rotation_world = glm::vec3(0);
 
+int light_type_selection = 0;
 
 bool show_global_rotation_window = false;
 bool show_global_scale_window = false;
@@ -51,6 +52,9 @@ bool show_model_1_window = false;
 bool show_model_2_window = false;
 bool show_model_3_window = false;
 bool show_model_4_window = false;
+
+bool light_properties_window = false;
+bool model_materials_window = false;
 
 bool vertex_normal = false;
 bool face_normal = false;
@@ -88,7 +92,16 @@ bool firstMouse = true;
 float yaw = 0;
 float pitch = 0;
 
+glm::vec3 model_color = glm::vec3(0.156, 0.592, 0.976);
+
+float ambient = 0.5f;
+float diffuse = 0.5f;
+float specular = 0.5f;
+
+bool texture_mapping = 0;
+
 glm::vec3 clear_color = glm::vec3(0.26f, 0.26f, 0.26f);
+glm::vec3 light_color = glm::vec3(1);
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
@@ -370,6 +383,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				show_local_scale_window = true;
 			}
 
+			if (ImGui::MenuItem("Materials"))
+			{
+				model_materials_window = true;
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -418,12 +436,24 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("Light Trans."))
+		if (ImGui::BeginMenu("Light"))
 		{
-			if (ImGui::MenuItem("Translation"))
+			light_properties_window = true;
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Post Processing"))
+		{
+			if (ImGui::MenuItem(""))
 			{
-				light_translation_window = true;
+				
 			}
+
+			if (ImGui::MenuItem(""))
+			{
+				
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -844,6 +874,54 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		}
 		ImGui::End();
 	}
+
+	if (model_materials_window)
+	{
+		ImGui::Begin("Model Material Window", &model_materials_window);
+
+		ImGui::Text("Choose a Material: ");
+		ImGui::SameLine();
+		if (ImGui::Button("Metal"))
+		{
+			ambient = 0.5;
+			diffuse = 0.6;
+			specular = 0.9;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Plastic"))
+		{
+			ambient = 0.3;
+			diffuse = 0.7;
+			specular = 0.2;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Rubber"))
+		{
+			ambient = 0.8;
+			diffuse = 0.4;
+			specular = 0.1;
+		}
+
+		ImGui::ColorEdit3("Model Color", (float*)&model_color);
+
+		ImGui::SliderFloat("Ambient", &ambient, 0.0f, 1.0f);
+		ImGui::SliderFloat("Diffuse", &diffuse, 0.0f, 1.0f);
+		ImGui::SliderFloat("Specular", &specular, 0.0f, 1.0f);
+
+		ImGui::Checkbox("Texture Mapping", &texture_mapping);
+
+		if (scene.GetModelCount() > 0)
+		{
+			scene.GetActiveModel().SetAmbient(ambient);
+			scene.GetActiveModel().SetDiffuse(diffuse);
+			scene.GetActiveModel().SetSpecular(specular);
+			scene.GetActiveModel().SetColorOfMesh(model_color);
+		}
+
+		ImGui::End();
+	}
 }
 
 void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
@@ -1042,15 +1120,29 @@ void CameraWindowsWorld(Scene& scene)
 
 void LightWindow(Scene& scene)
 {
-	if (light_translation_window)
+	if (light_properties_window)
 	{
-		ImGui::Begin("Light Translation", &light_translation_window);
+		ImGui::Begin("Light Properties", &light_properties_window);
 
-		ImGui::SliderFloat("Light X", &light_transformation.x, -100.0, 100.0);
-		ImGui::SliderFloat("Light Y", &light_transformation.y, -100.0, 100.0);
-		ImGui::SliderFloat("Light Z", &light_transformation.z, -100.0, 100.0);
+		ImGui::RadioButton("Flat", &light_type_selection, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("Phong", &light_type_selection, 1);
+		ImGui::SameLine();
+		ImGui::RadioButton("Gouraud", &light_type_selection, 2);
+		
+		// Controls
+		ImGui::ColorEdit3("Light Color", (float*)&light_color);
 
-		scene.GetActiveLight().SetNewPosition(light_transformation);
+		ImGui::SliderFloat("Light X Pos", &light_transformation.x, -50.0, 50.0);
+		ImGui::SliderFloat("Light Y Pos", &light_transformation.y, -25.0, 25.0);
+		ImGui::SliderFloat("Light Z Pos", &light_transformation.z, -100.0, 100.0);
+
+		if (scene.GetLightCount() > 0)
+		{
+			scene.GetActiveLight().SetLightModel(light_type_selection);
+			scene.GetActiveLight().SetColorOfMesh(light_color);
+			scene.GetActiveLight().SetNewPosition(light_transformation);
+		}
 
 		if (ImGui::Button("Close Me")) {
 			light_translation_window = false;

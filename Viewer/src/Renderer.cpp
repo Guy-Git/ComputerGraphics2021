@@ -21,6 +21,8 @@ double minPointZValue = INFINITY;
 
 static int counter = 0;
 
+glm::vec3 lightPoint;
+
 float** zBuff;
 
 Renderer::Renderer(int viewport_width, int viewport_height) :
@@ -408,7 +410,9 @@ void Renderer::Render(Scene& scene)
 				transformationMatrix = LightTransformations(threePoints, scaleFactor * currentLight.GetScaleFactor(), currentLight.GetPosition());
 				threePointsAfterTransformationsLight = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
-				DrawTriangle(threePointsAfterTransformationsLight, i, currentLight, scene, scene.GetActiveLight().GetColorOfMesh());
+				lightPoint = threePointsAfterTransformationsLight.at(0);
+
+				DrawLightTriangle(threePointsAfterTransformationsLight, i, currentLight, scene, scene.GetActiveLight().GetColorOfMesh());
 
 				if (currentLight.isLightRotating_)
 				{
@@ -435,6 +439,7 @@ void Renderer::Render(Scene& scene)
 			MeshModel currentModel = scene.GetModel(i);
 			double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 			std::vector <glm::vec3> threePoints;
+			std::vector <glm::vec3> vertexNormals;
 			std::vector <glm::vec3> threePointsAfterTransformations;
 			glm::mat4 transformationMatrix;
 
@@ -443,6 +448,10 @@ void Renderer::Render(Scene& scene)
 				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
 				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
+				
+				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetVertexIndex(0) - 1));
+				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetVertexIndex(1) - 1));
+				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetVertexIndex(2) - 1));
 
 				FindMaxValues(threePoints);
 
@@ -470,12 +479,12 @@ void Renderer::Render(Scene& scene)
 				// Phong = face normal
 				// Gouraud = vertex normal
 				if (scene.GetLightCount() > 0)
-					colorOfFace = CalcColorOfFace(scene, faceNormal, threePointsAfterTransformationsLight.at(0), threePointsAfterTransformations.at(0)); // TODO - perspective not working
+					colorOfFace = CalcColorOfFace(scene, vertexNormal, threePointsAfterTransformationsLight.at(0), threePointsAfterTransformations.at(0)); // TODO - perspective not working
 				
 				else
 					colorOfFace = scene.GetActiveModel().GetColorOfMesh();
 				
-				DrawTriangle(threePointsAfterTransformations, i, currentModel, scene, colorOfFace);
+				DrawTriangle(threePointsAfterTransformations, i, currentModel, scene, colorOfFace, vertexNormals);
 
 				threePoints.clear();
 			}
@@ -503,7 +512,7 @@ void Renderer::Render(Scene& scene)
 glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::vec3 lightPoint, glm::vec3 modelPoint)
 {
 	//Ambient:
-	float ambientStrength = 0.5;
+	float ambientStrength = scene.GetActiveModel().GetAmbient();
 	glm::vec3 ambient = ambientStrength * scene.GetActiveLight().GetColorOfMesh();
 
 	//Diffuse:
@@ -512,7 +521,7 @@ glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::vec3 li
 	glm::vec3 diffuse = diff * scene.GetActiveLight().GetColorOfMesh();
 
 	//Specular:
-	float specularStrength = 0.5;
+	float specularStrength = scene.GetActiveModel().GetSpecular();
 	glm::vec3 viewDir = glm::normalize(scene.GetActiveCamera().GetCameraEye() - modelPoint);
 	glm::vec3 reflectDir = glm::reflect(-lightDir, normal);
 	float spec = pow(fmax(glm::dot(viewDir, reflectDir), 0.0), 64);
@@ -604,12 +613,21 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color)
+void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color, std::vector <glm::vec3> vertexNormals)
 {
 
 	glm::vec3 v1 = vertexPositions.at(0);
 	glm::vec3 v2 = vertexPositions.at(1);
 	glm::vec3 v3 = vertexPositions.at(2);
+
+	glm::vec3 v1Color = CalcColorOfFace(scene, vertexNormals.at(0), lightPoint, vertexPositions.at(0));
+	glm::vec3 v2Color = CalcColorOfFace(scene, vertexNormals.at(1), lightPoint, vertexPositions.at(0));
+	glm::vec3 v3Color = CalcColorOfFace(scene, vertexNormals.at(2), lightPoint, vertexPositions.at(0));
+
+	std::vector<glm::vec3> vertexColors;
+	vertexColors.push_back(v3Color);
+	vertexColors.push_back(v2Color);
+	vertexColors.push_back(v1Color);
 
 	float a1 = v2.x - v1.x;
 	float b1 = v2.y - v1.y;
@@ -674,7 +692,59 @@ void Renderer::DrawTriangle(const std::vector<glm::vec3>& vertexPositions, int f
 					{
 						zBuff[x][y] = z;
 						//PutPixel(x, y, glm::vec3((zBuff[x][y] - 1.0041) / (1.0052 - 1.0041), (zBuff[x][y] - 1.0041) / (1.0052 - 1.0041), (zBuff[x][y] - 1.0041) / (1.0052 - 1.0041))); // (val - min) / (max - min)
+						color = GouraudColor(vertexColors, v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, x, y);
 						PutPixel(x, y, color); // (val - min) / (max - min)
+					}
+				}
+			}
+		}
+	}
+}
+
+void Renderer::DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color)
+{
+
+	glm::vec3 v1 = vertexPositions.at(0);
+	glm::vec3 v2 = vertexPositions.at(1);
+	glm::vec3 v3 = vertexPositions.at(2);
+
+	float a1 = v2.x - v1.x;
+	float b1 = v2.y - v1.y;
+	float c1 = v2.z - v1.z;
+	float a2 = v3.x - v1.x;
+	float b2 = v3.y - v1.y;
+	float c2 = v3.z - v1.z;
+	float a = b1 * c2 - b2 * c1;
+	float b = a2 * c1 - a1 * c2;
+	float c = a1 * b2 - b1 * a2;
+	float d = (-a * v1.x - b * v1.y - c * v1.z);
+	float z;
+
+	//if() NOT Z-Buffer
+	int maxX = fmax(v1.x, fmax(v2.x, v3.x));
+	int minX = fmin(v1.x, fmin(v2.x, v3.x));
+	int maxY = fmax(v1.y, fmax(v2.y, v3.y));
+	int minY = fmin(v1.y, fmin(v2.y, v3.y));
+
+	glm::vec2 vs1 = glm::vec2(v2.x - v1.x, v2.y - v1.y);
+	glm::vec2 vs2 = glm::vec2(v3.x - v1.x, v3.y - v1.y);
+
+	for (int x = minX; x <= maxX; x++)
+	{
+		for (int y = minY; y <= maxY; y++)
+		{
+			glm::vec2 q = glm::vec2(x - v1.x, y - v1.y);
+			float s = (q.x * vs2.y - q.y * vs2.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			if ((s >= 0) && (t >= 0) && (s + t <= 1))
+			{
+				z = -(a * x + b * y + d) / c;
+				if (x > 0 && y > 0 && y < scene.GetHeight() && x < scene.GetWidth())
+				{
+					if (z >= zBuff[x][y])
+					{
+						zBuff[x][y] = z;
+						PutPixel(x, y, color); 
 					}
 				}
 			}
@@ -947,4 +1017,23 @@ void Renderer::DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const
 	}
 
 	//scene.GetActiveModel().SetMinMax(glm::vec4(p1t.x, p2t.x, p1t.y, p3t.y)); // (maxX, minX, maxY, minY)
+}
+
+float Renderer::Area(float dX0, float dY0, float dX1, float dY1, float dX2, float dY2)
+{
+	float dArea = ((dX1 - dX0) * (dY2 - dY0) - (dX2 - dX0) * (dY1 - dY0)) / 2.0;
+	return (dArea > 0.0) ? dArea : -dArea;
+}
+
+glm::vec3 Renderer::GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0, float dY0, float dX1, float dY1, float dX2, float dY2, float px, float py)
+{
+	float A1 = Area(dX0, dY0, dX1, dY1, px, py);
+	float A2 = Area(dX0, dY0, dX2, dY2, px, py);
+	float A3 = Area(dX1, dY1, dX2, dY2, px, py);
+
+	float A = A1 + A2 + A3;
+
+	glm::vec3 pColor = (A1 / A * vertexColors.at(0) + A2 / A * vertexColors.at(1) + A3 / A * vertexColors.at(2));
+
+	return pColor;
 }

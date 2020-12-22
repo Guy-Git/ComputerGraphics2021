@@ -11,7 +11,11 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	isFaceNormalShown_(false),
 	isVertexNormalShown_(false),
 	isBoundingBoxShown_(false),
-	isLightRotating_(false)
+	isLightRotating_(false),
+	ambient_(0.5),
+	diffuse_(0.5),
+	specular_(0.5),
+	lightModel_(1)
 {
 
 }
@@ -44,6 +48,11 @@ int MeshModel::GetVerticesCount() const
 const glm::vec3& MeshModel::GetVertex(int index) const
 {
 	return vertices_.at(index);
+}
+
+const glm::vec3& MeshModel::GetVertexNormal(int index) const
+{
+	return normals_.at(index);
 }
 
 void MeshModel::SetScaleFactor(float scaleFactor)
@@ -96,11 +105,6 @@ bool MeshModel::GetVertexNormalShown()
 	return isVertexNormalShown_;
 }
 
-const glm::vec3& MeshModel::GetVertexNormal(int index) const
-{
-	return normals_.at(index);
-}
-
 void MeshModel::SetBoundingBoxShown(bool isShown)
 {
 	isBoundingBoxShown_ = isShown;
@@ -125,7 +129,49 @@ void MeshModel::SetColorOfMesh(glm::vec3 colorOfMesh)
 {
 	colorOfMesh_ = colorOfMesh;
 }
+
 glm::vec3 MeshModel::GetColorOfMesh()
 {
 	return colorOfMesh_;
 }
+
+void MeshModel::SetAmbient(float ambient)
+{
+	ambient_ = ambient;
+}
+
+float MeshModel::GetAmbient()
+{
+	return ambient_;
+}
+
+void MeshModel::SetDiffuse(float diffuse)
+{
+	diffuse_ = diffuse;
+}
+
+float MeshModel::GetDiffuse()
+{
+	return diffuse_;
+}
+
+void MeshModel::SetSpecular(float specular)
+{
+	specular_ = specular;
+}
+
+float MeshModel::GetSpecular()
+{
+	return specular_;
+}
+
+void MeshModel::SetLightModel(int lightModel)
+{
+	lightModel_ = lightModel;
+}
+
+float MeshModel::GetLightModel()
+{
+	return lightModel_;
+}
+

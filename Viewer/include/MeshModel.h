@@ -36,6 +36,14 @@ public:
 
 	void SetColorOfMesh(glm::vec3 colorOfMesh);
 	glm::vec3 GetColorOfMesh();
+	void SetAmbient(float ambient);
+	float GetAmbient();
+	void SetDiffuse(float diffuse);
+	float GetDiffuse();
+	void SetSpecular(float specular);
+	float GetSpecular();
+	void SetLightModel(int lightModel);
+	float GetLightModel();
 
 	int kindOfModel; // 0 - model, 1 - point, 2 - parallel 
 	bool isLightRotating_;
@@ -56,6 +64,11 @@ private:
 	bool isVertexNormalShown_;
 	bool isBoundingBoxShown_;
 
+	int lightModel_;
+	
+	float ambient_;
+	float diffuse_;
+	float specular_;
 
 	glm::vec4 minMaxXY_; // (max X, min X, max y, min y)
 };
