@@ -460,7 +460,6 @@ void Renderer::Render(Scene& scene)
 			glm::mat4 transformationMatrix;
 			std::vector <glm::vec3> threeNormalsAfterTransformations;
 			glm::mat4 transformationMatrixNormals;
-			glm::vec3 modelPoint = glm::vec3(750, 450, 0);
 
 			for (int i = 0; i < currentModel.GetFacesCount(); i++)
 			{
@@ -487,7 +486,14 @@ void Renderer::Render(Scene& scene)
 				threeNormalsAfterTransformations.at(0).x -= 750; threeNormalsAfterTransformations.at(0).y -= 450; threeNormalsAfterTransformations.at(0).z -= 0;
 				threeNormalsAfterTransformations.at(1).x -= 750; threeNormalsAfterTransformations.at(1).y -= 450; threeNormalsAfterTransformations.at(1).z -= 0;
 				threeNormalsAfterTransformations.at(2).x -= 750; threeNormalsAfterTransformations.at(2).y -= 450; threeNormalsAfterTransformations.at(2).z -= 0;
+				
+				threeNormalsAfterTransformations.at(0) = glm::normalize(threeNormalsAfterTransformations.at(0));
+				threeNormalsAfterTransformations.at(1) = glm::normalize(threeNormalsAfterTransformations.at(1));
+				threeNormalsAfterTransformations.at(2) = glm::normalize(threeNormalsAfterTransformations.at(2));
 
+				DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0));
+				DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1));
+				DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2));
 
 				glm::vec3 faceNormal = glm::vec3(1);
 				glm::vec3 vertexNormal = glm::vec3(1);
@@ -518,19 +524,19 @@ void Renderer::Render(Scene& scene)
 				if (scene.GetLightCount() > 0)
 				{
 					if (scene.GetActiveLight().GetLightModel() == 0)
-						DrawFlatTriangle(threePointsAfterTransformations, i, currentModel, scene, modelPoint, lightPoint, faceNormal);
+						DrawFlatTriangle(threePointsAfterTransformations,currentModel, scene, lightPoint, faceNormal);
 
-					//if (scene.GetActiveLight().GetLightModel() == 1)
-					//	DrawPhongTriangle(threePointsAfterTransformations, i, currentModel, scene, modelPoint, lightPoint, threeNormalsAfterTransformations);
+					if (scene.GetActiveLight().GetLightModel() == 1)
+						DrawPhongTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
 					
 					if (scene.GetActiveLight().GetLightModel() == 2)
-						DrawGouraudTriangle(threePointsAfterTransformations, i, currentModel, scene, modelPoint, lightPoint, threeNormalsAfterTransformations);
+						DrawGouraudTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
 
 				}
 
 				else
 				{
-					DrawFlatTriangle(threePointsAfterTransformations, i, currentModel, scene, modelPoint, glm::vec3(0, 0, 0) , faceNormal);
+					DrawFlatTriangle(threePointsAfterTransformations, currentModel, scene, glm::vec3(0, 0, 0), faceNormal);
 				}
 				/*if(scene.GetActiveLight().GetLightModel() == 2)
 					DrawTriangle(threePointsAfterTransformations, i, currentModel, scene, modelPoint, lightPoint, threeNormalsAfterTransformations);
@@ -539,7 +545,7 @@ void Renderer::Render(Scene& scene)
 				threePoints.clear();
 			}
 
-			modelPoint = DrawBoundingBox(currentModel, transformationMatrix, scene, scene.GetActiveCamera());
+			DrawBoundingBox(currentModel, transformationMatrix, scene, scene.GetActiveCamera());
 
 			maxPointXValue = -INFINITY;
 			maxPointYValue = -INFINITY;
@@ -695,7 +701,7 @@ void Renderer::Swap(int& X1, int& Y1, int& X2, int& Y2)
 	Y2 = tempY;
 }
 
-void Renderer::DrawGouraudTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 modelPoint, glm::vec3 lightPoint, std::vector <glm::vec3> vertexNormals)
+void Renderer::DrawGouraudTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector <glm::vec3> vertexNormals)
 {
 
 	glm::vec3 v1 = vertexPositions.at(0);
@@ -760,7 +766,7 @@ void Renderer::DrawGouraudTriangle(const std::vector<glm::vec3>& vertexPositions
 	}
 }
 
-void Renderer::DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 modelPoint, glm::vec3 lightPoint, glm::vec3 faceNormal)
+void Renderer::DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, glm::vec3 faceNormal)
 {
 
 	glm::vec3 v1 = vertexPositions.at(0);
@@ -819,6 +825,66 @@ void Renderer::DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, i
 		}
 	}
 }
+
+void Renderer::DrawPhongTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector <glm::vec3> vertexNormals)
+{
+	glm::vec3 v1 = vertexPositions.at(0);
+	glm::vec3 v2 = vertexPositions.at(1);
+	glm::vec3 v3 = vertexPositions.at(2);
+
+	glm::vec3 triangleCentroid = glm::vec3((vertexPositions.at(0).x + vertexPositions.at(1).x + vertexPositions.at(2).x) / 3,
+		(vertexPositions.at(0).y + vertexPositions.at(1).y + vertexPositions.at(2).y) / 3,
+		(vertexPositions.at(0).z + vertexPositions.at(1).z + vertexPositions.at(2).z) / 3);
+
+	// DrawLine(lightPoint, triangleCentroid, glm::vec3(1, 0, 0));
+
+	float a1 = v2.x - v1.x;
+	float b1 = v2.y - v1.y;
+	float c1 = v2.z - v1.z;
+	float a2 = v3.x - v1.x;
+	float b2 = v3.y - v1.y;
+	float c2 = v3.z - v1.z;
+	float a = b1 * c2 - b2 * c1;
+	float b = a2 * c1 - a1 * c2;
+	float c = a1 * b2 - b1 * a2;
+	float d = (-a * v1.x - b * v1.y - c * v1.z);
+	float z;
+
+	int maxX = fmax(v1.x, fmax(v2.x, v3.x));
+	int minX = fmin(v1.x, fmin(v2.x, v3.x));
+	int maxY = fmax(v1.y, fmax(v2.y, v3.y));
+	int minY = fmin(v1.y, fmin(v2.y, v3.y));
+
+	glm::vec2 vs1 = glm::vec2(v2.x - v1.x, v2.y - v1.y);
+	glm::vec2 vs2 = glm::vec2(v3.x - v1.x, v3.y - v1.y);
+
+	for (int x = minX; x <= maxX; x++)
+	{
+		for (int y = minY; y <= maxY; y++)
+		{
+			glm::vec2 q = glm::vec2(x - v1.x, y - v1.y);
+			float s = (q.x * vs2.y - q.y * vs2.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			float t = (vs1.x * q.y - vs1.y * q.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+			if ((s >= 0) && (t >= 0) && (s + t <= 1))
+			{
+				z = -(a * x + b * y + d) / c;
+				if (x > 0 && y > 0 && y < scene.GetHeight() && x < scene.GetWidth())
+				{
+					if (z >= zBuff[x][y])
+					{
+						zBuff[x][y] = z;
+						glm::vec3 xyNormal = PhongNormalInterpolation(vertexNormals, x, y);
+						//DrawNormal(glm::vec3(x, y, z), xyNormal);
+						glm::vec3 color = CalcColorOfFace(scene, glm::normalize(xyNormal), lightPoint, triangleCentroid);
+						PutPixel(x, y, color);
+
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void Renderer::DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color)
 {
@@ -1113,4 +1179,31 @@ glm::vec3 Renderer::GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0
 	glm::vec3 pColor = (A1 / A * vertexColors.at(0) + A2 / A * vertexColors.at(1) + A3 / A * vertexColors.at(2));
 
 	return pColor;
+}
+
+glm::vec3 Renderer::PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, float px, float py)
+{
+	float A1 = Area(vertexNormals.at(0).x, vertexNormals.at(0).y, vertexNormals.at(1).x, vertexNormals.at(1).y, px, py);
+	float A2 = Area(vertexNormals.at(0).x, vertexNormals.at(0).y, vertexNormals.at(2).x, vertexNormals.at(2).y, px, py);
+	float A3 = Area(vertexNormals.at(1).x, vertexNormals.at(1).y, vertexNormals.at(2).x, vertexNormals.at(2).y, px, py);
+
+	float A = A1 + A2 + A3;
+
+	glm::vec3 xyNormal = (A1 / A * vertexNormals.at(0) + A2 / A * vertexNormals.at(1) + A3 / A * vertexNormals.at(2));
+
+	return xyNormal;
+}
+
+void Renderer::DrawNormal(const glm::vec3 vertexPosition, glm::vec3 normal)
+{
+	double scaleFactor = 50;
+
+	glm::vec3 normalEndPoint = glm::vec3(normal.x + vertexPosition.x, normal.y + vertexPosition.y, normal.z + vertexPosition.z);
+
+	//glm::vec3 scaleEndPoint = glm::vec3(triangleCentroid.x + scaleFactor * (normalEndPoint.x - triangleCentroid.x),
+	//	triangleCentroid.y + scaleFactor * (normalEndPoint.y - triangleCentroid.y),
+	//	triangleCentroid.z + scaleFactor * (normalEndPoint.z - triangleCentroid.z));
+
+	DrawLine(vertexPosition, normalEndPoint, glm::vec3(0, 0, 1));
+
 }
