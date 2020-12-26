@@ -22,7 +22,7 @@ double minPointZValue = INFINITY;
 double maxLightXValue = -INFINITY;
 double maxLightYValue = -INFINITY;
 double maxLightZValue = -INFINITY;
-		  
+
 double minLightXValue = INFINITY;
 double minLightYValue = INFINITY;
 double minLightZValue = INFINITY;
@@ -416,13 +416,13 @@ void Renderer::Render(Scene& scene)
 
 				transformationMatrix = LightTransformations(threePoints, scaleFactor * currentLight.GetScaleFactor(), currentLight.GetPosition());
 				threePointsAfterTransformationsLight = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
-				
+
 				FindMaxLightValues(threePointsAfterTransformationsLight);
 
 				DrawLightTriangle(threePointsAfterTransformationsLight, i, currentLight, scene, scene.GetActiveLight().GetColorOfMesh());
 
 				if (currentLight.isLightRotating_)
-				{	
+				{
 					double max = FindMaxXorYPointForScaleFactor(scene.GetActiveModel());
 
 					float lightX = 4.0 * sin(glfwGetTime()) + max;
@@ -435,11 +435,11 @@ void Renderer::Render(Scene& scene)
 			}
 
 			lightPoint = glm::vec3((maxLightXValue + minLightXValue) / 2, (maxLightYValue + minLightYValue) / 2, (maxLightZValue + minLightZValue) / 2);
-			
+
 			maxLightXValue = -INFINITY;
 			maxLightYValue = -INFINITY;
 			maxLightZValue = -INFINITY;
-			   
+
 			minLightXValue = INFINITY;
 			minLightYValue = INFINITY;
 			minLightZValue = INFINITY;
@@ -466,7 +466,7 @@ void Renderer::Render(Scene& scene)
 				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
 				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
 				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
-				
+
 				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetNormalIndex(0) - 1));
 				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetNormalIndex(1) - 1));
 				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetNormalIndex(2) - 1));
@@ -486,7 +486,7 @@ void Renderer::Render(Scene& scene)
 				threeNormalsAfterTransformations.at(0).x -= 750; threeNormalsAfterTransformations.at(0).y -= 450; threeNormalsAfterTransformations.at(0).z -= 0;
 				threeNormalsAfterTransformations.at(1).x -= 750; threeNormalsAfterTransformations.at(1).y -= 450; threeNormalsAfterTransformations.at(1).z -= 0;
 				threeNormalsAfterTransformations.at(2).x -= 750; threeNormalsAfterTransformations.at(2).y -= 450; threeNormalsAfterTransformations.at(2).z -= 0;
-				
+
 				threeNormalsAfterTransformations.at(0) = glm::normalize(threeNormalsAfterTransformations.at(0));
 				threeNormalsAfterTransformations.at(1) = glm::normalize(threeNormalsAfterTransformations.at(1));
 				threeNormalsAfterTransformations.at(2) = glm::normalize(threeNormalsAfterTransformations.at(2));
@@ -508,7 +508,7 @@ void Renderer::Render(Scene& scene)
 					DrawFaceNormals(threePointsAfterTransformations, true);
 				}
 
-				
+
 				vertexNormal = DrawVertexNormals(threePointsAfterTransformations, false);
 				faceNormal = DrawFaceNormals(threePointsAfterTransformations, false);
 
@@ -517,18 +517,18 @@ void Renderer::Render(Scene& scene)
 				// Gouraud = vertex normal
 				/*if (scene.GetLightCount() > 0)
 					colorOfFace = CalcColorOfFace(scene, vertexNormal, threePointsAfterTransformationsLight.at(0), threePointsAfterTransformations.at(0)); // TODO - perspective not working
-				
+
 				else
 					colorOfFace = scene.GetActiveModel().GetColorOfMesh();
 				*/
 				if (scene.GetLightCount() > 0)
 				{
 					if (scene.GetActiveLight().GetLightModel() == 0)
-						DrawFlatTriangle(threePointsAfterTransformations,currentModel, scene, lightPoint, faceNormal);
+						DrawFlatTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, faceNormal);
 
 					if (scene.GetActiveLight().GetLightModel() == 1)
 						DrawPhongTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
-					
+
 					if (scene.GetActiveLight().GetLightModel() == 2)
 						DrawGouraudTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
 
@@ -556,6 +556,8 @@ void Renderer::Render(Scene& scene)
 			minPointZValue = INFINITY;
 		}
 	}
+
+	PostProcessingFunctions(scene);
 
 	for (int i = 0; i < currentWidth; i++)
 	{
@@ -929,7 +931,7 @@ void Renderer::DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, 
 					if (z >= zBuff[x][y])
 					{
 						zBuff[x][y] = z;
-						PutPixel(x, y, color); 
+						PutPixel(x, y, color);
 					}
 				}
 			}
@@ -1205,5 +1207,153 @@ void Renderer::DrawNormal(const glm::vec3 vertexPosition, glm::vec3 normal)
 	//	triangleCentroid.z + scaleFactor * (normalEndPoint.z - triangleCentroid.z));
 
 	DrawLine(vertexPosition, normalEndPoint, glm::vec3(0, 0, 1));
+}
 
+void Renderer::PostProcessingFunctions(Scene scene)
+{
+	// Gaussian blur
+	if (scene.GetPPMode() == 1)
+	{
+		glm::vec3 bloomTreshold = BloomTreshold();
+		glm::vec3 currentColor;;
+		float brightness;
+		glm::vec3** BrightColor;
+
+		BrightColor = new glm::vec3 * [viewport_width_]; // Rows
+		for (int i = 0; i < viewport_width_; i++)
+		{
+			BrightColor[i] = new glm::vec3[viewport_height_]; // Columns
+		}
+
+		for (int i = 0; i < viewport_width_; i++)
+		{
+			for (int j = 0; j < viewport_height_; j++)
+			{
+				currentColor = glm::vec3(color_buffer_[INDEX(viewport_width_, i, j, 0)],
+					color_buffer_[INDEX(viewport_width_, i, j, 1)],
+					color_buffer_[INDEX(viewport_width_, i, j, 2)]);
+
+				brightness = glm::dot(currentColor, bloomTreshold);
+
+				if (brightness > 1.0)
+					BrightColor[i][j] = glm::vec3(currentColor);
+				else
+					BrightColor[i][j] = glm::vec3(0.0, 0.0, 0.0);
+			}
+		}
+
+		ApplyGaussianBlur(BrightColor);
+
+		CombineBlooming(BrightColor);
+
+		for (int i = 0; i < viewport_width_; i++)
+		{
+			delete[] BrightColor[i]; // Delete columns
+		}
+		delete[] BrightColor; // Delete Rows
+	}
+}
+
+void Renderer::CombineBlooming(glm::vec3** BrightColor)
+{
+	for (int i = 0; i < viewport_width_; i++)
+	{
+		for (int j = 0; j < viewport_height_; j++)
+		{
+			if (BrightColor[i][j] != glm::vec3(0.0, 0.0, 0.0))
+			{
+				PutPixel(i, j, BrightColor[i][j]);
+			}
+		}
+	}
+}
+
+glm::vec3 Renderer::BloomTreshold()
+{
+	float rSum = 0;
+	float gSum = 0;
+	float bSum = 0;
+
+	float fullSize = viewport_width_ * viewport_height_;
+
+	for (int i = 0; i < viewport_width_; i++)
+	{
+		for (int j = 0; j < viewport_height_; j++)
+		{
+			rSum += color_buffer_[INDEX(viewport_width_, i, j, 0)];
+			gSum += color_buffer_[INDEX(viewport_width_, i, j, 1)];
+			bSum += color_buffer_[INDEX(viewport_width_, i, j, 2)];
+		}
+	}
+
+	return glm::vec3(rSum / fullSize, gSum / fullSize, bSum / fullSize);
+}
+
+void Renderer::ApplyGaussianBlur(glm::vec3** BrightColor)
+{
+	float kernelMatrix[5][5] = { 0.003, 0.0133, 0.0219, 0.0133, 0.003,
+								0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
+								0.0219, 0.0983, 0.1621, 0.0983, 0.0219,
+								0.0133, 0.0596, 0.0983, 0.0596,0.0133,
+								0.003, 0.0133, 0.0219, 0.0133, 0.003 };
+
+	Convolution(kernelMatrix, BrightColor);
+
+}
+
+void Renderer::Convolution(float kernel[][5], glm::vec3** BrightColor)
+{
+	// find center position of kernel (half of kernel size)
+	int kCenterX = 2;
+	int kCenterY = 2;
+	int kRows = 5;
+	int kCols = 5;
+	int rows = viewport_height_;
+	int cols = viewport_width_;
+
+	for (int color = 0; color < 3; color++) // RGB
+	{
+		for (int i = 0; i < rows; i++) // rows
+		{
+			for (int j = 0; j < cols; j++) // columns
+			{
+				for (int m = 0; m < kRows; m++) // kernel rows
+				{
+					int mm = kRows - 1 - m; // row index of flipped kernel
+
+					for (int n = 0; n < kCols; n++) // kernel columns
+					{
+						int nn = kCols - 1 - n; // column index of flipped kernel
+
+						// index of input signal, used for checking boundary
+						int ii = i + (kCenterY - mm);
+						int jj = j + (kCenterX - nn);
+
+						// ignore input samples which are out of bound
+						if (ii >= 0 && ii < rows && jj >= 0 && jj < cols)
+						{
+							/*color_buffer_[INDEX(viewport_width_, j, i, color)] +=
+								color_buffer_[INDEX(viewport_width_, jj, ii, color)] * kernel[mm][nn];*/
+							if (color == 0)
+							{
+								BrightColor[j][i].x +=
+									BrightColor[jj][ii].r * kernel[mm][nn];
+							}
+							else if (color == 1)
+							{
+								BrightColor[j][i].y +=
+									BrightColor[jj][ii].g * kernel[mm][nn];
+							}
+							else
+							{
+								BrightColor[j][i].z +=
+									BrightColor[jj][ii].b * kernel[mm][nn];
+							}
+
+						}
+					}
+				}
+			}
+		}
+	}
 }

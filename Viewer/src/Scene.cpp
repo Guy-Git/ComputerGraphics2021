@@ -10,7 +10,8 @@ Scene::Scene() :
 	rotateAngle_(0),
 	position_(0),
 	window_height_(900.0),
-	window_width_(1500.0)
+	window_width_(1500.0),
+	PPmode_(0)
 {
 	AddCamera(*(new Camera()));
 	AddCamera(*(new Camera()));
@@ -145,4 +146,14 @@ void Scene::SetWindowSizes(int& height, int& width)
 {
 	window_width_ = width;
 	window_height_ = height;
+}
+
+void Scene::SetPPMode(int mode)
+{
+	PPmode_ = mode;
+}
+
+int Scene::GetPPMode()
+{
+	return PPmode_;
 }

@@ -444,14 +444,18 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 		if (ImGui::BeginMenu("Post Processing"))
 		{
-			if (ImGui::MenuItem(""))
+			if (ImGui::MenuItem("Gaussing Blur + Bloom"))
 			{
-				
+				scene.SetPPMode(1);
 			}
 
-			if (ImGui::MenuItem(""))
+			if (ImGui::MenuItem("TBD"))
 			{
-				
+				scene.SetPPMode(2);
+			}
+			if (ImGui::MenuItem("Reset PP"))
+			{
+				scene.SetPPMode(0);
 			}
 
 			ImGui::EndMenu();

@@ -175,3 +175,4 @@ float MeshModel::GetLightModel()
 	return lightModel_;
 }
 
+

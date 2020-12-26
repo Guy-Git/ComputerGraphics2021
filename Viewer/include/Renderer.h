@@ -44,6 +44,11 @@ private:
 	glm::vec3 GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0, float dY0, float dX1, float dY1, float dX2, float dY2, float px, float py);
 	glm::vec3 PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, float px, float py);
 	void DrawNormal(const glm::vec3 vertexPosition, glm::vec3 normal);
+	void PostProcessingFunctions(Scene scene);
+	void CombineBlooming(glm::vec3** BrightColor);
+	glm::vec3 BloomTreshold();
+	void ApplyGaussianBlur(glm::vec3** BrightColor);
+	void Convolution(float kernel[][5], glm::vec3** BrightColor);
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();

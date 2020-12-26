@@ -45,6 +45,8 @@ public:
 	void SetLightModel(int lightModel);
 	float GetLightModel();
 
+
+
 	int kindOfModel; // 0 - model, 1 - point, 2 - parallel 
 	bool isLightRotating_;
 
@@ -69,6 +71,8 @@ private:
 	float ambient_;
 	float diffuse_;
 	float specular_;
+
+	
 
 	glm::vec4 minMaxXY_; // (max X, min X, max y, min y)
 };

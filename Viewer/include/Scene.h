@@ -43,6 +43,9 @@ public:
 	void SetWindowSizes(int& height, int& width);
 	float Scene::GetWidth() const;
 	float Scene::GetHeight() const;
+
+	void SetPPMode(int mode);
+	int GetPPMode();
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
@@ -59,4 +62,6 @@ private:
 
 	float window_width_;
 	float window_height_;
+
+	int PPmode_; // 0 = none, 1 = bloom + gaussian, 2 = TBD
 };
