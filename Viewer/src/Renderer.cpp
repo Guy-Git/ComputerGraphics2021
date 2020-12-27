@@ -491,10 +491,6 @@ void Renderer::Render(Scene& scene)
 				threeNormalsAfterTransformations.at(1) = glm::normalize(threeNormalsAfterTransformations.at(1));
 				threeNormalsAfterTransformations.at(2) = glm::normalize(threeNormalsAfterTransformations.at(2));
 
-				//DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0));
-				//DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1));
-				//DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2));
-
 				glm::vec3 faceNormal = glm::vec3(1);
 				glm::vec3 vertexNormal = glm::vec3(1);
 
@@ -508,19 +504,11 @@ void Renderer::Render(Scene& scene)
 					DrawFaceNormals(threePointsAfterTransformations, true);
 				}
 
-
 				vertexNormal = DrawVertexNormals(threePointsAfterTransformations, false);
 				faceNormal = DrawFaceNormals(threePointsAfterTransformations, false);
 
-				glm::vec3 colorOfFace;
-				// Phong = face normal
-				// Gouraud = vertex normal
-				/*if (scene.GetLightCount() > 0)
-					colorOfFace = CalcColorOfFace(scene, vertexNormal, threePointsAfterTransformationsLight.at(0), threePointsAfterTransformations.at(0)); // TODO - perspective not working
+				//glm::vec3 colorOfFace;
 
-				else
-					colorOfFace = scene.GetActiveModel().GetColorOfMesh();
-				*/
 				if (scene.GetLightCount() > 0)
 				{
 					if (scene.GetActiveLight().GetLightModel() == 0)
@@ -531,7 +519,6 @@ void Renderer::Render(Scene& scene)
 
 					if (scene.GetActiveLight().GetLightModel() == 2)
 						DrawGouraudTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
-
 				}
 
 				else
@@ -783,7 +770,7 @@ void Renderer::DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, M
 	if (scene.GetLightCount() > 0)
 		color = CalcColorOfFace(scene, glm::normalize(faceNormal), lightPoint, triangleCentroid);
 	else
-		color = scene.GetActiveModel().GetColorOfMesh();
+		color = currentModel.GetColorOfMesh();
 
 	float a1 = v2.x - v1.x;
 	float b1 = v2.y - v1.y;
@@ -1191,9 +1178,9 @@ glm::vec3 Renderer::PhongNormalInterpolation(std::vector<glm::vec3>& vertexNorma
 
 	float A = A1 + A2 + A3;
 
-	glm::vec3 xyNormal = (A1 / A * vertexNormals.at(0) + A2 / A * vertexNormals.at(1) + A3 / A * vertexNormals.at(2));
+	glm::vec3 xyzNormal = (A1 / A * vertexNormals.at(0) + A2 / A * vertexNormals.at(1) + A3 / A * vertexNormals.at(2));
 
-	return xyNormal;
+	return xyzNormal;
 }
 
 void Renderer::DrawNormal(const glm::vec3 vertexPosition, glm::vec3 normal)
@@ -1254,6 +1241,7 @@ void Renderer::PostProcessingFunctions(Scene scene)
 			}
 		}
 
+
 		BrightColorDst = ApplyGaussianBlur(BrightColorSrc, BrightColorDst);
 
 		CombineBlooming(BrightColorDst, bloomTresholdBrightness);
@@ -1270,6 +1258,31 @@ void Renderer::PostProcessingFunctions(Scene scene)
 		}
 		delete[] BrightColorDst;
 	}
+
+	// Fog blur
+	if (scene.GetPPMode() == 2)
+	{
+		float fog;
+		//float fogEnd = 1.0052;
+		float fogEnd = 2;
+		//float fogStart = 1.0041;
+		float fogStart = 0;
+
+		for (int x = 0; x < viewport_width_; x++)
+		{
+			for (int y = 0; y < viewport_height_; y++)
+			{
+				if (zBuff[x][y] > -INFINITY)
+				{
+					float z = (zBuff[x][y] - 1.0041) / (1.0052 - 1.0041);
+					fog = (fogEnd - z) / (fogEnd - fogStart);
+
+					PutPixel(x, y,  ((1 - fog) * scene.GetActiveModel().GetColorOfMesh() + fog * glm::vec3(0.26)));
+				}
+			}
+		}
+	}
+
 }
 
 void Renderer::CombineBlooming(glm::vec3** BrightColor, float bloomTreshold)
@@ -1280,10 +1293,9 @@ void Renderer::CombineBlooming(glm::vec3** BrightColor, float bloomTreshold)
 		{
 			float brightColorBrightness = (0.2126 * BrightColor[i][j].r + 0.7152 * BrightColor[i][j].g + 0.0722 * BrightColor[i][j].b);
 
-			if (brightColorBrightness > bloomTreshold)
-			{
-				PutPixel(i, j, BrightColor[i][j]);
-			}
+			PutPixel(i, j, glm::vec3(0.5 * (color_buffer_[INDEX(viewport_width_, i, j, 0)] + BrightColor[i][j].r),
+				0.5 * (color_buffer_[INDEX(viewport_width_, i, j, 1)] + BrightColor[i][j].g),
+				0.5 * (color_buffer_[INDEX(viewport_width_, i, j, 2)] + BrightColor[i][j].b)));
 		}
 	}
 }
@@ -1311,17 +1323,35 @@ glm::vec3 Renderer::BloomTreshold()
 
 glm::vec3** Renderer::ApplyGaussianBlur(glm::vec3** BrightColorSrc, glm::vec3** BrightColorDst)
 {
-	float kernel[5][5] = { 0.003, 0.0133, 0.0219, 0.0133, 0.003,
-								0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
-								0.0219, 0.0983, 0.1621, 0.0983, 0.0219,
-								0.0133, 0.0596, 0.0983, 0.0596,0.0133,
-								0.003, 0.0133, 0.0219, 0.0133, 0.003 };
+
+	float kernel[30][30];
+	//double sigma = 1.0;
+	//double sum = 0.0;
+
+	for (int x = 0; x < 30; x++)
+	{
+		for (int y = 0; y < 30; y++)
+		{
+			kernel[x][y] = 0.0011;
+
+			//kernel[x][y] = 1 / (2 * M_PI * glm::pow(sigma,2)) * exp(-(x*x + y*y)/(2* glm::pow(sigma, 2)));
+			//sum += kernel[x][y];
+		}
+	}
+
+	/*for (int x = 0; x < 30; x++)
+	{
+		for (int y = 0; y < 30; y++)
+		{
+			kernel[x][y] /= sum;
+		}
+	}*/
 
 	// find center position of kernel (half of kernel size)
-	int kCenterX = 2;
-	int kCenterY = 2;
-	int kRows = 5;
-	int kCols = 5;
+	int kCenterX = 15;
+	int kCenterY = 15;
+	int kRows = 30;
+	int kCols = 30;
 	int rows = viewport_height_;
 	int cols = viewport_width_;
 

@@ -449,7 +449,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 				scene.SetPPMode(1);
 			}
 
-			if (ImGui::MenuItem("TBD"))
+			if (ImGui::MenuItem("Fog"))
 			{
 				scene.SetPPMode(2);
 			}
