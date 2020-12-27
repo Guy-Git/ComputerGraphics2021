@@ -27,7 +27,7 @@ private:
 	void DrawLine(const glm::ivec2& p1, const glm::ivec2& p2, const glm::vec3& color);
 	void Renderer::DrawGouraudTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector <glm::vec3> vertexNormals);
 	void DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, glm::vec3 faceNormal);
-	void DrawPhongTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector<glm::vec3> vertexNormals);
+	void DrawPhongTriangle(std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector<glm::vec3> vertexNormals);
 	void DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color);
 	glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
@@ -42,13 +42,12 @@ private:
 	glm::vec3 DrawBoundingBox(MeshModel& model, glm::mat4 transformation, const Scene& scene, Camera& cam);
 	float Area(float dX0, float dY0, float dX1, float dY1, float dX2, float dY2);
 	glm::vec3 GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0, float dY0, float dX1, float dY1, float dX2, float dY2, float px, float py);
-	glm::vec3 PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, float px, float py);
+	glm::vec3 PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, std::vector<glm::vec3>& vertexPositions, float px, float py);
 	void DrawNormal(const glm::vec3 vertexPosition, glm::vec3 normal);
 	void PostProcessingFunctions(Scene scene);
-	void CombineBlooming(glm::vec3** BrightColor);
+	void CombineBlooming(glm::vec3** BrightColor, float bloomTreshold);
 	glm::vec3 BloomTreshold();
-	void ApplyGaussianBlur(glm::vec3** BrightColor);
-	void Convolution(float kernel[][5], glm::vec3** BrightColor);
+	glm::vec3** Renderer::ApplyGaussianBlur(glm::vec3** BrightColorSrc, glm::vec3** BrightColorDst);
 	void CreateBuffers(int w, int h);
 	void CreateOpenGLBuffer();
 	void InitOpenGLRendering();

@@ -375,9 +375,9 @@ void Renderer::ClearColorBuffer(const glm::vec3& color)
 
 void Renderer::Render(Scene& scene)
 {
-	DrawLine(glm::ivec2(0, scene.GetHeight() / 2), glm::ivec2(scene.GetWidth(), scene.GetHeight() / 2), glm::vec3(0, 0, 0)); // X axis
+	//DrawLine(glm::ivec2(0, scene.GetHeight() / 2), glm::ivec2(scene.GetWidth(), scene.GetHeight() / 2), glm::vec3(0, 0, 0)); // X axis
 
-	DrawLine(glm::ivec2(scene.GetWidth() / 2, scene.GetHeight()), glm::ivec2(scene.GetWidth() / 2, 0), glm::vec3(0, 0, 0)); // Y axis
+	//DrawLine(glm::ivec2(scene.GetWidth() / 2, scene.GetHeight()), glm::ivec2(scene.GetWidth() / 2, 0), glm::vec3(0, 0, 0)); // Y axis
 
 	//Creation
 
@@ -491,9 +491,9 @@ void Renderer::Render(Scene& scene)
 				threeNormalsAfterTransformations.at(1) = glm::normalize(threeNormalsAfterTransformations.at(1));
 				threeNormalsAfterTransformations.at(2) = glm::normalize(threeNormalsAfterTransformations.at(2));
 
-				DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0));
-				DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1));
-				DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2));
+				//DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0));
+				//DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1));
+				//DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2));
 
 				glm::vec3 faceNormal = glm::vec3(1);
 				glm::vec3 vertexNormal = glm::vec3(1);
@@ -828,7 +828,7 @@ void Renderer::DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, M
 	}
 }
 
-void Renderer::DrawPhongTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector <glm::vec3> vertexNormals)
+void Renderer::DrawPhongTriangle(std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector <glm::vec3> vertexNormals)
 {
 	glm::vec3 v1 = vertexPositions.at(0);
 	glm::vec3 v2 = vertexPositions.at(1);
@@ -875,7 +875,7 @@ void Renderer::DrawPhongTriangle(const std::vector<glm::vec3>& vertexPositions, 
 					if (z >= zBuff[x][y])
 					{
 						zBuff[x][y] = z;
-						glm::vec3 xyNormal = PhongNormalInterpolation(vertexNormals, x, y);
+						glm::vec3 xyNormal = PhongNormalInterpolation(vertexNormals, vertexPositions, x, y);
 						//DrawNormal(glm::vec3(x, y, z), xyNormal);
 						glm::vec3 color = CalcColorOfFace(scene, glm::normalize(xyNormal), lightPoint, triangleCentroid);
 						PutPixel(x, y, color);
@@ -1183,11 +1183,11 @@ glm::vec3 Renderer::GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0
 	return pColor;
 }
 
-glm::vec3 Renderer::PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, float px, float py)
+glm::vec3 Renderer::PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, std::vector<glm::vec3>& vertexPositions, float px, float py)
 {
-	float A1 = Area(vertexNormals.at(0).x, vertexNormals.at(0).y, vertexNormals.at(1).x, vertexNormals.at(1).y, px, py);
-	float A2 = Area(vertexNormals.at(0).x, vertexNormals.at(0).y, vertexNormals.at(2).x, vertexNormals.at(2).y, px, py);
-	float A3 = Area(vertexNormals.at(1).x, vertexNormals.at(1).y, vertexNormals.at(2).x, vertexNormals.at(2).y, px, py);
+	float A1 = Area(vertexPositions.at(0).x, vertexPositions.at(0).y, vertexPositions.at(1).x, vertexPositions.at(1).y, px, py);
+	float A2 = Area(vertexPositions.at(0).x, vertexPositions.at(0).y, vertexPositions.at(2).x, vertexPositions.at(2).y, px, py);
+	float A3 = Area(vertexPositions.at(1).x, vertexPositions.at(1).y, vertexPositions.at(2).x, vertexPositions.at(2).y, px, py);
 
 	float A = A1 + A2 + A3;
 
@@ -1217,12 +1217,20 @@ void Renderer::PostProcessingFunctions(Scene scene)
 		glm::vec3 bloomTreshold = BloomTreshold();
 		glm::vec3 currentColor;;
 		float brightness;
-		glm::vec3** BrightColor;
+		float bloomTresholdBrightness;
+		glm::vec3** BrightColorSrc;
+		glm::vec3** BrightColorDst;
 
-		BrightColor = new glm::vec3 * [viewport_width_]; // Rows
+		BrightColorSrc = new glm::vec3 * [viewport_width_]; // Rows
 		for (int i = 0; i < viewport_width_; i++)
 		{
-			BrightColor[i] = new glm::vec3[viewport_height_]; // Columns
+			BrightColorSrc[i] = new glm::vec3[viewport_height_]; // Columns
+		}
+
+		BrightColorDst = new glm::vec3 * [viewport_width_]; // Rows
+		for (int i = 0; i < viewport_width_; i++)
+		{
+			BrightColorDst[i] = new glm::vec3[viewport_height_]; // Columns
 		}
 
 		for (int i = 0; i < viewport_width_; i++)
@@ -1233,34 +1241,46 @@ void Renderer::PostProcessingFunctions(Scene scene)
 					color_buffer_[INDEX(viewport_width_, i, j, 1)],
 					color_buffer_[INDEX(viewport_width_, i, j, 2)]);
 
-				brightness = glm::dot(currentColor, bloomTreshold);
+				bloomTresholdBrightness = 0.2126 * bloomTreshold.r + 0.7152 * bloomTreshold.g + 0.0722 * bloomTreshold.b;
+				brightness = 0.2126 * currentColor.r + 0.7152 * currentColor.g + 0.0722 * currentColor.b;
 
-				if (brightness > 1.0)
-					BrightColor[i][j] = glm::vec3(currentColor);
-				else
-					BrightColor[i][j] = glm::vec3(0.0, 0.0, 0.0);
+				if (brightness > bloomTresholdBrightness) {
+					BrightColorSrc[i][j] = glm::vec3(currentColor);
+				}
+				else {
+					BrightColorSrc[i][j] = glm::vec3(0.0, 0.0, 0.0);
+				}
+				BrightColorDst[i][j] = glm::vec3(0.0, 0.0, 0.0);
 			}
 		}
 
-		ApplyGaussianBlur(BrightColor);
+		BrightColorDst = ApplyGaussianBlur(BrightColorSrc, BrightColorDst);
 
-		CombineBlooming(BrightColor);
+		CombineBlooming(BrightColorDst, bloomTresholdBrightness);
 
 		for (int i = 0; i < viewport_width_; i++)
 		{
-			delete[] BrightColor[i]; // Delete columns
+			delete[] BrightColorSrc[i]; // Delete columns
 		}
-		delete[] BrightColor; // Delete Rows
+		delete[] BrightColorSrc; // Delete Rows
+
+		for (int i = 0; i < viewport_width_; i++)
+		{
+			delete[] BrightColorDst[i];
+		}
+		delete[] BrightColorDst;
 	}
 }
 
-void Renderer::CombineBlooming(glm::vec3** BrightColor)
+void Renderer::CombineBlooming(glm::vec3** BrightColor, float bloomTreshold)
 {
 	for (int i = 0; i < viewport_width_; i++)
 	{
 		for (int j = 0; j < viewport_height_; j++)
 		{
-			if (BrightColor[i][j] != glm::vec3(0.0, 0.0, 0.0))
+			float brightColorBrightness = (0.2126 * BrightColor[i][j].r + 0.7152 * BrightColor[i][j].g + 0.0722 * BrightColor[i][j].b);
+
+			if (brightColorBrightness > bloomTreshold)
 			{
 				PutPixel(i, j, BrightColor[i][j]);
 			}
@@ -1289,20 +1309,14 @@ glm::vec3 Renderer::BloomTreshold()
 	return glm::vec3(rSum / fullSize, gSum / fullSize, bSum / fullSize);
 }
 
-void Renderer::ApplyGaussianBlur(glm::vec3** BrightColor)
+glm::vec3** Renderer::ApplyGaussianBlur(glm::vec3** BrightColorSrc, glm::vec3** BrightColorDst)
 {
-	float kernelMatrix[5][5] = { 0.003, 0.0133, 0.0219, 0.0133, 0.003,
+	float kernel[5][5] = { 0.003, 0.0133, 0.0219, 0.0133, 0.003,
 								0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
 								0.0219, 0.0983, 0.1621, 0.0983, 0.0219,
 								0.0133, 0.0596, 0.0983, 0.0596,0.0133,
 								0.003, 0.0133, 0.0219, 0.0133, 0.003 };
 
-	Convolution(kernelMatrix, BrightColor);
-
-}
-
-void Renderer::Convolution(float kernel[][5], glm::vec3** BrightColor)
-{
 	// find center position of kernel (half of kernel size)
 	int kCenterX = 2;
 	int kCenterY = 2;
@@ -1332,28 +1346,28 @@ void Renderer::Convolution(float kernel[][5], glm::vec3** BrightColor)
 						// ignore input samples which are out of bound
 						if (ii >= 0 && ii < rows && jj >= 0 && jj < cols)
 						{
-							/*color_buffer_[INDEX(viewport_width_, j, i, color)] +=
-								color_buffer_[INDEX(viewport_width_, jj, ii, color)] * kernel[mm][nn];*/
 							if (color == 0)
 							{
-								BrightColor[j][i].x +=
-									BrightColor[jj][ii].r * kernel[mm][nn];
+								BrightColorDst[j][i].x +=
+									BrightColorSrc[jj][ii].r * kernel[mm][nn];
 							}
 							else if (color == 1)
 							{
-								BrightColor[j][i].y +=
-									BrightColor[jj][ii].g * kernel[mm][nn];
+								BrightColorDst[j][i].y +=
+									BrightColorSrc[jj][ii].g * kernel[mm][nn];
 							}
 							else
 							{
-								BrightColor[j][i].z +=
-									BrightColor[jj][ii].b * kernel[mm][nn];
+								BrightColorDst[j][i].z +=
+									BrightColorSrc[jj][ii].b * kernel[mm][nn];
 							}
-
 						}
 					}
 				}
 			}
 		}
 	}
+
+
+	return BrightColorDst;
 }

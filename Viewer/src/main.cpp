@@ -68,7 +68,7 @@ bool show_model_selection_window = false;
 static int model_selection = 0;
 static int light_selection = 0;
 static int camera_selection = 0;
-static int view_selection = 1;
+static int view_selection = 0;
 static int last_model_selection = 0;
 
 static float left = 0.1;
