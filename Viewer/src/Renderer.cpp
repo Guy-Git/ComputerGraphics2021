@@ -414,22 +414,12 @@ void Renderer::Render(Scene& scene)
 				threePoints.push_back(currentLight.GetVertex(currentLight.GetFace(i).GetVertexIndex(2) - 1));
 
 
-				transformationMatrix = LightTransformations(threePoints, scaleFactor * currentLight.GetScaleFactor(), currentLight.GetPosition());
+				transformationMatrix = Transformations(threePoints, scaleFactor, glm::vec3(0), currentLight.GetPosition(), 1, glm::vec3(0), glm::vec3(0));
 				threePointsAfterTransformationsLight = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
 				FindMaxLightValues(threePointsAfterTransformationsLight);
 
 				DrawLightTriangle(threePointsAfterTransformationsLight, i, currentLight, scene, scene.GetActiveLight().GetColorOfMesh());
-
-				if (currentLight.isLightRotating_)
-				{
-					double max = FindMaxXorYPointForScaleFactor(scene.GetActiveModel());
-
-					float lightX = 4.0 * sin(glfwGetTime()) + max;
-					float lightY = -0.3f;
-					float lightZ = 3.0 * cos(glfwGetTime()) + max;
-					currentLight.SetNewPosition(glm::vec3(lightX, lightY, lightZ));
-				}
 
 				threePoints.clear();
 			}
@@ -518,7 +508,13 @@ void Renderer::Render(Scene& scene)
 						DrawPhongTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
 
 					if (scene.GetActiveLight().GetLightModel() == 2)
+					{
+						DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0) * 20.f);
+						DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1) * 20.f);
+						DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2) * 20.f);
+
 						DrawGouraudTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
+					}
 				}
 
 				else
@@ -561,7 +557,14 @@ glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::vec3 li
 
 	//Diffuse:
 	float diffuseStrength = scene.GetActiveModel().GetDiffuse();
-	glm::vec3 lightDir = glm::normalize(lightPoint - modelPoint);
+	
+	glm::vec3 lightDir;
+	if(scene.GetActiveLight().kindOfModel == 1)
+		lightDir = glm::normalize(lightPoint - modelPoint);
+
+	if(scene.GetActiveLight().kindOfModel == 2)
+		lightDir = -scene.GetActiveLight().GetLightDirection();
+
 	float diff = fmax(glm::dot(normal, lightDir), 0.0);
 	glm::vec3 diffuse = diffuseStrength * diff * scene.GetActiveLight().GetColorOfMesh();
 

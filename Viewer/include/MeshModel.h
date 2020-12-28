@@ -45,6 +45,8 @@ public:
 	void SetLightModel(int lightModel);
 	float GetLightModel();
 
+	void SetNewLightDirection(glm::vec3 newDir);
+	glm::vec3 GetLightDirection() const;
 
 
 	int kindOfModel; // 0 - model, 1 - point, 2 - parallel 
@@ -60,6 +62,7 @@ private:
 	glm::vec3 rotateAngle_;
 	glm::vec3 position_;
 
+	glm::vec3 lightDirection_;
 	glm::vec3 colorOfMesh_;
 
 	bool isFaceNormalShown_;

@@ -157,3 +157,10 @@ int Scene::GetPPMode()
 {
 	return PPmode_;
 }
+
+void Scene::RemoveLight()
+{
+	lights_.clear();
+}
+
+

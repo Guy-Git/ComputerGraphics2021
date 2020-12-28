@@ -46,6 +46,8 @@ public:
 
 	void SetPPMode(int mode);
 	int GetPPMode();
+
+	void RemoveLight();
 	
 private:
 	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
@@ -59,6 +61,7 @@ private:
 	float scaleFactor_;
 	glm::vec3 rotateAngle_;
 	glm::vec3 position_;
+	
 
 	float window_width_;
 	float window_height_;

@@ -15,7 +15,8 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	ambient_(0.5),
 	diffuse_(0.5),
 	specular_(0.5),
-	lightModel_(0)
+	lightModel_(0),
+	lightDirection_(0)
 {
 
 }
@@ -175,4 +176,12 @@ float MeshModel::GetLightModel()
 	return lightModel_;
 }
 
+void MeshModel::SetNewLightDirection(glm::vec3 newDir)
+{
+	lightDirection_ = newDir;
+}
 
+glm::vec3 MeshModel::GetLightDirection() const
+{
+	return lightDirection_;
+}

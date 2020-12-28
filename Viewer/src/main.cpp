@@ -67,6 +67,7 @@ bool show_model_selection_window = false;
 
 static int model_selection = 0;
 static int light_selection = 0;
+static int pointOrParallelLight = -1;
 static int camera_selection = 0;
 static int view_selection = 0;
 static int last_model_selection = 0;
@@ -84,6 +85,7 @@ static float cameraY = 0;
 static float cameraZ = 450.0;
 
 glm::vec3 light_transformation = glm::vec3(0);
+glm::vec3 light_direction = glm::vec3(0);
 
 static float orthoZoom = 0.0;
 
@@ -582,16 +584,6 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	ImGui::Begin("Light selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
-	ImGui::RadioButton("Light #1", &light_selection, 0);
-	if (scene.GetLightCount() > 0)
-	{
-		ImGui::SameLine(); ImGui::Text("[LIGHT LOADED]");
-	}
-	ImGui::RadioButton("Light #2", &light_selection, 1);
-	if (scene.GetLightCount() > 1)
-	{
-		ImGui::SameLine(); ImGui::Text("[LIGHT LOADED]");
-	}
 	ChangeLightSelection(scene);
 
 	if (ImGui::Button("Reset Current light"))
@@ -599,34 +591,31 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		ResetLightParametersValue(scene);
 	}
 
-	if (ImGui::Button("Add Point Of Light"))
+	if (ImGui::RadioButton("Point Of Light", &pointOrParallelLight, 0))
 	{
+
 		scene.AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
 
 		light_selection = scene.GetLightCount() - 1;
 		
-		scene.GetLight(light_selection).SetColorOfMesh(glm::vec3(1, 1, 1));
+		scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
 
-		scene.GetLight(light_selection).kindOfModel = 1; // point
+		scene.GetActiveLight().kindOfModel = 1; // point
 	}
 
-	if (ImGui::Button("Add Parallel Light"))
+	if (ImGui::RadioButton("Parallel Light", &pointOrParallelLight, 1))
 	{
-		scene.AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
+		scene.RemoveLight();
 
-		light_selection = scene.GetLightCount() - 1;
+		std::vector<Face> faces;
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> normals;
+		std::string string;
 
-		scene.GetLight(light_selection).SetColorOfMesh(glm::vec3(1, 1, 1));
-
-		scene.GetLight(light_selection).kindOfModel = 2; // parallel
-	}
-
-	ImGui::Checkbox("Rotate Light", &rotate_light);
-
-	if (rotate_light)
-	{
-		ResetParametersValue(scene);
-		scene.GetLight(light_selection).isLightRotating_ = rotate_light;
+		scene.AddLight(std::make_shared<MeshModel>(faces, vertices, normals, string));
+		scene.SetActiveLightIndex(0);
+		scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
+		scene.GetActiveLight().kindOfModel = 2; // parallel
 	}
 
 	ImGui::End();
@@ -1137,15 +1126,26 @@ void LightWindow(Scene& scene)
 		// Controls
 		ImGui::ColorEdit3("Light Color", (float*)&light_color);
 
-		ImGui::SliderFloat("Light X Pos", &light_transformation.x, -50.0, 50.0);
-		ImGui::SliderFloat("Light Y Pos", &light_transformation.y, -25.0, 25.0);
-		ImGui::SliderFloat("Light Z Pos", &light_transformation.z, -100.0, 100.0);
+		if (pointOrParallelLight == 0)
+		{
+			ImGui::SliderFloat("Light X Pos", &light_transformation.x, -50.0, 50.0);
+			ImGui::SliderFloat("Light Y Pos", &light_transformation.y, -25.0, 25.0);
+			ImGui::SliderFloat("Light Z Pos", &light_transformation.z, -100.0, 100.0);
+		}
+
+		else
+		{
+			ImGui::SliderFloat("Light X Direction", &light_direction.x, -1, 1);
+			ImGui::SliderFloat("Light Y Direction", &light_direction.y, -1, 1);
+			ImGui::SliderFloat("Light Z Direction", &light_direction.z, -1, 1);
+		}
 
 		if (scene.GetLightCount() > 0)
 		{
 			scene.GetActiveLight().SetLightModel(light_type_selection);
 			scene.GetActiveLight().SetColorOfMesh(light_color);
 			scene.GetActiveLight().SetNewPosition(light_transformation);
+			scene.GetActiveLight().SetNewLightDirection(light_direction);	
 		}
 
 		if (ImGui::Button("Close Me")) {
