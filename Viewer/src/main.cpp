@@ -438,11 +438,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("Light"))
+		/*if (ImGui::BeginMenu("Light"))
 		{
 			light_properties_window = true;
 			ImGui::EndMenu();
-		}
+		}*/
 
 		if (ImGui::BeginMenu("Post Processing"))
 		{
@@ -580,16 +580,11 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	// light selection window - position and window flag
 	ImGui::SetNextWindowPos(ImVec2(660, scene.GetHeight() - 200));
-	ImGui::SetNextWindowSize(ImVec2(330, 200));
+	ImGui::SetNextWindowSize(ImVec2(420, 200));
 
 	ImGui::Begin("Light selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
 	ChangeLightSelection(scene);
-
-	if (ImGui::Button("Reset Current light"))
-	{
-		ResetLightParametersValue(scene);
-	}
 
 	if (ImGui::RadioButton("Point Of Light", &pointOrParallelLight, 0))
 	{
@@ -597,7 +592,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		scene.AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
 
 		light_selection = scene.GetLightCount() - 1;
-		
+
 		scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
 
 		scene.GetActiveLight().kindOfModel = 1; // point
@@ -618,6 +613,45 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		scene.GetActiveLight().kindOfModel = 2; // parallel
 	}
 
+	if (pointOrParallelLight != -1)
+	{
+		ImGui::RadioButton("Flat", &light_type_selection, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("Phong", &light_type_selection, 1);
+		ImGui::SameLine();
+		ImGui::RadioButton("Gouraud", &light_type_selection, 2);
+
+		// Controls
+		ImGui::ColorEdit3("Light Color", (float*)&light_color);
+
+		if (pointOrParallelLight == 0)
+		{
+			ImGui::SliderFloat("Light X Position", &light_transformation.x, -50.0, 50.0);
+			ImGui::SliderFloat("Light Y Position", &light_transformation.y, -25.0, 25.0);
+			ImGui::SliderFloat("Light Z Position", &light_transformation.z, -100.0, 100.0);
+		}
+
+		else
+		{
+			ImGui::SliderFloat("Light X Direction", &light_direction.x, -1, 1);
+			ImGui::SliderFloat("Light Y Direction", &light_direction.y, -1, 1);
+			ImGui::SliderFloat("Light Z Direction", &light_direction.z, -1, 1);
+		}
+
+		if (scene.GetLightCount() > 0)
+		{
+			scene.GetActiveLight().SetLightModel(light_type_selection);
+			scene.GetActiveLight().SetColorOfMesh(light_color);
+			scene.GetActiveLight().SetNewPosition(light_transformation);
+			scene.GetActiveLight().SetNewLightDirection(light_direction);
+		}
+	}
+
+	if (ImGui::Button("Reset Current light"))
+	{
+		ResetLightParametersValue(scene);
+	}
+
 	ImGui::End();
 
 	ShowScaleRotateTranslationWindowsLocal(scene); // all local windows declarations
@@ -630,7 +664,7 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	CameraWindowsWorld(scene);
 
-	LightWindow(scene);
+	//LightWindow(scene);
 
 	SetNormalsAndBoundingBox(scene);
 
@@ -876,25 +910,28 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::SameLine();
 		if (ImGui::Button("Metal"))
 		{
-			ambient = 0.5;
-			diffuse = 0.6;
-			specular = 0.9;
+			ambient = 0.2;
+			diffuse = 0.9;
+			specular = 1.0;
+			model_color = glm::vec3(174, 174, 174);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Plastic"))
 		{
-			ambient = 0.3;
-			diffuse = 0.7;
-			specular = 0.2;
+			ambient = 0.4;
+			diffuse = 0.5;
+			specular = 0.4;
+			model_color = glm::vec3(238, 33, 33);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rubber"))
 		{
-			ambient = 0.8;
-			diffuse = 0.4;
-			specular = 0.1;
+			ambient = 0.3;
+			diffuse = 0.7;
+			specular = 0.2;
+			model_color = glm::vec3(63, 69, 113);
 		}
 
 		ImGui::ColorEdit3("Model Color", (float*)&model_color);
@@ -903,14 +940,12 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::SliderFloat("Diffuse", &diffuse, 0.0f, 1.0f);
 		ImGui::SliderFloat("Specular", &specular, 0.0f, 1.0f);
 
-		ImGui::Checkbox("Texture Mapping", &texture_mapping);
-
 		if (scene.GetModelCount() > 0)
 		{
 			scene.GetActiveModel().SetAmbient(ambient);
 			scene.GetActiveModel().SetDiffuse(diffuse);
 			scene.GetActiveModel().SetSpecular(specular);
-			scene.GetActiveModel().SetColorOfMesh(model_color);
+			scene.GetActiveModel().SetColorOfMesh(glm::normalize(model_color));
 		}
 
 		ImGui::End();
@@ -1122,7 +1157,7 @@ void LightWindow(Scene& scene)
 		ImGui::RadioButton("Phong", &light_type_selection, 1);
 		ImGui::SameLine();
 		ImGui::RadioButton("Gouraud", &light_type_selection, 2);
-		
+
 		// Controls
 		ImGui::ColorEdit3("Light Color", (float*)&light_color);
 
@@ -1145,7 +1180,7 @@ void LightWindow(Scene& scene)
 			scene.GetActiveLight().SetLightModel(light_type_selection);
 			scene.GetActiveLight().SetColorOfMesh(light_color);
 			scene.GetActiveLight().SetNewPosition(light_transformation);
-			scene.GetActiveLight().SetNewLightDirection(light_direction);	
+			scene.GetActiveLight().SetNewLightDirection(light_direction);
 		}
 
 		if (ImGui::Button("Close Me")) {

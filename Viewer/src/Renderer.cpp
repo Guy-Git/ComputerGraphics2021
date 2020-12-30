@@ -509,9 +509,9 @@ void Renderer::Render(Scene& scene)
 
 					if (scene.GetActiveLight().GetLightModel() == 2)
 					{
-						DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0) * 20.f);
-						DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1) * 20.f);
-						DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2) * 20.f);
+						//DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0) * 20.f);
+						//DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1) * 20.f);
+						//DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2) * 20.f);
 
 						DrawGouraudTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
 					}
@@ -557,12 +557,12 @@ glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::vec3 li
 
 	//Diffuse:
 	float diffuseStrength = scene.GetActiveModel().GetDiffuse();
-	
+
 	glm::vec3 lightDir;
-	if(scene.GetActiveLight().kindOfModel == 1)
+	if (scene.GetActiveLight().kindOfModel == 1)
 		lightDir = glm::normalize(lightPoint - modelPoint);
 
-	if(scene.GetActiveLight().kindOfModel == 2)
+	if (scene.GetActiveLight().kindOfModel == 2)
 		lightDir = -scene.GetActiveLight().GetLightDirection();
 
 	float diff = fmax(glm::dot(normal, lightDir), 0.0);
@@ -570,9 +570,13 @@ glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::vec3 li
 
 	//Specular:
 	float specularStrength = scene.GetActiveModel().GetSpecular();
-	glm::vec3 viewDir = glm::normalize(scene.GetActiveCamera().GetCameraEye() - modelPoint);
-	glm::vec3 reflectDir = glm::reflect(-lightDir, normal);
-	float spec = pow(fmax(glm::dot(viewDir, reflectDir), 0.0), 64);
+
+	//glm::vec3 cameraPosition = scene.GetActiveCamera().GetCameraEye();
+
+	glm::vec3 viewDir = glm::normalize(glm::vec3(750, 450, 0) - modelPoint);
+	//glm::vec3 reflectDir = glm::reflect(-lightDir, normal); // I removed reflectDir and used lightDir insted
+
+	float spec = pow(fmax(glm::dot(-viewDir, lightDir), 0.0), 64);
 	glm::vec3 specular = specularStrength * spec * scene.GetActiveLight().GetColorOfMesh();
 
 	glm::vec3 lightChange = (specular + ambient + diffuse) * scene.GetActiveModel().GetColorOfMesh();
@@ -866,8 +870,7 @@ void Renderer::DrawPhongTriangle(std::vector<glm::vec3>& vertexPositions, MeshMo
 					{
 						zBuff[x][y] = z;
 						glm::vec3 xyNormal = PhongNormalInterpolation(vertexNormals, vertexPositions, x, y);
-						//DrawNormal(glm::vec3(x, y, z), xyNormal);
-						glm::vec3 color = CalcColorOfFace(scene, glm::normalize(xyNormal), lightPoint, triangleCentroid);
+						glm::vec3 color = CalcColorOfFace(scene, glm::normalize(xyNormal), lightPoint, glm::vec3(x, y, z));
 						PutPixel(x, y, color);
 
 					}
@@ -1175,9 +1178,9 @@ glm::vec3 Renderer::GouraudColor(std::vector<glm::vec3>& vertexColors, float dX0
 
 glm::vec3 Renderer::PhongNormalInterpolation(std::vector<glm::vec3>& vertexNormals, std::vector<glm::vec3>& vertexPositions, float px, float py)
 {
-	float A1 = Area(vertexPositions.at(0).x, vertexPositions.at(0).y, vertexPositions.at(1).x, vertexPositions.at(1).y, px, py);
+	float A3 = Area(vertexPositions.at(0).x, vertexPositions.at(0).y, vertexPositions.at(1).x, vertexPositions.at(1).y, px, py);
 	float A2 = Area(vertexPositions.at(0).x, vertexPositions.at(0).y, vertexPositions.at(2).x, vertexPositions.at(2).y, px, py);
-	float A3 = Area(vertexPositions.at(1).x, vertexPositions.at(1).y, vertexPositions.at(2).x, vertexPositions.at(2).y, px, py);
+	float A1 = Area(vertexPositions.at(1).x, vertexPositions.at(1).y, vertexPositions.at(2).x, vertexPositions.at(2).y, px, py);
 
 	float A = A1 + A2 + A3;
 
@@ -1280,7 +1283,7 @@ void Renderer::PostProcessingFunctions(Scene scene)
 					float z = (zBuff[x][y] - 1.0041) / (1.0052 - 1.0041);
 					fog = (fogEnd - z) / (fogEnd - fogStart);
 
-					PutPixel(x, y,  ((1 - fog) * scene.GetActiveModel().GetColorOfMesh() + fog * glm::vec3(0.26)));
+					PutPixel(x, y, ((1 - fog) * scene.GetActiveModel().GetColorOfMesh() + fog * glm::vec3(0.26)));
 				}
 			}
 		}
