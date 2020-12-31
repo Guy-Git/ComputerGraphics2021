@@ -5,7 +5,7 @@
 <img src=./parallel_light.png width=60%>  
 
 # 2.  Specify a material for each model -  
-Each material has different parameters (ambient, diffuse and specular). 
+Each material has different parameters (ambient, diffuse and specular).  
 By choosing different parameters, we can mimic each real world material characteristics.
 * ### Metal:
 <img src=./metal.png width=60%> 
@@ -22,8 +22,10 @@ By choosing different parameters, we can mimic each real world material characte
 * ### Phong:
 <img src=./phong.png width=60%>  
 
-# 4. More screenshots of lightning -   
-<img src=./gouraud.png width=60%> 
+# 4. Demonstrated on each section individually:  
+In section 1 - Point vs. Parallel light source.  
+In section 2 - Different materials.  
+In section 3 - Different shading modules.  
 
 # 5. Post-processing effects -  
 * ### Bloom:  
