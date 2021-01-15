@@ -3,6 +3,8 @@
 #include "vector"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <ShaderProgram.h>
+#include <Texture2D.h>
 
 class Renderer
 {
@@ -29,10 +31,12 @@ private:
 	void DrawFlatTriangle(const std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, glm::vec3 faceNormal);
 	void DrawPhongTriangle(std::vector<glm::vec3>& vertexPositions, MeshModel& currentModel, Scene& scene, glm::vec3 lightPoint, std::vector<glm::vec3> vertexNormals);
 	void DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, int faceID, MeshModel& currentModel, Scene& scene, glm::vec3 color);
-	glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+	glm::mat4 Renderer::Transformations(float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 		float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition);
 
 	glm::mat4 Renderer::LightTransformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localPosition);
+
+	glm::mat4 CameraTransformation(Camera& cam, Scene& scene);
 
 	std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene);
 	void Renderer::updatePosition(glm::mat4 transformation, Camera& cam, Scene& scene, bool isModelOrLight);
@@ -56,6 +60,13 @@ private:
 	float* color_buffer_;
 	int viewport_width_;
 	int viewport_height_;
+
 	GLuint gl_screen_tex_;
 	GLuint gl_screen_vtc_;
+	ShaderProgram lightShader;
+	ShaderProgram colorShader;
+	Texture2D texture1;
+
+	void LoadShaders();
+	void LoadTextures();
 };

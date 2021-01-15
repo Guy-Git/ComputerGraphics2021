@@ -2,6 +2,15 @@
 #include <glm/glm.hpp>
 #include <string>
 #include "Face.h"
+#include <glad/glad.h>
+
+
+struct Vertex
+{
+	glm::vec3 position;
+	glm::vec3 normal;
+	glm::vec2 textureCoords;
+};
 
 class MeshModel
 {
@@ -52,6 +61,11 @@ public:
 	int kindOfModel; // 0 - model, 1 - point, 2 - parallel 
 	bool isLightRotating_;
 
+	std::vector<Vertex> modelVertices;
+	std::vector<glm::vec3> textureCoords;
+
+	GLuint GetVAO() ;
+
 private:
 	std::vector<Face> faces_;
 	std::vector<glm::vec3> vertices_;
@@ -78,4 +92,7 @@ private:
 	
 
 	glm::vec4 minMaxXY_; // (max X, min X, max y, min y)
+
+	GLuint vbo;
+	GLuint vao;
 };

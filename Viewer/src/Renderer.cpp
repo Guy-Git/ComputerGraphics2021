@@ -414,7 +414,7 @@ void Renderer::Render(Scene& scene)
 				threePoints.push_back(currentLight.GetVertex(currentLight.GetFace(i).GetVertexIndex(2) - 1));
 
 
-				transformationMatrix = Transformations(threePoints, scaleFactor, glm::vec3(0), currentLight.GetPosition(), 1, glm::vec3(0), glm::vec3(0));
+				transformationMatrix = Transformations(scaleFactor, glm::vec3(0), currentLight.GetPosition(), 1, glm::vec3(0), glm::vec3(0));
 				threePointsAfterTransformationsLight = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
 
 				FindMaxLightValues(threePointsAfterTransformationsLight);
@@ -441,7 +441,6 @@ void Renderer::Render(Scene& scene)
 	{
 		for (size_t i = 0; i < scene.GetModelCount(); i++)
 		{
-
 			MeshModel currentModel = scene.GetModel(i);
 			double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 			std::vector <glm::vec3> threePoints;
@@ -451,92 +450,39 @@ void Renderer::Render(Scene& scene)
 			std::vector <glm::vec3> threeNormalsAfterTransformations;
 			glm::mat4 transformationMatrixNormals;
 
-			for (int i = 0; i < currentModel.GetFacesCount(); i++)
-			{
-				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(0) - 1));
-				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(1) - 1));
-				threePoints.push_back(currentModel.GetVertex(currentModel.GetFace(i).GetVertexIndex(2) - 1));
+			glm::mat4 modelTransformations = Transformations(scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
+				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());;
 
-				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetNormalIndex(0) - 1));
-				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetNormalIndex(1) - 1));
-				vertexNormals.push_back(currentModel.GetVertexNormal(currentModel.GetFace(i).GetNormalIndex(2) - 1));
+			glm::mat4 cameraTransformations = CameraTransformation(scene.GetActiveCamera(), scene);
 
-				FindMaxValues(threePoints);
 
-				transformationMatrix = Transformations(threePoints, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
-					scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+			// Activate the 'colorShader' program (vertex and fragment shaders)
+			colorShader.use();
 
-				threePointsAfterTransformations = CalcNewPoints(threePoints, transformationMatrix, scene.GetActiveCamera(), scene);
+			// Set the uniform variables
+			colorShader.setUniform("model", modelTransformations);
+			colorShader.setUniform("camera", cameraTransformations);
+			colorShader.setUniform("material.textureMap", 0);
 
-				transformationMatrixNormals = Transformations(vertexNormals, scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
-					scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());
+			// Set 'texture1' as the active texture at slot #0
+			texture1.bind(0);
 
-				threeNormalsAfterTransformations = CalcNewPoints(vertexNormals, transformationMatrixNormals, scene.GetActiveCamera(), scene);
+			// Drag our model's faces (triangles) in fill mode
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glBindVertexArray(currentModel.GetVAO());
+			glDrawArrays(GL_TRIANGLES, 0, currentModel.GetVerticesCount());
+			glBindVertexArray(0);
 
-				threeNormalsAfterTransformations.at(0).x -= 750; threeNormalsAfterTransformations.at(0).y -= 450; threeNormalsAfterTransformations.at(0).z -= 0;
-				threeNormalsAfterTransformations.at(1).x -= 750; threeNormalsAfterTransformations.at(1).y -= 450; threeNormalsAfterTransformations.at(1).z -= 0;
-				threeNormalsAfterTransformations.at(2).x -= 750; threeNormalsAfterTransformations.at(2).y -= 450; threeNormalsAfterTransformations.at(2).z -= 0;
+			// Unset 'texture1' as the active texture at slot #0
+			texture1.unbind(0);
 
-				threeNormalsAfterTransformations.at(0) = glm::normalize(threeNormalsAfterTransformations.at(0));
-				threeNormalsAfterTransformations.at(1) = glm::normalize(threeNormalsAfterTransformations.at(1));
-				threeNormalsAfterTransformations.at(2) = glm::normalize(threeNormalsAfterTransformations.at(2));
+			colorShader.setUniform("color", glm::vec3(0, 0, 0));
 
-				glm::vec3 faceNormal = glm::vec3(1);
-				glm::vec3 vertexNormal = glm::vec3(1);
-
-				if (currentModel.GetVertexNormalShown())
-				{
-					DrawVertexNormals(threePointsAfterTransformations, true);
-				}
-
-				if (currentModel.GetFaceNormalShown())
-				{
-					DrawFaceNormals(threePointsAfterTransformations, true);
-				}
-
-				vertexNormal = DrawVertexNormals(threePointsAfterTransformations, false);
-				faceNormal = DrawFaceNormals(threePointsAfterTransformations, false);
-
-				//glm::vec3 colorOfFace;
-
-				if (scene.GetLightCount() > 0)
-				{
-					if (scene.GetActiveLight().GetLightModel() == 0)
-						DrawFlatTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, faceNormal);
-
-					if (scene.GetActiveLight().GetLightModel() == 1)
-						DrawPhongTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
-
-					if (scene.GetActiveLight().GetLightModel() == 2)
-					{
-						//DrawNormal(threePointsAfterTransformations.at(0), threeNormalsAfterTransformations.at(0) * 20.f);
-						//DrawNormal(threePointsAfterTransformations.at(1), threeNormalsAfterTransformations.at(1) * 20.f);
-						//DrawNormal(threePointsAfterTransformations.at(2), threeNormalsAfterTransformations.at(2) * 20.f);
-
-						DrawGouraudTriangle(threePointsAfterTransformations, currentModel, scene, lightPoint, threeNormalsAfterTransformations);
-					}
-				}
-
-				else
-				{
-					DrawFlatTriangle(threePointsAfterTransformations, currentModel, scene, glm::vec3(0, 0, 0), faceNormal);
-				}
-				/*if(scene.GetActiveLight().GetLightModel() == 2)
-					DrawTriangle(threePointsAfterTransformations, i, currentModel, scene, modelPoint, lightPoint, threeNormalsAfterTransformations);
-				*/
-				vertexNormals.clear();
-				threePoints.clear();
-			}
-
-			DrawBoundingBox(currentModel, transformationMatrix, scene, scene.GetActiveCamera());
-
-			maxPointXValue = -INFINITY;
-			maxPointYValue = -INFINITY;
-			maxPointZValue = -INFINITY;
-
-			minPointXValue = INFINITY;
-			minPointYValue = INFINITY;
-			minPointZValue = INFINITY;
+			// Drag our model's faces (triangles) in line mode (wireframe)
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glBindVertexArray(currentModel.GetVAO());
+			glDrawArrays(GL_TRIANGLES, 0, currentModel.GetVerticesCount());
+			glBindVertexArray(0);
 		}
 	}
 
@@ -932,7 +878,7 @@ void Renderer::DrawLightTriangle(const std::vector<glm::vec3>& vertexPositions, 
 	}
 }
 
-glm::mat4 Renderer::Transformations(const std::vector<glm::vec3>& vertexPositions, float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
+glm::mat4 Renderer::Transformations(float localScale, glm::vec3 localRotAngle, glm::vec3 localPosition,
 	float worldScale, glm::vec3 worldRotAngle, glm::vec3 worldPosition)
 {
 
@@ -960,6 +906,30 @@ glm::mat4 Renderer::LightTransformations(const std::vector<glm::vec3>& vertexPos
 	return localScaleMat * localPositionMat;
 }
 
+glm::mat4 Renderer::CameraTransformation(Camera& cam, Scene& scene)
+{
+	glm::mat4 orthoMat = cam.GetOrthographicTrans();
+	glm::mat4 perspecMat = cam.GetPerspectiveTrans();
+	glm::mat4 view = cam.GetCameraLookAt();
+
+	glm::mat4 cameraLocalRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getSelfAngle().x), sin(cam.getSelfAngle().x), 0, 0, -sin(cam.getSelfAngle().x), cos(cam.getSelfAngle().x), 0, 0, 0, 0, 1);
+	glm::mat4 cameraLocalRotationMatY = glm::mat4(cos(cam.getSelfAngle().y), 0, sin(cam.getSelfAngle().y), 0, 0, 1, 0, 0, -sin(cam.getSelfAngle().y), 0, cos(cam.getSelfAngle().y), 0, 0, 0, 0, 1);
+	glm::mat4 cameraLocalRotationMatZ = glm::mat4(cos(cam.getSelfAngle().z), sin(cam.getSelfAngle().z), 0, 0, -sin(cam.getSelfAngle().z), cos(cam.getSelfAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+	glm::mat4 cameraWorldRotationMatX = glm::mat4(1, 0, 0, 0, 0, cos(cam.getWorldRotatingAngle().x), sin(cam.getWorldRotatingAngle().x), 0, 0, -sin(cam.getWorldRotatingAngle().x), cos(cam.getWorldRotatingAngle().x), 0, 0, 0, 0, 1);
+	glm::mat4 cameraWorldRotationMatY = glm::mat4(cos(cam.getWorldRotatingAngle().y), 0, sin(cam.getWorldRotatingAngle().y), 0, 0, 1, 0, 0, -sin(cam.getWorldRotatingAngle().y), 0, cos(cam.getWorldRotatingAngle().y), 0, 0, 0, 0, 1);
+	glm::mat4 cameraWorldRotationMatZ = glm::mat4(cos(cam.getWorldRotatingAngle().z), sin(cam.getWorldRotatingAngle().z), 0, 0, -sin(cam.getWorldRotatingAngle().z), cos(cam.getWorldRotatingAngle().z), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+	glm::mat4 cameraLocalRotate = cameraLocalRotationMatX * cameraLocalRotationMatY * cameraLocalRotationMatZ;
+	glm::mat4 cameraWorldRotate = cameraWorldRotationMatX * cameraWorldRotationMatY * cameraWorldRotationMatZ;
+
+	cameraLocalRotate = glm::inverse(cameraLocalRotate);
+	cameraWorldRotate = glm::inverse(cameraWorldRotate);
+
+	float w = 1.0;
+
+	return orthoMat * perspecMat * cameraLocalRotate * view * cameraWorldRotate;
+}
 std::vector<glm::vec3> Renderer::CalcNewPoints(const std::vector<glm::vec3>& vertexPositions, glm::mat4 transformation, Camera& cam, Scene& scene)
 {
 	int x0 = scene.GetWidth() / 2;
@@ -1406,4 +1376,17 @@ glm::vec3** Renderer::ApplyGaussianBlur(glm::vec3** BrightColorSrc, glm::vec3** 
 
 
 	return BrightColorDst;
+}
+
+void Renderer::LoadShaders()
+{
+	colorShader.loadShaders("vshader_color.glsl", "fshader_color.glsl");
+}
+
+void Renderer::LoadTextures()
+{
+	if (!texture1.loadTexture("bin\\Debug\\crate.jpg", true))
+	{
+		texture1.loadTexture("bin\\Release\\crate.jpg", true);
+	}
 }
