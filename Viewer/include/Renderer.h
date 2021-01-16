@@ -9,20 +9,23 @@
 class Renderer
 {
 public:
-	Renderer(int viewportWidth, int viewportHeight);
+	//Renderer(int viewportWidth, int viewportHeight);
 	virtual ~Renderer();
 	void Render(Scene& scene);
 	double FindMaxXorYPointForScaleFactor(MeshModel& currentModel);
 	void FindMaxValues(const std::vector<glm::vec3>& triangle);
 	void FindMaxLightValues(const std::vector<glm::vec3>& triangle);
-	void SwapBuffers();
+	//void SwapBuffers();
 	void ClearColorBuffer(const glm::vec3& color);
-	int GetViewportWidth() const;
-	int GetViewportHeight() const;
-	void SetViewport(int height, int width, glm::vec3 color);
+	//int GetViewportWidth() const;
+	//int GetViewportHeight() const;
+	//void SetViewport(int height, int width, glm::vec3 color);
 	void Renderer::ScaleLocal(const Scene& scene, const float scaleFactor);
 
 	glm::vec3 CalcColorOfFace(Scene& scene, glm::vec3 faceNormal, glm::vec3 lightPoint, glm::vec3 modelPoint);
+
+	void LoadShaders();
+	void LoadTextures();
 
 private:
 	void PutPixel(const int i, const int j, const glm::vec3& color);
@@ -52,21 +55,16 @@ private:
 	void CombineBlooming(glm::vec3** BrightColor, float bloomTreshold);
 	glm::vec3 BloomTreshold();
 	glm::vec3** Renderer::ApplyGaussianBlur(glm::vec3** BrightColorSrc, glm::vec3** BrightColorDst);
-	void CreateBuffers(int w, int h);
-	void CreateOpenGLBuffer();
-	void InitOpenGLRendering();
+	//void CreateBuffers(int w, int h);
+	//void CreateOpenGLBuffer();
+	//void InitOpenGLRendering();
 	void Swap(int& X1, int& Y1, int& X2, int& Y2);
 
 	float* color_buffer_;
 	int viewport_width_;
 	int viewport_height_;
 
-	GLuint gl_screen_tex_;
-	GLuint gl_screen_vtc_;
 	ShaderProgram lightShader;
 	ShaderProgram colorShader;
 	Texture2D texture1;
-
-	void LoadShaders();
-	void LoadTextures();
 };

@@ -1,12 +1,15 @@
 #version 150
 
-in  vec2 texCoord;
 out vec4 fColor;
 
 uniform sampler2D texture;
+uniform vec3 color;
+
+in vec3 fragPos;
+in vec3 fragNormal;
 
 void main() 
 { 
-   fColor = textureLod( texture, texCoord, 0 );
+   fColor = vec4(color,1);
 } 
 

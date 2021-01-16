@@ -102,8 +102,15 @@ float specular = 0.5f;
 
 bool texture_mapping = 0;
 
-glm::vec3 clear_color = glm::vec3(0.26f, 0.26f, 0.26f);
+glm::vec4 clear_color = glm::vec4(0.26f, 0.26f, 0.26f, 1);
 glm::vec3 light_color = glm::vec3(1);
+
+int windowWidth = 1280;
+int windowHeight = 720;
+
+ImGuiIO* imgui;
+GLFWwindow* window;
+
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
@@ -131,6 +138,10 @@ bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
 void CameraWindowsLocal(Scene& scene);
 void CameraWindowsWorld(Scene& scene);
 void LightWindow(Scene& scene);
+
+ImGuiIO& SetupImgui(GLFWwindow* window);
+bool Setup(int windowWidth, int windowHeight, const char* windowName);
+
 
 /**
  * Function implementation
@@ -167,33 +178,116 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 		}
 	}
 }
+bool Setup(int windowWidth, int windowHeight, const char* windowName)
+{
+	window = SetupGlfwWindow(windowWidth, windowHeight, windowName);
+	if (!window)
+	{
+		std::cerr << "Window setup failed" << std::endl;
+		return false;
+	}
+
+	imgui = &SetupImgui(window);
+
+	glClearColor(clear_color.r, clear_color.g, clear_color.b, 1);
+	glEnable(GL_DEPTH_TEST);
+
+	return true;
+}
+
+ImGuiIO& SetupImgui(GLFWwindow* window)
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	(void)io;
+
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init();
+
+	// Setup style
+	ImGui::StyleColorsDark();
+
+	return io;
+}
 
 int main(int argc, char** argv)
 {
-	GLFWwindow* window = SetupGlfwWindow(1500, 900, "Mesh Viewer");
-	if (!window)
-		return 1;
 
-	int frameBufferWidth, frameBufferHeight;
-	glfwMakeContextCurrent(window);
-	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
-
-	Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
-	Scene scene = Scene();
-
-	ImGuiIO& io = SetupDearImgui(window);
-	glfwSetScrollCallback(window, ScrollCallback);
-	while (!glfwWindowShouldClose(window))
+	if (!Setup(1500, 900, "aaa"))
 	{
-		glfwPollEvents();
-		StartFrame();
-		DrawImguiMenus(io, scene);
-		RenderFrame(window, scene, renderer, io);
+		std::cerr << "Setup failed" << std::endl;
+		return -1;
 	}
 
-	Cleanup(window);
+	Scene scene = Scene();
+	
+	Renderer renderer;
+	renderer.LoadShaders();
+	renderer.LoadTextures();
+
+	while (!glfwWindowShouldClose(window))
+	{
+		// Poll and process events
+		glfwPollEvents();
+
+		// Imgui stuff
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		DrawImguiMenus(ImGui::GetIO(), scene);
+		ImGui::Render();
+		
+		// Clear the screen and depth buffer
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Render scene
+		renderer.Render(scene);
+
+		// Imgui stuff
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// Swap front and back buffers
+		glfwSwapBuffers(window);
+	}
+
+	glfwTerminate();
 	return 0;
+
+
+	//GLFWwindow* window = SetupGlfwWindow(1500, 900, "Mesh Viewer");
+	//if (!window)
+	//	return 1;
+
+	//glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
+	//glEnable(GL_DEPTH_TEST);
+
+	//int frameBufferWidth, frameBufferHeight;
+	//glfwMakeContextCurrent(window);
+	//glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
+
+	////Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
+
+	//Renderer renderer;
+	//renderer.LoadShaders();
+	//renderer.LoadTextures();
+
+	//Scene scene = Scene();
+
+	//ImGuiIO& io = SetupDearImgui(window);
+	//glfwSetScrollCallback(window, ScrollCallback);
+	//while (!glfwWindowShouldClose(window))
+	//{
+	//	glfwPollEvents();
+	//	StartFrame();
+	//	DrawImguiMenus(io, scene);
+	//	RenderFrame(window, scene, renderer, io);
+	//}
+
+	//Cleanup(window);
+	//return 0;
 }
+
 
 static void GlfwErrorCallback(int error, const char* description)
 {
@@ -256,11 +350,11 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 	glfwMakeContextCurrent(window);
 	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
 
-	if (frameBufferWidth != renderer.GetViewportWidth() || frameBufferHeight != renderer.GetViewportHeight())
+	/*if (frameBufferWidth != renderer.GetViewportWidth() || frameBufferHeight != renderer.GetViewportHeight())
 	{
 		scene.SetWindowSizes(frameBufferHeight, frameBufferWidth);
-	}
-	renderer.SetViewport(scene.GetHeight(), scene.GetWidth(), clear_color);
+	}*/
+	//renderer.SetViewport(scene.GetHeight(), scene.GetWidth(), clear_color);
 
 	const float cameraSpeed = 100.0f; // adjust accordingly
 	if (cameraAtBuffer.x == 0.0 && cameraAtBuffer.y == 0.0 && cameraAtBuffer.z == 0.0)
@@ -303,8 +397,11 @@ void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& 
 
 	scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
 
+	// Clear the screen and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	renderer.Render(scene);
-	renderer.SwapBuffers();
+	//renderer.SwapBuffers();
 
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	glfwMakeContextCurrent(window);
