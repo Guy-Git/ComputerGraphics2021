@@ -10,6 +10,7 @@ class Renderer
 {
 public:
 	//Renderer(int viewportWidth, int viewportHeight);
+	Renderer::Renderer();
 	virtual ~Renderer();
 	void Render(Scene& scene);
 	double FindMaxXorYPointForScaleFactor(MeshModel& currentModel);

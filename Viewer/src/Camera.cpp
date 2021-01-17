@@ -8,7 +8,7 @@ Camera::Camera()
 	selfAngle_= glm::vec3(0);
 	worldRotatingAngle_ = glm::vec3(0);
 
-	cameraEye_ = glm::vec3(0.0f, 0.0f, 450.0f);
+	cameraEye_ = glm::vec3(0.0f, 0.0f, 10.0f);
 	cameraAt_ = glm::vec3(0.0f, 0.0f, 0.0f);
 	cameraUp_ = glm::vec3(0.0f, 1.0f, 0.0f);
 

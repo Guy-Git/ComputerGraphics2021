@@ -39,6 +39,11 @@ float** zBuff;
 //	//CreateBuffers(viewport_width, viewport_height);
 //}
 
+Renderer::Renderer()
+{
+
+}
+
 Renderer::~Renderer()
 {
 	delete[] color_buffer_;
@@ -384,7 +389,7 @@ void Renderer::Render(Scene& scene)
 	int currentHeight = scene.GetHeight();
 	int currentWidth = scene.GetWidth();
 
-	glm::vec3 lightPoint;
+	/*glm::vec3 lightPoint;
 
 	zBuff = new float* [currentWidth]; // Rows
 
@@ -436,7 +441,7 @@ void Renderer::Render(Scene& scene)
 
 		}
 	}
-
+	*/
 	if (scene.GetModelCount() > 0)
 	{
 		for (size_t i = 0; i < scene.GetModelCount(); i++)
@@ -453,12 +458,17 @@ void Renderer::Render(Scene& scene)
 			colorShader.use();
 
 			// Set the uniform variables
+			modelTransformations = glm::mat4(1);
+			glm::mat4 view = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -10, 1);
+			glm::mat4 projection = glm::mat4(1.35799515, 0, 0, 0, 0, 2.41421342, 0, 0, 0, 0, -1.00100052, -1.00000000, 0, 0, -0.200100049, 0);
+			cameraTransformations = projection * view;
+
 			colorShader.setUniform("model", modelTransformations);
 			colorShader.setUniform("camera", cameraTransformations);
-			//colorShader.setUniform("material.textureMap", 0);
+			colorShader.setUniform("material.textureMap", 0);
 
 			// Set 'texture1' as the active texture at slot #0
-			//texture1.bind(0);
+			texture1.bind(0);
 
 			// Drag our model's faces (triangles) in fill mode
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -467,7 +477,7 @@ void Renderer::Render(Scene& scene)
 			glBindVertexArray(0);
 
 			// Unset 'texture1' as the active texture at slot #0
-			//texture1.unbind(0);
+			texture1.unbind(0);
 
 			colorShader.setUniform("color", currentModel.GetColorOfMesh());
 
@@ -478,7 +488,7 @@ void Renderer::Render(Scene& scene)
 			glBindVertexArray(0);
 		}
 	}
-
+	/*
 	PostProcessingFunctions(scene);
 
 	for (int i = 0; i < currentWidth; i++)
@@ -486,6 +496,7 @@ void Renderer::Render(Scene& scene)
 		delete[] zBuff[i]; // Delete columns
 	}
 	delete[] zBuff; // Delete Rows
+	*/
 }
 
 glm::vec3 Renderer::CalcColorOfFace(Scene& scene, glm::vec3 normal, glm::vec3 lightPoint, glm::vec3 modelPoint)

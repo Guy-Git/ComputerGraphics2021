@@ -76,8 +76,8 @@ static float left = 0.1;
 static float right = 10.0;
 static float bottom = 0.1;
 static float top = 10.0;
-static float near_param = -0.1;
-static float far_param = -50.0;
+static float near_param = 5.0f;
+static float far_param = 5.0f;
 static float fov = 45.0;
 
 static float cameraX = 0;
@@ -119,6 +119,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
  */
 static void GlfwErrorCallback(int error, const char* description);
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name);
+void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height);
 ImGuiIO& SetupDearImgui(GLFWwindow* window);
 void StartFrame();
 void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& io);
@@ -180,7 +181,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 }
 bool Setup(int windowWidth, int windowHeight, const char* windowName)
 {
-	window = SetupGlfwWindow(windowWidth, windowHeight, windowName);
+	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, windowName);
 	if (!window)
 	{
 		std::cerr << "Window setup failed" << std::endl;
@@ -237,6 +238,7 @@ int main(int argc, char** argv)
 		ImGui::NewFrame();
 		DrawImguiMenus(ImGui::GetIO(), scene);
 		ImGui::Render();
+
 		
 		// Clear the screen and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -296,25 +298,51 @@ static void GlfwErrorCallback(int error, const char* description)
 
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name)
 {
-	glfwSetErrorCallback(GlfwErrorCallback);
+	// Intialize GLFW
 	if (!glfwInit())
-		return NULL;
+	{
+		// An error occured
+		std::cerr << "GLFW initialization failed" << std::endl;
+		return false;
+	}
+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#if __APPLE__
+	// forward compatible with newer versions of OpenGL as they become available but not backward compatible (it will not run on devices that do not support OpenGL 3.3
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
 
-	GLFWwindow* window = glfwCreateWindow(w, h, window_name, NULL, NULL);
+	// Create an OpenGL 3.3 core, forward compatible context window
+	window = glfwCreateWindow(windowWidth, windowHeight, window_name, NULL, NULL);
+	if (window == NULL)
+	{
+		std::cerr << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return false;
+	}
+
+	// Make the window's context the current one
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1); // Enable vsync
-						 // very importent!! initialization of glad
-						 // https://stackoverflow.com/questions/48582444/imgui-with-the-glad-opengl-loader-throws-segmentation-fault-core-dumped
 
-	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	// Setup window events callbacks
+	glfwSetFramebufferSizeCallback(window, glfw_OnFramebufferSize);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		// An error occured
+		std::cerr << "GLAD initialization failed" << std::endl;
+		return false;
+	}
+
 	return window;
+}
+
+void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height)
+{
+	windowWidth = width;
+	windowHeight = height;
+	glViewport(0, 0, windowWidth, windowHeight);
 }
 
 ImGuiIO& SetupDearImgui(GLFWwindow* window)
