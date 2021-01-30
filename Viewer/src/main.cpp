@@ -76,13 +76,15 @@ static float left = 0.1;
 static float right = 10.0;
 static float bottom = 0.1;
 static float top = 10.0;
-static float near_param = 5.0f;
+static float near_param = 1.0f;
 static float far_param = 5.0f;
 static float fov = 45.0;
 
+glm::vec3 cameraAtBuffer = glm::vec3(0.0, 0.0, 0.0);
+
 static float cameraX = 0;
 static float cameraY = 0;
-static float cameraZ = 450.0;
+static float cameraZ = 10.0;
 
 glm::vec3 light_transformation = glm::vec3(0);
 glm::vec3 light_direction = glm::vec3(0);
@@ -215,7 +217,7 @@ ImGuiIO& SetupImgui(GLFWwindow* window)
 int main(int argc, char** argv)
 {
 
-	if (!Setup(1500, 900, "aaa"))
+	if (!Setup(1500, 900, "MeshViewer"))
 	{
 		std::cerr << "Setup failed" << std::endl;
 		return -1;
@@ -619,39 +621,33 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		cameraY = 0;
 		cameraZ = 450.0;
 		fov = 45.0;
-
-		//zoom
-
 	}
-
-	/*ImGui::SliderFloat("Rotate Y:", &rotateCameraY, -180, 180);
-	scene.GetActiveCamera().setSelfAngle(rotateCameraY);*/
 	if (view_selection == 1)
 		ImGui::SliderFloat("Fovy", &fov, 0.1, 100);
 	else
-		ImGui::SliderFloat("Zoom", &orthoZoom, -10, 10);
+		ImGui::SliderFloat("Zoom", &orthoZoom, -100, 100);
 
-	ImGui::End();
-
+	/*glm::vec3 cameraAtBuffer = scene.GetActiveCamera().GetCameraAt();*/
 	/*
-
-	glm::vec3 cameraAtBuffer = scene.GetActiveCamera().GetCameraAt();
-
-	ImGui::SliderFloat("At X", &cameraAtBuffer.x, -200.0f, 200.0f);
-	ImGui::SliderFloat("At Y", &cameraAtBuffer.y, -200.0f, 200.0f);
-	ImGui::SliderFloat("At Z", &cameraAtBuffer.z, -200.0f, 200.0f);
+	ImGui::SliderFloat("At X", &cameraAtBuffer.x, -100.0f, 100.0f);
+	ImGui::SliderFloat("At Y", &cameraAtBuffer.y, -100.0f, 100.0f);
+	ImGui::SliderFloat("At Z", &cameraAtBuffer.z, -100.0f, 100.0f);
 
 	scene.GetActiveCamera().SetCameraAt(cameraAtBuffer);
 
-	ImGui::SliderFloat("Width", &windowWidth, 1.0, 2000.0);
-	ImGui::SliderFloat("Height", &windowHeight, 1.0, 2000.0);
-
+	ImGui::SliderFloat("Near", &near_param, 1.0, 200.0);
+	ImGui::SliderFloat("Far", &far_param, 1.0, 200.0);
+	ImGui::SliderFloat("Top", &top, 1.0, 200.0);
+	ImGui::SliderFloat("Bottom", &bottom, 1.0, 200.0);
+	ImGui::SliderFloat("Left", &left, 1.0, 200.0);
+	ImGui::SliderFloat("Right", &right, 1.0, 200.0);
+	*/
 	if (ImGui::Button("Reset Camera Position"))
 	{
 		scene.GetActiveCamera().ResetCameraPosition();
 	}
 
-	ImGui::End();*/
+	ImGui::End();
 
 	scene.SetActiveCameraIndex(camera_selection);
 
@@ -1220,9 +1216,9 @@ void CameraWindowsLocal(Scene& scene)
 	{
 		ImGui::Begin("Camera Local Translation", &camera_local_translation_window);
 
-		ImGui::SliderFloat("Camera X", &cameraX, -1500.0, 1500.0);
-		ImGui::SliderFloat("Camera Y", &cameraY, -1500.0, 1500.0);
-		ImGui::SliderFloat("Camera Z", &cameraZ, -1500.0, 1500.0);
+		ImGui::SliderFloat("Camera X", &cameraX, -200.0, 200.0);
+		ImGui::SliderFloat("Camera Y", &cameraY, -200.0, 200.0);
+		ImGui::SliderFloat("Camera Z", &cameraZ, -200.0, 200.0);
 
 		scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
 		ImGui::End();

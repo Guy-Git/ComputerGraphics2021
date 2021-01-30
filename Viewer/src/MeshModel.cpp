@@ -64,6 +64,10 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	glBindVertexArray(0);
 }
 
+MeshModel::MeshModel()
+{
+}
+
 MeshModel::~MeshModel()
 {
 	glDeleteVertexArrays(1, &vao);

@@ -31,6 +31,8 @@ static int counter = 0;
 
 float** zBuff;
 
+MeshModel currentModel;
+
 //Renderer::Renderer(int viewport_width, int viewport_height)
 //{
 //	viewport_width_ = viewport_width;
@@ -446,10 +448,10 @@ void Renderer::Render(Scene& scene)
 	{
 		for (size_t i = 0; i < scene.GetModelCount(); i++)
 		{
-			MeshModel currentModel = scene.GetModel(i);
+			currentModel = scene.GetModel(i);
 			double scaleFactor = abs(400 / FindMaxXorYPointForScaleFactor(currentModel));
 
-			glm::mat4 modelTransformations = Transformations(scaleFactor * currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
+			glm::mat4 modelTransformations = Transformations(currentModel.GetScaleFactor(), currentModel.GetRotateAngle(), currentModel.GetPosition(),
 				scene.GetScaleFactor(), scene.GetRotateAngle(), scene.GetPosition());;
 
 			glm::mat4 cameraTransformations = CameraTransformation(scene.GetActiveCamera(), scene);
@@ -458,7 +460,7 @@ void Renderer::Render(Scene& scene)
 			colorShader.use();
 
 			// Set the uniform variables
-			modelTransformations = glm::mat4(1);
+			//modelTransformations = glm::mat4(1);
 			glm::mat4 view = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -10, 1);
 			glm::mat4 projection = glm::mat4(1.35799515, 0, 0, 0, 0, 2.41421342, 0, 0, 0, 0, -1.00100052, -1.00000000, 0, 0, -0.200100049, 0);
 			cameraTransformations = projection * view;
@@ -481,11 +483,11 @@ void Renderer::Render(Scene& scene)
 
 			colorShader.setUniform("color", currentModel.GetColorOfMesh());
 
-			// Drag our model's faces (triangles) in line mode (wireframe)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glBindVertexArray(currentModel.GetVAO());
-			glDrawArrays(GL_TRIANGLES, 0, currentModel.GetVerticesCount());
-			glBindVertexArray(0);
+			//// Drag our model's faces (triangles) in line mode (wireframe)
+			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			//glBindVertexArray(currentModel.GetVAO());
+			//glDrawArrays(GL_TRIANGLES, 0, currentModel.GetVerticesCount());
+			//glBindVertexArray(0);
 		}
 	}
 	/*
