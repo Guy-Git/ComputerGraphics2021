@@ -1,126 +1,188 @@
 #include "Camera.h"
+#include "Utils.h"
+#include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-Camera::Camera()
+Camera::Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up, const float aspectRatio) :
+	zoom(1.0f),
+	fovy(glm::pi<float>() / 4.0f),
+	height(5),
+	zNear(0.1f),
+	zFar(200.0f),
+	aspectRatio(aspectRatio),
+	prespective(true),
+	viewTransformation(1),
+	eye(eye),
+	at(at),
+	up(up)
 {
-	//orthographic_transformation_ = glm::mat4(1);
-	perspective_transformation_ = glm::mat4(1);
-	view_transformation_ = glm::mat4(1);
-	selfAngle_= glm::vec3(0);
-	worldRotatingAngle_ = glm::vec3(0);
-
-	cameraEye_ = glm::vec3(0.0f, 0.0f, 10.0f);
-	cameraAt_ = glm::vec3(0.0f, 0.0f, 0.0f);
-	cameraUp_ = glm::vec3(0.0f, 1.0f, 0.0f);
-
+	UpdateProjectionMatrix();
+	viewTransformation = glm::lookAt(eye, at, up);
 }
 
 Camera::~Camera()
 {
+}
 
+//void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
+//{
+//	this->eye = eye;
+//	this->at = at;
+//	this->up = up;
+//
+//	f = glm::normalize(eye - at);
+//	l = glm::normalize(glm::cross(up, f));
+//	u = glm::cross(f, l);
+//	
+//	cameraRotation[0] = glm::vec4(l, 0);
+//	cameraRotation[1] = glm::vec4(u, 0);
+//	cameraRotation[2] = glm::vec4(f, 0);
+//	cameraRotation[3] = glm::vec4(0, 0, 0, 1);
+//
+//	glm::mat4x4 cameraModelRotation;
+//	cameraModelRotation[0] = glm::vec4(-l, 0);
+//	cameraModelRotation[1] = glm::vec4(u, 0);
+//	cameraModelRotation[2] = glm::vec4(-f, 0);
+//	cameraModelRotation[3] = glm::vec4(0, 0, 0, 1);
+//
+//	cameraInverseRotation = glm::transpose(cameraRotation);
+//	cameraTranslation = Utils::TranslationMatrix(eye);
+//	cameraInverseTranslation = Utils::TranslationMatrix(-eye);
+//	cameraTransformation = cameraInverseRotation * cameraInverseTranslation;
+//	worldTransform = cameraTranslation * cameraModelRotation * Utils::ScalingMatrix(glm::vec3(0.2,0.2,0.2));
+//}
+
+void Camera::SetOrthographicProjection(
+	const float height,
+	const float aspectRatio,
+	const float zNear,
+	const float zFar)
+{
+	prespective = false;
+	float width = aspectRatio * height;
+	projectionTransformation = glm::ortho(-width / 2, width / 2, -height / 2, height / 2, zNear, zFar);
+}
+
+void Camera::SetPerspectiveProjection(
+	const float fovy,
+	const float aspectRatio,
+	const float zNear,
+	const float zFar)
+{
+	prespective = true;
+	projectionTransformation = glm::perspective(fovy, aspectRatio, zNear, zFar);
 }
 
 const glm::mat4x4& Camera::GetProjectionTransformation() const
 {
-	return projection_transformation_;
+	return projectionTransformation;
 }
 
-void Camera::SetOrthographicTrans(float left, float right, float bottom, float top, float near, float far)
+const glm::mat4x4& Camera::GetViewTransformation() const
 {
-	orthographic_transformation_ = glm::ortho(left, right, bottom, top, near, far);
+	return viewTransformation;
 }
 
-glm::mat4 Camera::GetOrthographicTrans()
+void Camera::Zoom(const float factor)
 {
-	return orthographic_transformation_;
+	fovy = fovy * factor;
+	if (fovy > glm::pi<float>())
+	{
+		fovy = glm::pi<float>();
+	}
+
+	UpdateProjectionMatrix();
 }
 
-void Camera::SetPerspectiveTrans(float fov, float aspectRatio, float near, float far)
+void Camera::SphericalRotate(const glm::vec2& sphericalDelta)
 {
-	perspective_transformation_ = glm::perspective(glm::radians(fov), aspectRatio, near, far);
+	//glm::mat4x4 vAxisRotation = Utils::AxisRotationMatrix(u, sphericalDelta.x);
+	//glm::mat4x4 uAxisRotation = Utils::AxisRotationMatrix(l, sphericalDelta.y);
+	//eye = uAxisRotation * vAxisRotation * glm::vec4(eye,1);
+	//SetCameraLookAt(eye, at, glm::vec3(0, 1, 0));
 }
 
-glm::mat4 Camera::GetPerspectiveTrans()
+void Camera::SetAspectRatio(float aspectRatio)
 {
-	return (perspective_transformation_);
+	this->aspectRatio = aspectRatio;
+	UpdateProjectionMatrix();
 }
 
-void Camera::ResetProjectionsMatrix()
+void Camera::UpdateProjectionMatrix()
 {
-	orthographic_transformation_ = glm::mat4(1);
-	view_transformation_ = glm::mat4(1);
-	perspective_transformation_ = glm::mat4(1);
+	if (prespective)
+	{
+		SetPerspectiveProjection(fovy, aspectRatio, zNear, zFar);
+	}
+	else
+	{
+		SetOrthographicProjection(height, aspectRatio, zNear, zFar);
+	}
 }
 
-void Camera::ResetPerspectiveTrans()
+void Camera::SwitchToPrespective()
 {
-	perspective_transformation_ = glm::mat4(1);
+	prespective = true;
+	UpdateProjectionMatrix();
 }
 
-void Camera::SetCameraEye(glm::vec3 cameraEye)
+void Camera::SwitchToOrthographic()
 {
-	cameraEye_ = cameraEye;
+	prespective = false;
+	UpdateProjectionMatrix();
 }
 
-glm::vec3 Camera::GetCameraEye()
+void Camera::SetNear(const float zNear)
 {
-	return cameraEye_;
+	this->zNear = zNear;
+	UpdateProjectionMatrix();
 }
 
-void Camera::SetCameraAt(glm::vec3 cameraAt)
+void Camera::SetFar(const float zFar)
 {
-	cameraAt_ = cameraAt;
+	this->zFar = zFar;
+	UpdateProjectionMatrix();
 }
 
-glm::vec3 Camera::GetCameraAt()
+void Camera::SetHeight(const float height)
 {
-	return cameraAt_;
+	this->height = height;
+	UpdateProjectionMatrix();
 }
 
-void Camera::SetCameraUp(glm::vec3 cameraUp)
+void Camera::SetFovy(const float fovy)
 {
-	cameraUp_ = -cameraUp;
+	this->fovy = fovy;
+	UpdateProjectionMatrix();
 }
 
-glm::vec3 Camera::GetCameraUp()
+float Camera::GetNear()
 {
-	return cameraUp_;
+	return zNear;
 }
 
-glm::mat4 Camera::GetCameraLookAt()
+float Camera::GetFar()
 {
-	return (view_transformation_);
+	return zFar;
 }
 
-void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
+float Camera::GetFovy()
 {
-	view_transformation_ = (glm::lookAt(eye, at, up));
+	return fovy;
 }
 
-void Camera::ResetCameraPosition()
+float Camera::GetHeight()
 {
-	cameraEye_ = glm::vec3(0.0f, 0.0f, 450.0f);
-	cameraAt_ = glm::vec3(0.0f, 0.0f, 0.0f);
-	cameraUp_ = glm::vec3(0.0f, 1.0f, 0.0f);
-	selfAngle_ = glm::vec3(0);
-	worldRotatingAngle_ = glm::vec3(0);
+	return height;
 }
 
-void Camera::setSelfAngle(glm::vec3 newAngle)
+bool Camera::IsPrespective()
 {
-	selfAngle_ = newAngle;
+	return prespective;
 }
 
-glm::vec3 Camera::getSelfAngle()
+const glm::vec3& Camera::GetEye() const
 {
-	return selfAngle_;
-}
-
-void Camera::setWorldRotatingAngle(glm::vec3 newAngle)
-{
-	worldRotatingAngle_ = newAngle;
-}
-
-glm::vec3 Camera::getWorldRotatingAngle()
-{
-	return worldRotatingAngle_;
+	return eye;
 }

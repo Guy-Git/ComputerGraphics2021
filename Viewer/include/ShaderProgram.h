@@ -35,7 +35,7 @@ public:
 	void setUniformSampler(const GLchar* name, const GLint& slot);
 
 	// We are going to speed up looking for uniforms by keeping their locations in a map
-	GLint getUniformLocation(const GLchar * name);
+	GLint getUniformLocation(const GLchar* name);
 
 private:
 

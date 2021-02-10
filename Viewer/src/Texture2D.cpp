@@ -40,8 +40,8 @@ bool Texture2D::loadTexture(const string& fileName, bool generateMipMaps)
 
 	// Invert image
 	int widthInBytes = width * 4;
-	unsigned char *top = NULL;
-	unsigned char *bottom = NULL;
+	unsigned char* top = NULL;
+	unsigned char* bottom = NULL;
 	unsigned char temp = 0;
 	int halfHeight = height / 2;
 	for (int row = 0; row < halfHeight; row++)

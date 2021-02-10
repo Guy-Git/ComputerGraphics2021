@@ -1,33 +1,65 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <imgui/imgui.h>
-#include <stdio.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <imgui/imgui.h>
+
 #include <nfd.h>
+
+#include <stdio.h>
 #include <iostream>
+#include <memory>
+#include <random>
+#include <string>
+#include <sstream>
+#include <stdlib.h>
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
 #include "Renderer.h"
 #include "Scene.h"
+#include "Camera.h"
+#include "ImguiMenus.h"
+#include "AmbientLight.h"
+#include "PointLight.h"
 #include "Utils.h"
 
-/**
- * Fields
- */
-bool show_demo_window = false;
-bool show_another_window = false;
+double zoomFactor = 1;
+int windowWidth = 1280;
+int windowHeight = 720;
+char* windowTitle = "Guy & Yuval";
+glm::vec4 clearColor = glm::vec4(0.26f, 0.26f, 0.26f, 1);
+bool zoomChanged = false;
+std::shared_ptr<Scene> scene;
 
+ImGuiIO* imgui;
+GLFWwindow* window;
+
+bool light_properties_window = false;
+int light_type_selection = 0;
+glm::vec3 light_transformation = glm::vec3(0);
+glm::vec3 light_direction = glm::vec3(0);
+glm::vec3 model_color = glm::vec3(0.156, 0.592, 0.976);
+glm::vec3 light_color = glm::vec3(1);
+
+static int model_selection = 0;
+static int light_selection = 0;
+static int pointOrParallelLight = -1;
+static int camera_selection = 0;
+static int view_selection = 0;
+static int last_model_selection = 0;
+
+bool show_global_rotation_window = false;
+bool show_global_scale_window = false;
+bool show_global_translation_window = false;
+bool camera_global_rotation_window = false;
+bool light_translation_window = false;
 bool show_local_rotation_window = false;
 bool show_local_scale_window = false;
 bool show_local_translation_window = false;
-
-bool camera_local_rotation_window = false;
-bool camera_local_translation_window = false;
-
-bool light_translation_window = false;
 
 static float scale_factor_local = 1.0;
 static glm::vec3 rotation_angle_local = glm::vec3(0);
@@ -36,13 +68,6 @@ static glm::vec3 transformation_local = glm::vec3(0);
 static glm::vec3 camera_rotation_angle_local = glm::vec3(0);
 static glm::vec3 camera_transformation_local = glm::vec3(0);
 static glm::vec3 camera_rotation_world = glm::vec3(0);
-
-int light_type_selection = 0;
-
-bool show_global_rotation_window = false;
-bool show_global_scale_window = false;
-bool show_global_translation_window = false;
-bool camera_global_rotation_window = false;
 
 static float scale_factor_global = 1.0;
 static glm::vec3 rotation_angle_global = glm::vec3(0);
@@ -53,7 +78,6 @@ bool show_model_2_window = false;
 bool show_model_3_window = false;
 bool show_model_4_window = false;
 
-bool light_properties_window = false;
 bool model_materials_window = false;
 
 bool vertex_normal = false;
@@ -65,29 +89,11 @@ bool rotate_light = false;
 bool show_warning_window = false;
 bool show_model_selection_window = false;
 
-static int model_selection = 0;
-static int light_selection = 0;
-static int pointOrParallelLight = -1;
-static int camera_selection = 0;
-static int view_selection = 0;
-static int last_model_selection = 0;
-
-static float left = 0.1;
-static float right = 10.0;
-static float bottom = 0.1;
-static float top = 10.0;
-static float near_param = 1.0f;
-static float far_param = 5.0f;
-static float fov = 45.0;
-
 glm::vec3 cameraAtBuffer = glm::vec3(0.0, 0.0, 0.0);
 
 static float cameraX = 0;
 static float cameraY = 0;
 static float cameraZ = 10.0;
-
-glm::vec3 light_transformation = glm::vec3(0);
-glm::vec3 light_direction = glm::vec3(0);
 
 static float orthoZoom = 0.0;
 
@@ -96,135 +102,63 @@ bool firstMouse = true;
 float yaw = 0;
 float pitch = 0;
 
-glm::vec3 model_color = glm::vec3(0.156, 0.592, 0.976);
-
 float ambient = 0.5f;
 float diffuse = 0.5f;
 float specular = 0.5f;
 
 bool texture_mapping = 0;
 
-glm::vec4 clear_color = glm::vec4(0.26f, 0.26f, 0.26f, 1);
-glm::vec3 light_color = glm::vec3(1);
+bool camera_local_rotation_window = false;
+bool camera_local_translation_window = false;
 
-int windowWidth = 1280;
-int windowHeight = 720;
-
-ImGuiIO* imgui;
-GLFWwindow* window;
-
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-
-/**
- * Function declarations
- */
-static void GlfwErrorCallback(int error, const char* description);
 GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name);
-void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height);
-ImGuiIO& SetupDearImgui(GLFWwindow* window);
-void StartFrame();
-void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& io);
-void Cleanup(GLFWwindow* window);
-void DrawImguiMenus(ImGuiIO& io, Scene& scene);
-void ChangeCameraSelection(Scene& scene);
-void ChangeLightSelection(Scene& scene);
-void SwitchToDifferentModelView(int modelID);
-void ResetParametersValue(Scene& scene);
-void ResetLightParametersValue(Scene& scene);
-void SetParametersValueChangingModels(Scene& scene);
-void SetParametersValueChangingLights(Scene& scene);
-void ShowScaleRotateTranslationWindowsLocal(Scene& scene);
-void ShowScaleRotateTranslationWindowsGlobal(Scene& scene);
-void SetNormalsAndBoundingBox(const Scene& scene);
-bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
-void CameraWindowsLocal(Scene& scene);
-void CameraWindowsWorld(Scene& scene);
-void LightWindow(Scene& scene);
-
 ImGuiIO& SetupImgui(GLFWwindow* window);
 bool Setup(int windowWidth, int windowHeight, const char* windowName);
+void Cleanup();
 
+static void GlfwErrorCallback(int error, const char* description);
+void RenderFrame(GLFWwindow* window, std::shared_ptr<Scene> scene, Renderer& renderer, ImGuiIO& io);
 
-/**
- * Function implementation
- */
-void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+void glfw_OnMouseScroll(GLFWwindow* window, double xoffset, double yoffset);
+void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height);
 
-	if (show_local_scale_window)
-	{
-		scale_factor_local += (-1) * yoffset;
-	}
-	if (show_global_scale_window)
-	{
-		scale_factor_global += (-1) * yoffset;
-	}
-
-	if (view_selection == 1)
-	{
-		fov -= (float)yoffset;
-		if (fov < 0.1f) {
-			fov = 0.1f;
-		}
-		if (fov > 89.0f) {
-			fov = 89.0f;
-		}
-	}
-	if (view_selection == 0)
-	{
-		if (right >= 0 && top >= 0)
-		{
-			right -= (float)yoffset;
-			top -= (float)yoffset;
-		}
-	}
-}
-bool Setup(int windowWidth, int windowHeight, const char* windowName)
-{
-	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, windowName);
-	if (!window)
-	{
-		std::cerr << "Window setup failed" << std::endl;
-		return false;
-	}
-
-	imgui = &SetupImgui(window);
-
-	glClearColor(clear_color.r, clear_color.g, clear_color.b, 1);
-	glEnable(GL_DEPTH_TEST);
-
-	return true;
-}
-
-ImGuiIO& SetupImgui(GLFWwindow* window)
-{
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	(void)io;
-
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init();
-
-	// Setup style
-	ImGui::StyleColorsDark();
-
-	return io;
-}
+float GetAspectRatio();
+void DrawImguiMenus();
+void HandleImguiInput();
+void ChangeCameraSelection(const std::shared_ptr<Scene>& scene);
+void ChangeLightSelection(const std::shared_ptr<Scene>& scene);
+void SwitchToDifferentModelView(int modelID);
+void ResetParametersValue(const std::shared_ptr<Scene>& scene);
+void ResetLightParametersValue(const std::shared_ptr<Scene>& scene);
+void SetParametersValueChangingModels(const std::shared_ptr<Scene>& scene);
+void SetParametersValueChangingLights(const std::shared_ptr<Scene>& scene);
+void ShowScaleRotateTranslationWindowsLocal(const std::shared_ptr<Scene>& scene);
+void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene);
+bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
+void CameraWindowsLocal(const std::shared_ptr<Scene>& scene);
+void CameraWindowsWorld(const std::shared_ptr<Scene>& scene);
+void LightWindow(Scene& scene);
 
 int main(int argc, char** argv)
 {
 
-	if (!Setup(1500, 900, "MeshViewer"))
+	if (!Setup(windowWidth, windowHeight, windowTitle))
 	{
 		std::cerr << "Setup failed" << std::endl;
 		return -1;
 	}
 
-	Scene scene = Scene();
-	
+	scene = std::make_shared<Scene>();
+	glm::vec3 eye = glm::vec3(0, 0, 10);
+	glm::vec3 at = glm::vec3(0, 0, 0);
+	glm::vec3 up = glm::vec3(0, 1, 0);
+	Camera camera = Camera(eye, at, up, GetAspectRatio());
+	scene->AddCamera(camera);
+
+	scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 0, 15), glm::vec3(1, 1, 1)));
+	scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 5, 5), glm::vec3(0, 0, 0)));
+	scene->AddLight(std::make_shared<PointLight>(glm::vec3(-5, 0, 0), glm::vec3(0, 0, 0)));
+
 	Renderer renderer;
 	renderer.LoadShaders();
 	renderer.LoadTextures();
@@ -238,10 +172,10 @@ int main(int argc, char** argv)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		DrawImguiMenus(ImGui::GetIO(), scene);
+		DrawImguiMenus();
 		ImGui::Render();
+		HandleImguiInput();
 
-		
 		// Clear the screen and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -257,48 +191,31 @@ int main(int argc, char** argv)
 
 	glfwTerminate();
 	return 0;
-
-
-	//GLFWwindow* window = SetupGlfwWindow(1500, 900, "Mesh Viewer");
-	//if (!window)
-	//	return 1;
-
-	//glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
-	//glEnable(GL_DEPTH_TEST);
-
-	//int frameBufferWidth, frameBufferHeight;
-	//glfwMakeContextCurrent(window);
-	//glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
-
-	////Renderer renderer = Renderer(frameBufferWidth, frameBufferHeight);
-
-	//Renderer renderer;
-	//renderer.LoadShaders();
-	//renderer.LoadTextures();
-
-	//Scene scene = Scene();
-
-	//ImGuiIO& io = SetupDearImgui(window);
-	//glfwSetScrollCallback(window, ScrollCallback);
-	//while (!glfwWindowShouldClose(window))
-	//{
-	//	glfwPollEvents();
-	//	StartFrame();
-	//	DrawImguiMenus(io, scene);
-	//	RenderFrame(window, scene, renderer, io);
-	//}
-
-	//Cleanup(window);
-	//return 0;
 }
-
 
 static void GlfwErrorCallback(int error, const char* description)
 {
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name)
+bool Setup(int windowWidth, int windowHeight, const char* windowName)
+{
+	GLFWwindow* window = SetupGlfwWindow(windowWidth, windowHeight, windowName);
+	if (!window)
+	{
+		std::cerr << "Window setup failed" << std::endl;
+		return false;
+	}
+
+	imgui = &SetupImgui(window);
+
+	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+	glEnable(GL_DEPTH_TEST);
+
+	return true;
+}
+
+GLFWwindow* SetupGlfwWindow(int windowWidth, int windowHeight, const char* windowName)
 {
 	// Intialize GLFW
 	if (!glfwInit())
@@ -316,7 +233,7 @@ GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Create an OpenGL 3.3 core, forward compatible context window
-	window = glfwCreateWindow(windowWidth, windowHeight, window_name, NULL, NULL);
+	window = glfwCreateWindow(windowWidth, windowHeight, windowName, NULL, NULL);
 	if (window == NULL)
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
@@ -340,115 +257,100 @@ GLFWwindow* SetupGlfwWindow(int w, int h, const char* window_name)
 	return window;
 }
 
-void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height)
-{
-	windowWidth = width;
-	windowHeight = height;
-	glViewport(0, 0, windowWidth, windowHeight);
-}
-
-ImGuiIO& SetupDearImgui(GLFWwindow* window)
+ImGuiIO& SetupImgui(GLFWwindow* window)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
+	(void)io;
+
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init();
+
+	// Setup style
 	ImGui::StyleColorsDark();
+
+	glfwSetScrollCallback(window, glfw_OnMouseScroll);
+
 	return io;
 }
 
-void StartFrame()
+void HandleImguiInput()
 {
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-}
-
-void RenderFrame(GLFWwindow* window, Scene& scene, Renderer& renderer, ImGuiIO& io)
-{
-	glm::vec3 cameraEyeBuffer = scene.GetActiveCamera().GetCameraEye();
-	glm::vec3 cameraAtBuffer = scene.GetActiveCamera().GetCameraAt();
-	glm::vec3 cameraUpBuffer = scene.GetActiveCamera().GetCameraUp();
-
-	if (scene.GetModelCount() > 0)
+	if (!imgui->WantCaptureKeyboard)
 	{
-		scene.GetActiveModel().SetScaleFactor(scale_factor_local);
-	}
-	ImGui::Render();
-	int frameBufferWidth, frameBufferHeight;
-	glfwMakeContextCurrent(window);
-	glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
-
-	/*if (frameBufferWidth != renderer.GetViewportWidth() || frameBufferHeight != renderer.GetViewportHeight())
-	{
-		scene.SetWindowSizes(frameBufferHeight, frameBufferWidth);
-	}*/
-	//renderer.SetViewport(scene.GetHeight(), scene.GetWidth(), clear_color);
-
-	const float cameraSpeed = 100.0f; // adjust accordingly
-	if (cameraAtBuffer.x == 0.0 && cameraAtBuffer.y == 0.0 && cameraAtBuffer.z == 0.0)
-	{
-		cameraAtBuffer = glm::vec3(0.0, 0.0, 0.1);
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed / 6.0f;
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::vec3(0.0f, 0.0f, 10.0f) * cameraSpeed / 6.0f;
-	}
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed / 6.0f;
-	}
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::vec3(0.0f, 10.0f, 0.0f) * cameraSpeed / 6.0f;
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		cameraEyeBuffer += glm::normalize(glm::cross(cameraAtBuffer, cameraUpBuffer)) * cameraSpeed;
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		cameraEyeBuffer -= glm::normalize(glm::cross(cameraAtBuffer, cameraUpBuffer)) * cameraSpeed;
-	}
-
-	if (!io.WantCaptureMouse)
-	{
-
-		if (io.MouseDown[0])
+		if (imgui->KeysDown[49]) // 1
 		{
-			cameraAtBuffer.x += io.MouseDelta.x; // change cameraAt with mouse
-			cameraAtBuffer.y += io.MouseDelta.y;
+			scene->GetActiveModel()->RotateXModel(M_PI / 200);
+		}
+
+		if (imgui->KeysDown[50]) // 2
+		{
+			scene->GetActiveModel()->RotateXModel(-M_PI / 200);
+		}
+
+		if (imgui->KeysDown[51]) // 3
+		{
+			scene->GetActiveModel()->RotateYModel(M_PI / 200);
+		}
+
+		if (imgui->KeysDown[52]) // 4
+		{
+			scene->GetActiveModel()->RotateYModel(-M_PI / 200);
+		}
+
+		if (imgui->KeysDown[53]) // 5
+		{
+			scene->GetActiveModel()->RotateZModel(M_PI / 200);
+		}
+
+		if (imgui->KeysDown[54]) // 6
+		{
+			scene->GetActiveModel()->RotateZModel(-M_PI / 200);
+		}
+
+		if (imgui->KeysDown[45]) // -
+		{
+			scene->GetActiveModel()->ScaleModel(1 / 1.01);
+		}
+
+		if (imgui->KeysDown[61]) // +
+		{
+			scene->GetActiveModel()->ScaleModel(1.01);
+		}
+
+		if (imgui->KeysDown[65]) // a
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(-0.02, 0, 0));
+		}
+
+		if (imgui->KeysDown[68]) // d
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0.02, 0, 0));
+		}
+
+		if (imgui->KeysDown[83]) // s
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0, 0.02));
+		}
+
+		if (imgui->KeysDown[87]) // w
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0, -0.02));
 		}
 	}
 
-	cameraX = cameraEyeBuffer.x;
-	cameraY = cameraEyeBuffer.y;
-	cameraZ = cameraEyeBuffer.z;
-
-	scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
-
-	// Clear the screen and depth buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	renderer.Render(scene);
-	//renderer.SwapBuffers();
-
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	glfwMakeContextCurrent(window);
-	glfwSwapBuffers(window);
-}
-
-bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene)
-{
-	if (xPos <= scene.GetActiveModel().GetMinMax().x && xPos >= scene.GetActiveModel().GetMinMax().y &&
-		yPos <= scene.GetActiveModel().GetMinMax().z && yPos >= scene.GetActiveModel().GetMinMax().w)
+	if (!imgui->WantCaptureMouse)
 	{
-		return true;
+		if (zoomChanged)
+		{
+			scene->GetActiveCamera().Zoom(zoomFactor);
+			zoomChanged = false;
+		}
 	}
-	return false;
 }
 
-void Cleanup(GLFWwindow* window)
+void Cleanup()
 {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
@@ -458,43 +360,213 @@ void Cleanup(GLFWwindow* window)
 	glfwTerminate();
 }
 
-void DrawImguiMenus(ImGuiIO& io, Scene& scene)
+//-----------------------------------------------------------------------------
+// Is called when the window is resized
+//-----------------------------------------------------------------------------
+void glfw_OnFramebufferSize(GLFWwindow* window, int width, int height)
 {
-	// Menu Bar
-	if (ImGui::BeginMainMenuBar())
+	windowWidth = width;
+	windowHeight = height;
+	glViewport(0, 0, windowWidth, windowHeight);
+	scene->GetActiveCamera().SetAspectRatio(GetAspectRatio());
+}
+
+void glfw_OnMouseScroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+	zoomFactor = glm::pow(1.1, -yoffset);
+	zoomChanged = true;
+}
+
+float GetAspectRatio()
+{
+	return static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
+}
+
+void DrawImguiMenus()
+{
+	ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Once);
 	{
-		if (scene.GetModelCount() < 4)
+		ImGui::Begin("Scene Menu");
+		if (ImGui::ColorEdit3("Clear Color", (float*)&clearColor))
+		{
+			glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+		}
+
+		if (ImGui::CollapsingHeader("Cameras"))
+		{
+			if (ImGui::Button("Add Camera"))
+			{
+
+				std::random_device rd;
+				std::mt19937 mt(rd());
+				std::uniform_real_distribution<double> dist(0, 2 * M_PI);
+				std::uniform_real_distribution<double> dist2(2, 10);
+				double angle = dist(mt);
+				double radius = dist2(mt);
+
+				glm::vec4 eye = glm::vec4(radius * glm::cos(angle), 0, radius * glm::sin(angle), 1);
+				glm::vec4 at = glm::vec4(0, 0, 0, 1);
+				glm::vec4 up = glm::vec4(0, 1, 0, 1);
+				scene->AddCamera(Camera(-scene->GetActiveCamera().GetEye(), at, up, GetAspectRatio()));
+			}
+
+			const char** items;
+			std::vector<std::string> cameraStrings;
+			items = new const char* [scene->GetCameraCount()];
+			for (int i = 0; i < scene->GetCameraCount(); i++)
+			{
+				std::ostringstream s;
+				s << "Camera " << i;
+				std::string mystring = s.str();
+				cameraStrings.push_back(mystring);
+			}
+
+			for (int i = 0; i < scene->GetCameraCount(); i++)
+			{
+				items[i] = cameraStrings[i].c_str();
+			}
+
+			int currentCamera = scene->GetActiveCameraIndex();
+			ImGui::Combo("Active Camera", &currentCamera, items, scene->GetCameraCount());
+
+			if (currentCamera != scene->GetActiveCameraIndex())
+			{
+				scene->SetActiveCameraIndex(currentCamera);
+				scene->GetActiveCamera().SetAspectRatio(GetAspectRatio());
+			}
+
+			delete items;
+
+			int newProjectionType = scene->GetActiveCamera().IsPrespective() ? 0 : 1;
+			ImGui::RadioButton("Prespective", &newProjectionType, 0);
+			ImGui::RadioButton("Orthographic", &newProjectionType, 1);
+
+			if (newProjectionType == 0)
+			{
+				float fovy;
+				float zNear;
+				float zFar;
+
+				scene->GetActiveCamera().SwitchToPrespective();
+
+				if (ImGui::SliderFloat("Fovy", &fovy, 0.0f, M_PI))
+				{
+					scene->GetActiveCamera().SetFovy(fovy);
+				}
+
+				if (ImGui::SliderFloat("Near", &zNear, 1.0f, 10.0f))
+				{
+					scene->GetActiveCamera().SetNear(zNear);
+				}
+
+				if (ImGui::SliderFloat("Far", &zFar, 1.0f, 10.0f))
+				{
+					scene->GetActiveCamera().SetFar(zFar);
+				}
+			}
+			else if (newProjectionType == 1)
+			{
+				float height;
+				float zNear;
+				float zFar;
+
+				scene->GetActiveCamera().SwitchToOrthographic();
+
+				if (ImGui::SliderFloat("Height", &height, 0.0f, M_PI))
+				{
+					scene->GetActiveCamera().SetHeight(height);
+				}
+
+				if (ImGui::SliderFloat("Near", &zNear, 1.0f, 10.0f))
+				{
+					scene->GetActiveCamera().SetNear(zNear);
+				}
+
+				if (ImGui::SliderFloat("Far", &zFar, 1.0f, 10.0f))
+				{
+					scene->GetActiveCamera().SetFar(zFar);
+				}
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Models"))
+		{
+			const char** items;
+			std::vector<std::string> modelStrings;
+			items = new const char* [scene->GetModelCount()];
+			for (int i = 0; i < scene->GetModelCount(); i++)
+			{
+				std::ostringstream s;
+				s << scene->GetModel(i)->GetModelName();
+				std::string mystring = s.str();
+				modelStrings.push_back(mystring);
+			}
+
+			for (int i = 0; i < scene->GetModelCount(); i++)
+			{
+				items[i] = modelStrings[i].c_str();
+			}
+
+			int currentModelIndex = scene->GetActiveModelIndex();
+			ImGui::Combo("Active Model", &currentModelIndex, items, scene->GetModelCount());
+
+			if (currentModelIndex != scene->GetActiveModelIndex())
+			{
+				scene->SetActiveModelIndex(currentModelIndex);
+			}
+
+			delete items;
+
+			glm::vec3 modelColor = scene->GetActiveModel()->GetColor();
+			if (ImGui::ColorEdit3("Model Color", (float*)&modelColor))
+			{
+				scene->GetActiveModel()->SetColor(modelColor);
+			}
+
+			std::shared_ptr<MeshModel> meshModel = std::dynamic_pointer_cast<MeshModel>(scene->GetActiveModel());
+			if (meshModel)
+			{
+				//glm::vec4 normalColor = meshModel->GetNormalModel().GetColor();
+				//if (ImGui::ColorEdit3("Normal Color", (float*)&normalColor))
+				//{
+				//	meshModel->GetNormalModel().SetColor(normalColor);
+				//}
+			}
+		}
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::End();
+	}
+
+	{
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoFocusOnAppearing;
+		if (ImGui::BeginMainMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+O"))
 				{
 					nfdchar_t* outPath = NULL;
-					nfdresult_t result = NFD_OpenDialog("obj;", NULL, &outPath);
-					if (result == NFD_OKAY)
-					{
-						scene.AddModel(Utils::LoadMeshModel(outPath));
-
-						model_selection = scene.GetModelCount() - 1;
-
-						scene.GetModel(model_selection).SetColorOfMesh(glm::vec3(0.156, 0.592, 0.976));
-
-						scene.GetModel(model_selection).kindOfModel = 0;
-
-						//Utils::printVerticesAndFace(scene.GetModel(0));
+					nfdresult_t result = NFD_OpenDialog("obj;png,jpg", NULL, &outPath);
+					if (result == NFD_OKAY) {
+						scene->AddModel(Utils::LoadMeshModel(outPath));
 						free(outPath);
 					}
-					else if (result == NFD_CANCEL)
-					{
+					else if (result == NFD_CANCEL) {
 					}
-					else
-					{
+					else {
 					}
+
 				}
 				ImGui::EndMenu();
+
 			}
+			//ImGui::EndMainMenuBar();
 		}
 
+	}
+	{
 		if (ImGui::BeginMenu("Model Local Trans."))
 		{
 			if (ImGui::MenuItem("Translation"))
@@ -575,39 +647,38 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 		{
 			if (ImGui::MenuItem("Gaussing Blur + Bloom"))
 			{
-				scene.SetPPMode(1);
+				//scene.SetPPMode(1);
 			}
 
 			if (ImGui::MenuItem("Fog"))
 			{
-				scene.SetPPMode(2);
+				//scene.SetPPMode(2);
 			}
 			if (ImGui::MenuItem("Reset PP"))
 			{
-				scene.SetPPMode(0);
+				//scene.SetPPMode(0);
 			}
 
 			ImGui::EndMenu();
 		}
-
 		ImGui::EndMainMenuBar();
 	}
 
 	// camera selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(0, scene.GetHeight() - 200));
+	ImGui::SetNextWindowPos(ImVec2(0, windowHeight - 200));
 	ImGui::SetNextWindowSize(ImVec2(330, 200));
 
 	ImGui::Begin("Camera selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
 	ImGui::RadioButton("Camera #1", &camera_selection, 0);
-	ChangeCameraSelection(scene);
+	//ChangeCameraSelection(scene);
 	ImGui::RadioButton("Camera #2", &camera_selection, 1);
 
 	if (ImGui::Button("Reset Current Camera"))
 	{
 		view_selection = -1;
-		scene.GetActiveCamera().ResetProjectionsMatrix();
-		scene.GetActiveCamera().ResetPerspectiveTrans();
+		//scene.GetActiveCamera().ResetProjectionsMatrix();
+		//scene.GetActiveCamera().ResetPerspectiveTrans();
 	}
 
 	ImGui::RadioButton("Orthographic View", &view_selection, 0);
@@ -616,25 +687,23 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	if (ImGui::Button("Reset Camera Position"))
 	{
-		scene.GetActiveCamera().ResetCameraPosition();
+		//scene.GetActiveCamera().ResetCameraPosition();
 		cameraX = 0;
 		cameraY = 0;
 		cameraZ = 450.0;
-		fov = 45.0;
+		//fov = 45.0;
 	}
-	if (view_selection == 1)
-		ImGui::SliderFloat("Fovy", &fov, 0.1, 100);
-	else
-		ImGui::SliderFloat("Zoom", &orthoZoom, -100, 100);
+	//if (view_selection == 1)
+		//ImGui::SliderFloat("Fovy", &fov, 0.1, 100);
+	//else
+		//ImGui::SliderFloat("Zoom", &orthoZoom, -100, 100);
 
 	/*glm::vec3 cameraAtBuffer = scene.GetActiveCamera().GetCameraAt();*/
 	/*
 	ImGui::SliderFloat("At X", &cameraAtBuffer.x, -100.0f, 100.0f);
 	ImGui::SliderFloat("At Y", &cameraAtBuffer.y, -100.0f, 100.0f);
 	ImGui::SliderFloat("At Z", &cameraAtBuffer.z, -100.0f, 100.0f);
-
 	scene.GetActiveCamera().SetCameraAt(cameraAtBuffer);
-
 	ImGui::SliderFloat("Near", &near_param, 1.0, 200.0);
 	ImGui::SliderFloat("Far", &far_param, 1.0, 200.0);
 	ImGui::SliderFloat("Top", &top, 1.0, 200.0);
@@ -644,54 +713,54 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	*/
 	if (ImGui::Button("Reset Camera Position"))
 	{
-		scene.GetActiveCamera().ResetCameraPosition();
+		//scene.GetActiveCamera().ResetCameraPosition();
 	}
 
 	ImGui::End();
 
-	scene.SetActiveCameraIndex(camera_selection);
+	//scene.SetActiveCameraIndex(camera_selection);
 
 	switch (view_selection)
 	{
 	case 0:
-		scene.GetActiveCamera().ResetProjectionsMatrix();
+		//scene.GetActiveCamera().ResetProjectionsMatrix();
 
-		scene.GetActiveCamera().SetOrthographicTrans(left, right + orthoZoom, bottom, top + orthoZoom, near_param, far_param);
+		//scene.GetActiveCamera().SetOrthographicTrans(left, right + orthoZoom, bottom, top + orthoZoom, near_param, far_param);
 
-		scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
-			scene.GetActiveCamera().GetCameraAt(),
-			scene.GetActiveCamera().GetCameraUp());
+		//scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
+			//scene.GetActiveCamera().GetCameraAt(),
+			//scene.GetActiveCamera().GetCameraUp());
 
 		break;
 	case 1:
-		scene.GetActiveCamera().ResetProjectionsMatrix();
-		scene.GetActiveCamera().SetPerspectiveTrans(glm::radians(fov), 1, near_param, far_param);
-		scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
-			scene.GetActiveCamera().GetCameraAt(),
-			scene.GetActiveCamera().GetCameraUp());
+		//scene.GetActiveCamera().ResetProjectionsMatrix();
+		//.GetActiveCamera().SetPerspectiveTrans(glm::radians(fov), 1, near_param, far_param);
+		//scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
+			//scene.GetActiveCamera().GetCameraAt(),
+			//scene.GetActiveCamera().GetCameraUp());
 
 		break;
 	}
 
 	// model selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(330, scene.GetHeight() - 200));
+	ImGui::SetNextWindowPos(ImVec2(330, windowHeight - 200));
 	ImGui::SetNextWindowSize(ImVec2(330, 200));
 
 	ImGui::Begin("Model selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
 	ImGui::RadioButton("Model #1", &model_selection, 0);
-	if (scene.GetModelCount() > 0)
+	if (scene->GetModelCount() > 0)
 	{
-		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(0).GetModelName().c_str());
+		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene->GetModel(0)->GetModelName().c_str());
 	}
 	ImGui::RadioButton("Model #2", &model_selection, 1);
-	if (scene.GetModelCount() > 1)
+	if (scene->GetModelCount() > 1)
 	{
-		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene.GetModel(1).GetModelName().c_str());
+		ImGui::SameLine(); ImGui::Text("[MODEL LOADED - %s]", scene->GetModel(1)->GetModelName().c_str());
 	}
 	if (ImGui::Button("Reset Current Model"))
 	{
-		ResetParametersValue(scene);
+		//ResetParametersValue(scene);
 	}
 	ImGui::Checkbox("Show Vertex Normals", &vertex_normal);
 	ImGui::SameLine(); ImGui::Checkbox("Show Face Normals", &face_normal);
@@ -700,38 +769,38 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 	ImGui::End();
 
 	// light selection window - position and window flag
-	ImGui::SetNextWindowPos(ImVec2(660, scene.GetHeight() - 200));
+	ImGui::SetNextWindowPos(ImVec2(660, windowHeight - 200));
 	ImGui::SetNextWindowSize(ImVec2(420, 200));
 
 	ImGui::Begin("Light selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
-	ChangeLightSelection(scene);
+	//ChangeLightSelection(scene);
 
 	if (ImGui::RadioButton("Point Of Light", &pointOrParallelLight, 0))
 	{
 
-		scene.AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
+		//scene->AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
 
-		light_selection = scene.GetLightCount() - 1;
+		light_selection = scene->GetLightCount() - 1;
 
-		scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
+		//scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
 
-		scene.GetActiveLight().kindOfModel = 1; // point
+		//scene.GetActiveLight().kindOfModel = 1; // point
 	}
 
 	if (ImGui::RadioButton("Parallel Light", &pointOrParallelLight, 1))
 	{
-		scene.RemoveLight();
+		//scene.RemoveLight();
 
 		std::vector<Face> faces;
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
 		std::string string;
 
-		scene.AddLight(std::make_shared<MeshModel>(faces, vertices, normals, string));
-		scene.SetActiveLightIndex(0);
-		scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
-		scene.GetActiveLight().kindOfModel = 2; // parallel
+		//scene.AddLight(std::make_shared<MeshModel>(faces, vertices, normals, string));
+		//scene.SetActiveLightIndex(0);
+		//scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
+		//scene.GetActiveLight().kindOfModel = 2; // parallel
 	}
 
 	if (pointOrParallelLight != -1)
@@ -759,18 +828,18 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 			ImGui::SliderFloat("Light Z Direction", &light_direction.z, -1, 1);
 		}
 
-		if (scene.GetLightCount() > 0)
+		if (scene->GetLightCount() > 0)
 		{
-			scene.GetActiveLight().SetLightModel(light_type_selection);
-			scene.GetActiveLight().SetColorOfMesh(light_color);
-			scene.GetActiveLight().SetNewPosition(light_transformation);
-			scene.GetActiveLight().SetNewLightDirection(light_direction);
+			//scene.GetActiveLight().SetLightModel(light_type_selection);
+			//scene.GetActiveLight().SetColorOfMesh(light_color);
+			//scene.GetActiveLight().SetNewPosition(light_transformation);
+			//scene.GetActiveLight().SetNewLightDirection(light_direction);
 		}
 	}
 
 	if (ImGui::Button("Reset Current light"))
 	{
-		ResetLightParametersValue(scene);
+		//ResetLightParametersValue(scene);
 	}
 
 	ImGui::End();
@@ -787,18 +856,18 @@ void DrawImguiMenus(ImGuiIO& io, Scene& scene)
 
 	//LightWindow(scene);
 
-	SetNormalsAndBoundingBox(scene);
+	//SetNormalsAndBoundingBox(scene);
 
 	if (show_model_1_window)
 	{
-		if (scene.GetModelCount() > 0)
-			scene.SetActiveModelIndex(model_selection);
+		if (scene->GetModelCount() > 0)
+			scene->SetActiveModelIndex(model_selection);
 	}
 
 	if (show_model_2_window)
 	{
-		if (scene.GetModelCount() > 1)
-			scene.SetActiveModelIndex(model_selection);
+		if (scene->GetModelCount() > 1)
+			scene->SetActiveModelIndex(model_selection);
 	}
 
 	SetParametersValueChangingModels(scene);
@@ -809,11 +878,11 @@ void ChangeCameraSelection(Scene& scene)
 {
 	if (camera_selection == 0)
 	{
-		scene.SetActiveCameraIndex(0);
+		//scene.SetActiveCameraIndex(0);
 	}
 	if (camera_selection == 1)
 	{
-		scene.SetActiveCameraIndex(1);
+		//scene.SetActiveCameraIndex(1);
 	}
 }
 
@@ -821,11 +890,11 @@ void ChangeLightSelection(Scene& scene)
 {
 	if (light_selection == 0)
 	{
-		scene.SetActiveLightIndex(0);
+		//scene.SetActiveLightIndex(0);
 	}
 	if (light_selection == 1)
 	{
-		scene.SetActiveLightIndex(1);
+		//scene.SetActiveLightIndex(1);
 	}
 }
 
@@ -861,51 +930,39 @@ void SwitchToDifferentModelView(int modelID) {
 	}
 }
 
-void SetParametersValueChangingModels(Scene& scene)
+void SetParametersValueChangingModels(const std::shared_ptr<Scene>& scene)
 {
-	if (scene.GetModelCount() > 0)
+	if (scene->GetModelCount() > 0)
 	{
-		scale_factor_local = scene.GetActiveModel().GetScaleFactor();
-		rotation_angle_local = scene.GetActiveModel().GetRotateAngle();
-		transformation_local = scene.GetActiveModel().GetPosition();
+		//scale_factor_local = scene.GetActiveModel().GetScaleFactor();
+		//rotation_angle_local = scene.GetActiveModel().GetRotateAngle();
+		//transformation_local = scene.GetActiveModel().GetPosition();
 
-		scale_factor_global = scene.GetScaleFactor();
-		rotation_angle_global = scene.GetRotateAngle();
-		transformation_global = scene.GetPosition();
+		//scale_factor_global = scene.GetScaleFactor();
+		//rotation_angle_global = scene.GetRotateAngle();
+		//transformation_global = scene.GetPosition();
 	}
 }
 
-void SetParametersValueChangingLights(Scene& scene)
+void SetParametersValueChangingLights(const std::shared_ptr<Scene>& scene)
 {
-	if (scene.GetLightCount() > 0)
+	if (scene->GetLightCount() > 0)
 	{
-		light_transformation = scene.GetActiveLight().GetPosition();
+		//light_transformation = scene.GetActiveLight().GetPosition();
 	}
 }
 
-void SetNormalsAndBoundingBox(const Scene& scene)
+void ResetParametersValue(const std::shared_ptr<Scene>& scene)
 {
-	if (scene.GetModelCount() > 0)
-	{
-		scene.GetActiveModel().SetVertexNormalShown(vertex_normal);
-
-		scene.GetActiveModel().SetFaceNormalShown(face_normal);
-
-		scene.GetActiveModel().SetBoundingBoxShown(show_bounding_box);
-	}
-}
-
-void ResetParametersValue(Scene& scene)
-{
-	if (scene.GetModelCount() > 0)
+	if (scene->GetModelCount() > 0)
 	{
 		vertex_normal = false;
 		face_normal = false;
 		show_bounding_box = false;
 
-		scene.GetActiveModel().SetScaleFactor(1);
-		scene.GetActiveModel().SetRotateAngle(glm::vec3(0, 0, 0));
-		scene.GetActiveModel().SetNewPosition(glm::vec3(0, 0, 0));
+		//scene.GetActiveModel().SetScaleFactor(1);
+		//scene.GetActiveModel().SetRotateAngle(glm::vec3(0, 0, 0));
+		//scene.GetActiveModel().SetNewPosition(glm::vec3(0, 0, 0));
 
 		scale_factor_local = 1;
 		rotation_angle_local = glm::vec3(0);;
@@ -916,22 +973,22 @@ void ResetParametersValue(Scene& scene)
 		transformation_global = glm::vec3(0);
 
 
-		scene.SetScaleFactor(1);
-		scene.SetRotateAngle(glm::vec3(0, 0, 0));
-		scene.SetNewPosition(glm::vec3(0, 0, 0));
+		//scene.SetScaleFactor(1);
+		//scene.SetRotateAngle(glm::vec3(0, 0, 0));
+		//scene.SetNewPosition(glm::vec3(0, 0, 0));
 	}
 }
 
-void ResetLightParametersValue(Scene& scene)
+void ResetLightParametersValue(const std::shared_ptr<Scene>& scene)
 {
-	if (scene.GetLightCount() > 0)
+	if (scene->GetLightCount() > 0)
 	{
 		light_transformation = glm::vec3(0);
-		scene.GetActiveLight().SetNewPosition(light_transformation);
+		//scene.GetActiveLight().SetNewPosition(light_transformation);
 	}
 }
 
-void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
+void ShowScaleRotateTranslationWindowsLocal(const std::shared_ptr<Scene>& scene) {
 	if (show_local_rotation_window)
 	{
 		ImGui::Begin("Local Rotation Window", &show_local_rotation_window);
@@ -940,36 +997,36 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		if (ImGui::Button("Rotate Left X"))
 		{
 			rotation_angle_local.x += 0.392699082;
-			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right X")) {
 			rotation_angle_local.x -= 0.392699082;
-			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		if (ImGui::Button("Rotate Left Y"))
 		{
 			rotation_angle_local.y += 0.392699082;
-			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right Y")) {
 			rotation_angle_local.y -= 0.392699082;
-			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 		if (ImGui::Button("Rotate Left Z"))
 		{
 			rotation_angle_local.z += 0.392699082;
-			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right Z")) {
 			rotation_angle_local.z -= 0.392699082;
-			scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
 		}
 
 		if (ImGui::Button("Close Me")) {
@@ -986,7 +1043,7 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::SliderFloat("Scale factor", &scale_factor_local, 0.0f, 2.0f);
 		if (scale_factor_local != 1)
 		{
-			scene.GetActiveModel().SetScaleFactor(scale_factor_local);
+			//scene.GetActiveModel().SetScaleFactor(scale_factor_local);
 		}
 
 		if (ImGui::Button("Close Me")) {
@@ -1002,19 +1059,19 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::SliderFloat("Move X", &transformation_local.x, -10.0f, 10.0f);
 		if (transformation_local.x != 0)
 		{
-			scene.GetActiveModel().SetNewPosition(transformation_local);
+			//scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 
 		ImGui::SliderFloat("Move Y", &transformation_local.y, -10.0f, 10.0f);
 		if (transformation_local.y != 0)
 		{
-			scene.GetActiveModel().SetNewPosition(transformation_local);
+			//scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 
 		ImGui::SliderFloat("Move Z", &transformation_local.z, -10.0f, 10.0f);
 		if (transformation_local.z != 0)
 		{
-			scene.GetActiveModel().SetNewPosition(transformation_local);
+			//scene.GetActiveModel().SetNewPosition(transformation_local);
 		}
 
 		if (ImGui::Button("Close Me")) {
@@ -1061,19 +1118,19 @@ void ShowScaleRotateTranslationWindowsLocal(Scene& scene) {
 		ImGui::SliderFloat("Diffuse", &diffuse, 0.0f, 1.0f);
 		ImGui::SliderFloat("Specular", &specular, 0.0f, 1.0f);
 
-		if (scene.GetModelCount() > 0)
+		if (scene->GetModelCount() > 0)
 		{
-			scene.GetActiveModel().SetAmbient(ambient);
+			/*scene.GetActiveModel().SetAmbient(ambient);
 			scene.GetActiveModel().SetDiffuse(diffuse);
 			scene.GetActiveModel().SetSpecular(specular);
-			scene.GetActiveModel().SetColorOfMesh(glm::normalize(model_color));
+			scene.GetActiveModel().SetColorOfMesh(glm::normalize(model_color));*/
 		}
 
 		ImGui::End();
 	}
 }
 
-void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
+void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene) {
 	if (show_global_rotation_window)
 	{
 		ImGui::Begin("Global Rotation Window", &show_global_rotation_window);
@@ -1082,35 +1139,35 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 		if (ImGui::Button("Rotate Left X"))
 		{
 			rotation_angle_global.x += 0.392699082;
-			scene.SetRotateAngle(rotation_angle_global);
+			//scene.SetRotateAngle(rotation_angle_global);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right X"))
 		{
 			rotation_angle_global.x -= 0.392699082;
-			scene.SetRotateAngle(rotation_angle_global);
+			//scene.SetRotateAngle(rotation_angle_global);
 		}
 		if (ImGui::Button("Rotate Left Y"))
 		{
 			rotation_angle_global.y += 0.392699082;
-			scene.SetRotateAngle(rotation_angle_global);
+			//scene.SetRotateAngle(rotation_angle_global);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right Y"))
 		{
 			rotation_angle_global.y -= 0.392699082;
-			scene.SetRotateAngle(rotation_angle_global);
+			//scene.SetRotateAngle(rotation_angle_global);
 		}
 		if (ImGui::Button("Rotate Left Z"))
 		{
 			rotation_angle_global.z += 0.392699082;
-			scene.SetRotateAngle(rotation_angle_global);
+			//scene.SetRotateAngle(rotation_angle_global);
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right Z"))
 		{
 			rotation_angle_global.z -= 0.392699082;
-			scene.SetRotateAngle(rotation_angle_global);
+			//scene.SetRotateAngle(rotation_angle_global);
 		}
 		if (ImGui::Button("Close Me")) {
 			show_global_rotation_window = false;
@@ -1126,7 +1183,7 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 		ImGui::SliderFloat("Scale factor", &scale_factor_global, 0.0f, 2.0f);
 		if (scale_factor_global != 1)
 		{
-			scene.SetScaleFactor(scale_factor_global);
+			//scene.SetScaleFactor(scale_factor_global);
 		}
 
 		if (ImGui::Button("Close Me")) {
@@ -1142,19 +1199,19 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 		ImGui::SliderFloat("Move X", &transformation_global.x, -200.0f, 200.0f);
 		if (transformation_global.x != 0)
 		{
-			scene.SetNewPosition(transformation_global);
+			//scene.SetNewPosition(transformation_global);
 		}
 
 		ImGui::SliderFloat("Move Y", &transformation_global.y, -200.0f, 200.0f);
 		if (transformation_global.y != 0)
 		{
-			scene.SetNewPosition(transformation_global);
+			//scene.SetNewPosition(transformation_global);
 		}
 
 		ImGui::SliderFloat("Move Z", &transformation_global.z, -200.0f, 200.0f);
 		if (transformation_global.z != 0)
 		{
-			scene.SetNewPosition(transformation_global);
+			//scene.SetNewPosition(transformation_global);
 		}
 
 		if (ImGui::Button("Close Me")) {
@@ -1164,7 +1221,7 @@ void ShowScaleRotateTranslationWindowsGlobal(Scene& scene) {
 	}
 }
 
-void CameraWindowsLocal(Scene& scene)
+void CameraWindowsLocal(const std::shared_ptr<Scene>& scene)
 {
 	if (camera_local_rotation_window)
 	{
@@ -1208,7 +1265,7 @@ void CameraWindowsLocal(Scene& scene)
 			camera_local_rotation_window = false;
 		}
 
-		scene.GetActiveCamera().setSelfAngle(camera_rotation_angle_local);
+		//scene.GetActiveCamera().setSelfAngle(camera_rotation_angle_local);
 		ImGui::End();
 	}
 
@@ -1220,12 +1277,12 @@ void CameraWindowsLocal(Scene& scene)
 		ImGui::SliderFloat("Camera Y", &cameraY, -200.0, 200.0);
 		ImGui::SliderFloat("Camera Z", &cameraZ, -200.0, 200.0);
 
-		scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
+		//scene.GetActiveCamera().SetCameraEye(glm::vec3(cameraX, cameraY, cameraZ));
 		ImGui::End();
 	}
 }
 
-void CameraWindowsWorld(Scene& scene)
+void CameraWindowsWorld(const std::shared_ptr<Scene>& scene)
 {
 	if (camera_global_rotation_window)
 	{
@@ -1262,7 +1319,7 @@ void CameraWindowsWorld(Scene& scene)
 			show_global_rotation_window = false;
 		}
 
-		scene.GetActiveCamera().setWorldRotatingAngle(camera_rotation_world);
+		//scene.GetActiveCamera().setWorldRotatingAngle(camera_rotation_world);
 		ImGui::End();
 	}
 }
@@ -1298,10 +1355,10 @@ void LightWindow(Scene& scene)
 
 		if (scene.GetLightCount() > 0)
 		{
-			scene.GetActiveLight().SetLightModel(light_type_selection);
+			/*scene.GetActiveLight().SetLightModel(light_type_selection);
 			scene.GetActiveLight().SetColorOfMesh(light_color);
 			scene.GetActiveLight().SetNewPosition(light_transformation);
-			scene.GetActiveLight().SetNewLightDirection(light_direction);
+			scene.GetActiveLight().SetNewLightDirection(light_direction);*/
 		}
 
 		if (ImGui::Button("Close Me")) {

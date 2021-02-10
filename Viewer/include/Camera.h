@@ -1,55 +1,81 @@
 #pragma once
+#include <memory>
 #include <glm/glm.hpp>
-#include <glm\ext\matrix_transform.hpp>
-#include <glm\ext\matrix_clip_space.hpp>
-
-
+#include "MeshModel.h"
+/*
+ * Camera class. This class takes care of all the camera transformations and manipulations.
+ */
 class Camera
 {
-public:
-	Camera();
-	virtual ~Camera();
-
-	void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
-	glm::mat4 Camera::GetCameraLookAt();
-	const glm::mat4x4& GetProjectionTransformation() const;
-	void Camera::SetOrthographicTrans(float left, float right, float bottom, float top, float near, float far);
-	glm::mat4 Camera::GetOrthographicTrans();
-	void Camera::SetPerspectiveTrans(float fov, float aspectRatio, float near, float far);
-	glm::mat4 Camera::GetPerspectiveTrans();
-	void Camera::ResetProjectionsMatrix();
-	void Camera::ResetPerspectiveTrans();
-
-	void Camera::SetCameraEye(glm::vec3 cameraEye);
-	glm::vec3 Camera::GetCameraEye();
-
-	void Camera::SetCameraAt(glm::vec3 cameraAt);
-	glm::vec3 Camera::GetCameraAt();
-
-	void Camera::SetCameraUp(glm::vec3 cameraUp);
-	glm::vec3 Camera::GetCameraUp();
-
-	void Camera::ResetCameraPosition();
-
-	void Camera::setSelfAngle(glm::vec3 newAngle);
-	glm::vec3 Camera::getSelfAngle();
-
-	void Camera::setWorldRotatingAngle(glm::vec3 newAngle);
-	glm::vec3 Camera::getWorldRotatingAngle();
-
-
 private:
-	glm::mat4x4 view_transformation_;
-	glm::mat4x4 projection_transformation_;
-	glm::mat4x4 orthographic_transformation_;
-	glm::mat4x4 perspective_transformation_;
-	glm::mat4x4 zoom_transformation_;
+	glm::mat4x4 viewTransformation;
+	glm::mat4x4 projectionTransformation;
 
-	glm::vec3 cameraEye_;
-	glm::vec3 cameraAt_;
-	glm::vec3 cameraUp_;
+	glm::vec3 eye;
+	glm::vec3 up;
+	glm::vec3 at;
 
-	glm::vec3 selfAngle_;
-	glm::vec3 worldRotatingAngle_;
+	glm::vec3 x;
+	glm::vec3 y;
+	glm::vec3 z;
 
+	float zoom;
+	float fovy;
+	float height;
+	float zNear;
+	float zFar;
+	float aspectRatio;
+
+	bool prespective;
+
+public:
+	Camera(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up, const float aspectRatio);
+	~Camera();
+
+	void SetOrthographicProjection(
+		const float height,
+		const float aspectRatio,
+		const float zNear,
+		const float zFar);
+
+	void SetPerspectiveProjection(
+		const float fovy,
+		const float aspect,
+		const float zNear,
+		const float zFar);
+
+	void UpdateProjectionMatrix();
+
+	void SetNear(const float zNear);
+
+	void SetFar(const float zFar);
+
+	void SetFovy(const float fovy);
+
+	void SetHeight(const float height);
+
+	void Zoom(const float factor);
+
+	void SphericalRotate(const glm::vec2& sphericalDelta);
+
+	const glm::mat4x4& GetProjectionTransformation() const;
+
+	const glm::mat4x4& GetViewTransformation() const;
+
+	void SetAspectRatio(float aspectRatio);
+
+	void SwitchToPrespective();
+	void SwitchToOrthographic();
+
+	float GetNear();
+
+	float GetFar();
+
+	float GetFovy();
+
+	float GetHeight();
+
+	bool IsPrespective();
+
+	const glm::vec3& GetEye() const;
 };

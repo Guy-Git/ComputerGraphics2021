@@ -3,164 +3,106 @@
 #include <string>
 
 Scene::Scene() :
-	active_camera_index_(0),
-	active_model_index_(0),
-	active_light_index_(0),
-	scaleFactor_(1),
-	rotateAngle_(0),
-	position_(0),
-	window_height_(900.0),
-	window_width_(1500.0),
-	PPmode_(0)
+	activeCameraIndex(0),
+	activeModelIndex(0)
 {
-	AddCamera(*(new Camera()));
-	AddCamera(*(new Camera()));
+
 }
 
-void Scene::AddModel(const std::shared_ptr<MeshModel>& mesh_model)
+void Scene::AddModel(const std::shared_ptr<MeshModel>& model)
 {
-	mesh_models_.push_back(mesh_model);
-}
-
-void Scene::AddLight(const std::shared_ptr<MeshModel>& mesh_model)
-{
-	lights_.push_back(mesh_model);
-}
-
-int Scene::GetLightCount() const
-{
-	return lights_.size();
-}
-
-MeshModel& Scene::GetLight(int index) const
-{
-	return *lights_[index];
-}
-
-MeshModel& Scene::GetActiveLight() const
-{
-	return *lights_[active_light_index_];
-}
-
-int Scene::GetModelCount() const
-{
-	return mesh_models_.size();
-}
-
-MeshModel& Scene::GetModel(int index) const
-{
-	return *mesh_models_[index];
-}
-
-MeshModel& Scene::GetActiveModel() const
-{
-	return *mesh_models_[active_model_index_];
+	models.push_back(model);
 }
 
 void Scene::AddCamera(const Camera& camera)
 {
-	cameras_.push_back(camera);
+	cameras.push_back(camera);
+}
+
+int Scene::GetModelCount() const
+{
+	return models.size();
 }
 
 int Scene::GetCameraCount() const
 {
-	return cameras_.size();
+	return cameras.size();
+}
+
+std::shared_ptr<MeshModel> Scene::GetModel(int index) const
+{
+	return models[index];
 }
 
 Camera& Scene::GetCamera(int index)
 {
-	return cameras_[index];
+	return cameras[index];
+}
+
+const Camera& Scene::GetCamera(int index) const
+{
+	return cameras[index];
+}
+
+const Camera& Scene::GetActiveCamera() const
+{
+	return cameras[activeCameraIndex];
 }
 
 Camera& Scene::GetActiveCamera()
 {
-	return cameras_[active_camera_index_];
+	return cameras[activeCameraIndex];
 }
 
 void Scene::SetActiveCameraIndex(int index)
 {
-	active_camera_index_ = index;
+	if (index >= 0 && index < cameras.size())
+	{
+		activeCameraIndex = index;
+	}
 }
 
-void Scene::SetActiveLightIndex(int index)
+const int Scene::GetActiveCameraIndex() const
 {
-	active_light_index_ = index;
-}
-
-int Scene::GetActiveCameraIndex() const
-{
-	return active_camera_index_;
+	return activeCameraIndex;
 }
 
 void Scene::SetActiveModelIndex(int index)
 {
-	active_model_index_ = index;
+	activeModelIndex = index;
 }
 
-int Scene::GetActiveModelIndex() const
+const int Scene::GetActiveModelIndex() const
 {
-	return active_model_index_;
+	return activeModelIndex;
 }
 
-void Scene::SetScaleFactor(float scaleFactor)
+const std::shared_ptr<MeshModel>& Scene::GetActiveModel() const
 {
-	Scene::scaleFactor_ = scaleFactor;
+	return models[activeModelIndex];
 }
 
-float Scene::GetScaleFactor() const
+void Scene::AddLight(const std::shared_ptr<PointLight>& light)
 {
-	return Scene::scaleFactor_;
+	lights.push_back(light);
 }
 
-void Scene::SetRotateAngle(glm::vec3 rotateAngle)
+int Scene::GetLightCount() const
 {
-	Scene::rotateAngle_ = rotateAngle;
+	return lights.size();
 }
 
-glm::vec3 Scene::GetRotateAngle() const
+std::shared_ptr<PointLight> Scene::GetLight(int index) const
 {
-	return Scene::rotateAngle_;
+	return lights[index];
 }
 
-void Scene::SetNewPosition(glm::vec3 newPos)
+const std::vector<std::shared_ptr<PointLight>>& Scene::GetActiveLights() const
 {
-	position_ = newPos;
+	return lights;
 }
 
-glm::vec3 Scene::GetPosition() const
+const AmbientLight& Scene::GetAmbientLight()
 {
-	return position_;
+	return ambientLight;
 }
-
-float Scene::GetWidth() const
-{
-	return window_width_;
-}
-
-float Scene::GetHeight() const
-{
-	return window_height_;
-}
-
-void Scene::SetWindowSizes(int& height, int& width)
-{
-	window_width_ = width;
-	window_height_ = height;
-}
-
-void Scene::SetPPMode(int mode)
-{
-	PPmode_ = mode;
-}
-
-int Scene::GetPPMode()
-{
-	return PPmode_;
-}
-
-void Scene::RemoveLight()
-{
-	lights_.clear();
-}
-
-

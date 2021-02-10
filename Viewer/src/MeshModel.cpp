@@ -1,23 +1,23 @@
 #include "MeshModel.h"
+#include "Utils.h"
+#include <vector>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <random>
+#include <glm/gtc/matrix_transform.hpp>
 
-MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, const std::string& model_name) :
-	faces_(faces),
-	vertices_(vertices),
-	normals_(normals),
-	model_name_(model_name),
-	scaleFactor_(1),
-	rotateAngle_(0),
-	position_(0),
-	isFaceNormalShown_(false),
-	isVertexNormalShown_(false),
-	isBoundingBoxShown_(false),
-	isLightRotating_(false),
-	ambient_(0.5),
-	diffuse_(0.5),
-	specular_(0.5),
-	lightModel_(0),
-	lightDirection_(0)
+MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<glm::vec2> textureCoords, const std::string& modelName) :
+	modelTransform(1),
+	worldTransform(1),
+	modelName(modelName)
 {
+	worldTransform = glm::mat4x4(1);
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(0, 1);
+	color = glm::vec3(dist(mt), dist(mt), dist(mt));
 
 	modelVertices.reserve(3 * faces.size());
 	for (int i = 0; i < faces.size(); i++)
@@ -64,177 +64,133 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	glBindVertexArray(0);
 }
 
-MeshModel::MeshModel()
-{
-}
-
 MeshModel::~MeshModel()
 {
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 }
 
-const Face& MeshModel::GetFace(int index) const
+const glm::vec3& MeshModel::GetColor() const
 {
-	return faces_[index];
+	return color;
 }
 
-int MeshModel::GetFacesCount() const
+void MeshModel::SetColor(const glm::vec3& color)
 {
-	return faces_.size();
+	this->color = color;
 }
 
-const std::string& MeshModel::GetModelName() const
+const std::string& MeshModel::GetModelName()
 {
-	return model_name_;
+	return modelName;
 }
 
-int MeshModel::GetVerticesCount() const
+void MeshModel::SetWorldTransformation(const glm::mat4x4& worldTransform)
 {
-	return vertices_.size();
+	this->worldTransform = worldTransform;
 }
 
-const glm::vec3& MeshModel::GetVertex(int index) const
+const glm::mat4x4& MeshModel::GetWorldTransformation() const
 {
-	return vertices_.at(index);
+	return worldTransform;
 }
 
-const glm::vec3& MeshModel::GetVertexNormal(int index) const
+void MeshModel::SetModelTransformation(const glm::mat4x4& worldTransform)
 {
-	return normals_.at(index);
+	this->modelTransform = worldTransform;
 }
 
-void MeshModel::SetScaleFactor(float scaleFactor)
+const glm::mat4x4& MeshModel::GetModelTransformation() const
 {
-	MeshModel::scaleFactor_ = scaleFactor;
+	return modelTransform;
 }
 
-float MeshModel::GetScaleFactor()
+void MeshModel::TranslateModel(const glm::vec3& translationVector)
 {
-	return MeshModel::scaleFactor_;
+	modelTransform = Utils::TranslationMatrix(translationVector) * modelTransform;
 }
 
-void MeshModel::SetRotateAngle(glm::vec3 rotateAngle)
+void MeshModel::TranslateWorld(const glm::vec3& translationVector)
 {
-	MeshModel::rotateAngle_ = rotateAngle;
+	worldTransform = Utils::TranslationMatrix(translationVector) * worldTransform;
 }
 
-glm::vec3 MeshModel::GetRotateAngle()
+void MeshModel::RotateXModel(double angle)
 {
-	return MeshModel::rotateAngle_;
+	modelTransform = Utils::XRotationMatrix(angle) * modelTransform;
 }
 
-void MeshModel::SetNewPosition(glm::vec3 newPos)
+void MeshModel::RotateYModel(double angle)
 {
-	position_ = newPos;
+	modelTransform = Utils::YRotationMatrix(angle) * modelTransform;
 }
 
-glm::vec3 MeshModel::GetPosition()
+void MeshModel::RotateZModel(double angle)
 {
-	return position_;
+	modelTransform = Utils::ZRotationMatrix(angle) * modelTransform;
 }
 
-void MeshModel::SetFaceNormalShown(bool isShown)
+void MeshModel::ScaleXModel(double factor)
 {
-	isFaceNormalShown_ = isShown;
+	modelTransform = Utils::XScalingMatrix(factor) * modelTransform;
 }
 
-bool MeshModel::GetFaceNormalShown()
+void MeshModel::ScaleYModel(double factor)
 {
-	return isFaceNormalShown_;
+	modelTransform = Utils::YScalingMatrix(factor) * modelTransform;
 }
 
-void MeshModel::SetVertexNormalShown(bool isShown)
+void MeshModel::ScaleZModel(double factor)
 {
-	isVertexNormalShown_ = isShown;
+	modelTransform = Utils::ZScalingMatrix(factor) * modelTransform;
 }
 
-bool MeshModel::GetVertexNormalShown()
+void MeshModel::ScaleModel(double factor)
 {
-	return isVertexNormalShown_;
+	modelTransform = glm::scale(glm::mat4(1), glm::vec3(factor, factor, factor)) * modelTransform;
 }
 
-void MeshModel::SetBoundingBoxShown(bool isShown)
+void MeshModel::RotateXWorld(double angle)
 {
-	isBoundingBoxShown_ = isShown;
+	worldTransform = Utils::XRotationMatrix(angle) * worldTransform;
 }
 
-bool MeshModel::GetBoundingBoxShown()
+void MeshModel::RotateYWorld(double angle)
 {
-	return isBoundingBoxShown_;
+	worldTransform = Utils::YRotationMatrix(angle) * worldTransform;
 }
 
-void MeshModel::SetMinMax(glm::vec4 minMaxVector)
+void MeshModel::RotateZWorld(double angle)
 {
-	minMaxXY_ = minMaxVector;
+	worldTransform = Utils::ZRotationMatrix(angle) * worldTransform;
 }
 
-glm::vec4 MeshModel::GetMinMax()
+void MeshModel::ScaleXWorld(double factor)
 {
-	return minMaxXY_;
+	worldTransform = Utils::XScalingMatrix(factor) * worldTransform;
 }
 
-void MeshModel::SetColorOfMesh(glm::vec3 colorOfMesh)
+void MeshModel::ScaleYWorld(double factor)
 {
-	colorOfMesh_ = colorOfMesh;
+	worldTransform = Utils::YScalingMatrix(factor) * worldTransform;
 }
 
-glm::vec3 MeshModel::GetColorOfMesh()
+void MeshModel::ScaleZWorld(double factor)
 {
-	return colorOfMesh_;
+	worldTransform = Utils::ZScalingMatrix(factor) * worldTransform;
 }
 
-void MeshModel::SetAmbient(float ambient)
+void MeshModel::ScaleWorld(double factor)
 {
-	ambient_ = ambient;
+	worldTransform = glm::scale(glm::mat4(1), glm::vec3(factor, factor, factor)) * worldTransform;
 }
 
-float MeshModel::GetAmbient()
-{
-	return ambient_;
-}
-
-void MeshModel::SetDiffuse(float diffuse)
-{
-	diffuse_ = diffuse;
-}
-
-float MeshModel::GetDiffuse()
-{
-	return diffuse_;
-}
-
-void MeshModel::SetSpecular(float specular)
-{
-	specular_ = specular;
-}
-
-float MeshModel::GetSpecular()
-{
-	return specular_;
-}
-
-void MeshModel::SetLightModel(int lightModel)
-{
-	lightModel_ = lightModel;
-}
-
-float MeshModel::GetLightModel()
-{
-	return lightModel_;
-}
-
-void MeshModel::SetNewLightDirection(glm::vec3 newDir)
-{
-	lightDirection_ = newDir;
-}
-
-glm::vec3 MeshModel::GetLightDirection() const
-{
-	return lightDirection_;
-}
-
-GLuint MeshModel::GetVAO() 
+GLuint MeshModel::GetVAO() const
 {
 	return vao;
+}
+
+const std::vector<Vertex>& MeshModel::GetModelVertices()
+{
+	return modelVertices;
 }

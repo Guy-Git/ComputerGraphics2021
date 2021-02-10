@@ -1,70 +1,52 @@
 #pragma once
 
+#include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <vector>
+#include <string>
 #include <memory>
-
-#include "Camera.h"
 #include "MeshModel.h"
+#include "AmbientLight.h"
+#include "PointLight.h"
+#include "Camera.h"
 
 class Scene {
+private:
+	std::vector<std::shared_ptr<MeshModel>> models;
+	std::vector<std::shared_ptr<PointLight>> lights;
+	AmbientLight ambientLight;
+	std::vector<Camera> cameras;
+
+	int activeCameraIndex;
+	int activeModelIndex;
+
 public:
 	Scene();
 
-	void AddModel(const std::shared_ptr<MeshModel>& mesh_model);
-	void Scene::AddLight(const std::shared_ptr<MeshModel>& mesh_model);
-
+	void AddModel(const std::shared_ptr<MeshModel>& model);
 	int GetModelCount() const;
-	MeshModel& GetModel(int index) const;
-	MeshModel& GetActiveModel() const;
+	std::shared_ptr<MeshModel> GetModel(int index) const;
 
-	int GetLightCount() const;
-	MeshModel& GetLight(int index) const;
-	MeshModel& GetActiveLight() const;
-	void Scene::SetActiveLightIndex(int index);
-	
-	void Scene::AddCamera(const Camera& camera);
+	void AddCamera(const Camera& camera);
 	int GetCameraCount() const;
 	Camera& GetCamera(int index);
+	const Camera& GetCamera(int index) const;
+
+	void AddLight(const std::shared_ptr<PointLight>& light);
+	int GetLightCount() const;
+	std::shared_ptr<PointLight> GetLight(int index) const;
+	const std::vector<std::shared_ptr<PointLight>>& GetActiveLights() const;
+
+	const AmbientLight& GetAmbientLight();
+
+	const Camera& GetActiveCamera() const;
 	Camera& GetActiveCamera();
 
 	void SetActiveCameraIndex(int index);
-	int GetActiveCameraIndex() const;
+	const int GetActiveCameraIndex() const;
+
+	const std::shared_ptr<MeshModel>& GetActiveModel() const;
 
 	void SetActiveModelIndex(int index);
-	int GetActiveModelIndex() const;
-
-	float Scene::GetScaleFactor() const;
-	void SetScaleFactor(float scaleFactor);
-	void SetRotateAngle(glm::vec3 rotateAngle);
-	glm::vec3 GetRotateAngle() const;
-	void SetNewPosition(glm::vec3 newPos);
-	glm::vec3 GetPosition() const;
-
-	void SetWindowSizes(int& height, int& width);
-	float Scene::GetWidth() const;
-	float Scene::GetHeight() const;
-
-	void SetPPMode(int mode);
-	int GetPPMode();
-
-	void RemoveLight();
-	
-private:
-	std::vector<std::shared_ptr<MeshModel>> mesh_models_;
-	std::vector<std::shared_ptr<MeshModel>> lights_;
-	std::vector<Camera> cameras_;
-
-	int active_camera_index_;
-	int active_model_index_;
-	int active_light_index_;
-
-	float scaleFactor_;
-	glm::vec3 rotateAngle_;
-	glm::vec3 position_;
-	
-
-	float window_width_;
-	float window_height_;
-
-	int PPmode_; // 0 = none, 1 = bloom + gaussian, 2 = TBD
+	const int GetActiveModelIndex() const;
 };

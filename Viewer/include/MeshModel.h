@@ -1,9 +1,10 @@
 #pragma once
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
+#include <memory>
+#include "MeshModel.h"
 #include "Face.h"
-#include <glad/glad.h>
-
 
 struct Vertex
 {
@@ -14,86 +15,59 @@ struct Vertex
 
 class MeshModel
 {
-public:
-	MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, const std::string& model_name);
-	MeshModel();
-	virtual ~MeshModel();
-	const Face& GetFace(int index) const;
-	int GetFacesCount() const;
-	const std::string& GetModelName() const;
-	int MeshModel::GetVerticesCount() const;
-	const glm::vec3& MeshModel::GetVertex(int index) const;
-	float MeshModel::GetScaleFactor();
-	void MeshModel::SetScaleFactor(float scaleFactor);
-	void MeshModel::SetRotateAngle(glm::vec3 rotateAngle);
-	glm::vec3 MeshModel::GetRotateAngle();
-	void MeshModel::SetNewPosition(glm::vec3 newPos);
-	glm::vec3 MeshModel::GetPosition();
-
-	void SetFaceNormalShown(bool isShown);
-	bool GetFaceNormalShown();
-	void SetVertexNormalShown(bool isShown);
-	bool GetVertexNormalShown();
-
-	void SetMinMax(glm::vec4 minMaxVector);
-	glm::vec4 GetMinMax();
-
-	const glm::vec3& MeshModel::GetVertexNormal(int index) const;
-
-	void SetBoundingBoxShown(bool isShown);
-
-	bool GetBoundingBoxShown();
-
-	void SetColorOfMesh(glm::vec3 colorOfMesh);
-	glm::vec3 GetColorOfMesh();
-	void SetAmbient(float ambient);
-	float GetAmbient();
-	void SetDiffuse(float diffuse);
-	float GetDiffuse();
-	void SetSpecular(float specular);
-	float GetSpecular();
-	void SetLightModel(int lightModel);
-	float GetLightModel();
-
-	void SetNewLightDirection(glm::vec3 newDir);
-	glm::vec3 GetLightDirection() const;
-
-
-	int kindOfModel; // 0 - model, 1 - point, 2 - parallel 
-	bool isLightRotating_;
-
-	std::vector<Vertex> modelVertices;
+protected:
+	std::vector<Face> faces;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
 	std::vector<glm::vec3> textureCoords;
 
-	GLuint GetVAO() ;
+	std::vector<Vertex> modelVertices;
 
-private:
-	std::vector<Face> faces_;
-	std::vector<glm::vec3> vertices_;
-	std::vector<glm::vec3> normals_;
-	std::string model_name_;
+	glm::mat4x4 modelTransform;
+	glm::mat4x4 worldTransform;
 
-	float scaleFactor_;
-	glm::vec3 rotateAngle_;
-	glm::vec3 position_;
+	std::string modelName;
 
-	glm::vec3 lightDirection_;
-	glm::vec3 colorOfMesh_;
-
-	bool isFaceNormalShown_;
-	bool isVertexNormalShown_;
-	bool isBoundingBoxShown_;
-
-	int lightModel_;
-	
-	float ambient_;
-	float diffuse_;
-	float specular_;
-
-	
-
-	glm::vec4 minMaxXY_; // (max X, min X, max y, min y)
+	glm::vec3 color;
 
 	GLuint vbo;
 	GLuint vao;
+
+public:
+	MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<glm::vec2> textureCoords, const std::string& modelName = "");
+	virtual ~MeshModel();
+
+	const glm::mat4x4& GetWorldTransformation() const;
+	const glm::mat4x4& GetModelTransformation() const;
+
+	void SetWorldTransformation(const glm::mat4x4& worldTransform);
+	void SetModelTransformation(const glm::mat4x4& modelTransform);
+
+	const glm::vec3& GetColor() const;
+	void SetColor(const glm::vec3& color);
+
+	const std::string& GetModelName();
+
+	const std::vector<Vertex>& GetModelVertices();
+
+	void TranslateModel(const glm::vec3& translationVector);
+	void TranslateWorld(const glm::vec3& translationVector);
+
+	void RotateXModel(double angle);
+	void RotateYModel(double angle);
+	void RotateZModel(double angle);
+	void ScaleXModel(double factor);
+	void ScaleYModel(double factor);
+	void ScaleZModel(double factor);
+	void ScaleModel(double factor);
+
+	void RotateXWorld(double angle);
+	void RotateYWorld(double angle);
+	void RotateZWorld(double angle);
+	void ScaleXWorld(double factor);
+	void ScaleYWorld(double factor);
+	void ScaleZWorld(double factor);
+	void ScaleWorld(double factor);
+
+	GLuint GetVAO() const;
 };
