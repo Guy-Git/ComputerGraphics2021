@@ -78,4 +78,6 @@ public:
 	bool IsPrespective();
 
 	const glm::vec3& GetEye() const;
+
+	void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up);
 };

@@ -25,33 +25,10 @@ Camera::~Camera()
 {
 }
 
-//void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
-//{
-//	this->eye = eye;
-//	this->at = at;
-//	this->up = up;
-//
-//	f = glm::normalize(eye - at);
-//	l = glm::normalize(glm::cross(up, f));
-//	u = glm::cross(f, l);
-//	
-//	cameraRotation[0] = glm::vec4(l, 0);
-//	cameraRotation[1] = glm::vec4(u, 0);
-//	cameraRotation[2] = glm::vec4(f, 0);
-//	cameraRotation[3] = glm::vec4(0, 0, 0, 1);
-//
-//	glm::mat4x4 cameraModelRotation;
-//	cameraModelRotation[0] = glm::vec4(-l, 0);
-//	cameraModelRotation[1] = glm::vec4(u, 0);
-//	cameraModelRotation[2] = glm::vec4(-f, 0);
-//	cameraModelRotation[3] = glm::vec4(0, 0, 0, 1);
-//
-//	cameraInverseRotation = glm::transpose(cameraRotation);
-//	cameraTranslation = Utils::TranslationMatrix(eye);
-//	cameraInverseTranslation = Utils::TranslationMatrix(-eye);
-//	cameraTransformation = cameraInverseRotation * cameraInverseTranslation;
-//	worldTransform = cameraTranslation * cameraModelRotation * Utils::ScalingMatrix(glm::vec3(0.2,0.2,0.2));
-//}
+void Camera::SetCameraLookAt(const glm::vec3& eye, const glm::vec3& at, const glm::vec3& up)
+{
+	viewTransformation = (glm::lookAt(eye, at, up));
+}
 
 void Camera::SetOrthographicProjection(
 	const float height,

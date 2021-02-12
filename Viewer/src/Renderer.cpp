@@ -62,7 +62,7 @@ void Renderer::Render(const std::shared_ptr<Scene>& scene)
 
 void Renderer::LoadShaders()
 {
-	colorShader.loadShaders("vshader_color.glsl", "fshader_color.glsl");
+	colorShader.loadShaders("vshader.glsl", "fshader.glsl");
 }
 
 void Renderer::LoadTextures()

@@ -22,12 +22,12 @@
 #include "Renderer.h"
 #include "Scene.h"
 #include "Camera.h"
-#include "ImguiMenus.h"
+//#include "ImguiMenus.h"
 #include "AmbientLight.h"
 #include "PointLight.h"
 #include "Utils.h"
 
-double zoomFactor = 1;
+float zoomFactor = 1;
 int windowWidth = 1280;
 int windowHeight = 720;
 char* windowTitle = "Guy & Yuval";
@@ -77,6 +77,11 @@ bool show_model_1_window = false;
 bool show_model_2_window = false;
 bool show_model_3_window = false;
 bool show_model_4_window = false;
+
+float fovy = 1;
+float zNear = 1;
+float zFar = 1;
+float height = 1;
 
 bool model_materials_window = false;
 
@@ -152,8 +157,10 @@ int main(int argc, char** argv)
 	glm::vec3 eye = glm::vec3(0, 0, 10);
 	glm::vec3 at = glm::vec3(0, 0, 0);
 	glm::vec3 up = glm::vec3(0, 1, 0);
-	Camera camera = Camera(eye, at, up, GetAspectRatio());
-	scene->AddCamera(camera);
+	Camera camera1 = Camera(eye, at, up, GetAspectRatio());
+	Camera camera2 = Camera(eye, at, up, GetAspectRatio());
+	scene->AddCamera(camera1);
+	scene->AddCamera(camera2);
 
 	scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 0, 15), glm::vec3(1, 1, 1)));
 	scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 5, 5), glm::vec3(0, 0, 0)));
@@ -317,6 +324,16 @@ void HandleImguiInput()
 		if (imgui->KeysDown[61]) // +
 		{
 			scene->GetActiveModel()->ScaleModel(1.01);
+		}
+
+		if (imgui->KeysDown[81]) // q
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0.02, 0));
+		}
+
+		if (imgui->KeysDown[69]) // e
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, -0.02, 0));
 		}
 
 		if (imgui->KeysDown[65]) // a
@@ -671,7 +688,6 @@ void DrawImguiMenus()
 	ImGui::Begin("Camera selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
 
 	ImGui::RadioButton("Camera #1", &camera_selection, 0);
-	//ChangeCameraSelection(scene);
 	ImGui::RadioButton("Camera #2", &camera_selection, 1);
 
 	if (ImGui::Button("Reset Current Camera"))
@@ -681,36 +697,51 @@ void DrawImguiMenus()
 		//scene.GetActiveCamera().ResetPerspectiveTrans();
 	}
 
-	ImGui::RadioButton("Orthographic View", &view_selection, 0);
-	ImGui::SameLine();
-	ImGui::RadioButton("Perspective View", &view_selection, 1);
+	int newProjectionType = scene->GetActiveCamera().IsPrespective() ? 0 : 1;
+	ImGui::RadioButton("Prespective", &newProjectionType, 0);
+	ImGui::RadioButton("Orthographic", &newProjectionType, 1);
 
-	if (ImGui::Button("Reset Camera Position"))
+	if (newProjectionType == 0)
 	{
-		//scene.GetActiveCamera().ResetCameraPosition();
-		cameraX = 0;
-		cameraY = 0;
-		cameraZ = 450.0;
-		//fov = 45.0;
-	}
-	//if (view_selection == 1)
-		//ImGui::SliderFloat("Fovy", &fov, 0.1, 100);
-	//else
-		//ImGui::SliderFloat("Zoom", &orthoZoom, -100, 100);
 
-	/*glm::vec3 cameraAtBuffer = scene.GetActiveCamera().GetCameraAt();*/
-	/*
-	ImGui::SliderFloat("At X", &cameraAtBuffer.x, -100.0f, 100.0f);
-	ImGui::SliderFloat("At Y", &cameraAtBuffer.y, -100.0f, 100.0f);
-	ImGui::SliderFloat("At Z", &cameraAtBuffer.z, -100.0f, 100.0f);
-	scene.GetActiveCamera().SetCameraAt(cameraAtBuffer);
-	ImGui::SliderFloat("Near", &near_param, 1.0, 200.0);
-	ImGui::SliderFloat("Far", &far_param, 1.0, 200.0);
-	ImGui::SliderFloat("Top", &top, 1.0, 200.0);
-	ImGui::SliderFloat("Bottom", &bottom, 1.0, 200.0);
-	ImGui::SliderFloat("Left", &left, 1.0, 200.0);
-	ImGui::SliderFloat("Right", &right, 1.0, 200.0);
-	*/
+
+		scene->GetActiveCamera().SwitchToPrespective();
+
+		if (ImGui::SliderFloat("Fovy", &fovy, 0.0f, 10.0))
+		{
+			scene->GetActiveCamera().SetFovy(fovy);
+		}
+
+		if (ImGui::SliderFloat("Near", &zNear, 1.0f, 10.0f))
+		{
+			scene->GetActiveCamera().SetNear(zNear);
+		}
+
+		if (ImGui::SliderFloat("Far", &zFar, 1.0f, 10.0f))
+		{
+			scene->GetActiveCamera().SetFar(zFar);
+		}
+	}
+	else if (newProjectionType == 1)
+	{
+		scene->GetActiveCamera().SwitchToOrthographic();
+
+		if (ImGui::SliderFloat("Height", &height, 0.0f, 10.0))
+		{
+			scene->GetActiveCamera().SetHeight(height);
+		}
+
+		if (ImGui::SliderFloat("Near", &zNear, 1.0f, 10.0f))
+		{
+			scene->GetActiveCamera().SetNear(zNear);
+		}
+
+		if (ImGui::SliderFloat("Far", &zFar, 1.0f, 10.0f))
+		{
+			scene->GetActiveCamera().SetFar(zFar);
+		}
+	}
+
 	if (ImGui::Button("Reset Camera Position"))
 	{
 		//scene.GetActiveCamera().ResetCameraPosition();
@@ -718,29 +749,33 @@ void DrawImguiMenus()
 
 	ImGui::End();
 
-	//scene.SetActiveCameraIndex(camera_selection);
-
-	switch (view_selection)
+	if (camera_selection != scene->GetActiveCameraIndex())
 	{
-	case 0:
-		//scene.GetActiveCamera().ResetProjectionsMatrix();
-
-		//scene.GetActiveCamera().SetOrthographicTrans(left, right + orthoZoom, bottom, top + orthoZoom, near_param, far_param);
-
-		//scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
-			//scene.GetActiveCamera().GetCameraAt(),
-			//scene.GetActiveCamera().GetCameraUp());
-
-		break;
-	case 1:
-		//scene.GetActiveCamera().ResetProjectionsMatrix();
-		//.GetActiveCamera().SetPerspectiveTrans(glm::radians(fov), 1, near_param, far_param);
-		//scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
-			//scene.GetActiveCamera().GetCameraAt(),
-			//scene.GetActiveCamera().GetCameraUp());
-
-		break;
+		scene->SetActiveCameraIndex(camera_selection);
+		scene->GetActiveCamera().SetAspectRatio(GetAspectRatio());
 	}
+
+	//switch (view_selection)
+	//{
+	//case 0:
+	//	//scene.GetActiveCamera().ResetProjectionsMatrix();
+
+	//	//scene.GetActiveCamera().SetOrthographicTrans(left, right + orthoZoom, bottom, top + orthoZoom, near_param, far_param);
+
+	//	//scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
+	//		//scene.GetActiveCamera().GetCameraAt(),
+	//		//scene.GetActiveCamera().GetCameraUp());
+
+	//	break;
+	//case 1:
+	//	//scene.GetActiveCamera().ResetProjectionsMatrix();
+	//	//.GetActiveCamera().SetPerspectiveTrans(glm::radians(fov), 1, near_param, far_param);
+	//	//scene.GetActiveCamera().SetCameraLookAt(scene.GetActiveCamera().GetCameraEye(),
+	//		//scene.GetActiveCamera().GetCameraAt(),
+	//		//scene.GetActiveCamera().GetCameraUp());
+
+	//	break;
+	//}
 
 	// model selection window - position and window flag
 	ImGui::SetNextWindowPos(ImVec2(330, windowHeight - 200));
@@ -760,7 +795,7 @@ void DrawImguiMenus()
 	}
 	if (ImGui::Button("Reset Current Model"))
 	{
-		//ResetParametersValue(scene);
+		ResetParametersValue(scene);
 	}
 	ImGui::Checkbox("Show Vertex Normals", &vertex_normal);
 	ImGui::SameLine(); ImGui::Checkbox("Show Face Normals", &face_normal);
@@ -870,20 +905,8 @@ void DrawImguiMenus()
 			scene->SetActiveModelIndex(model_selection);
 	}
 
-	SetParametersValueChangingModels(scene);
+	//SetParametersValueChangingModels(scene);
 	SetParametersValueChangingLights(scene);
-}
-
-void ChangeCameraSelection(Scene& scene)
-{
-	if (camera_selection == 0)
-	{
-		//scene.SetActiveCameraIndex(0);
-	}
-	if (camera_selection == 1)
-	{
-		//scene.SetActiveCameraIndex(1);
-	}
 }
 
 void ChangeLightSelection(Scene& scene)
@@ -904,45 +927,29 @@ void SwitchToDifferentModelView(int modelID) {
 	case 0:
 		show_model_1_window = true;
 		show_model_2_window = false;
-		show_model_3_window = false;
-		show_model_4_window = false;
 		break;
 	case 1:
 		show_model_1_window = false;
 		show_model_2_window = true;
-		show_model_3_window = false;
-		show_model_4_window = false;
-		break;
-	case 2:
-		show_model_1_window = false;
-		show_model_2_window = false;
-		show_model_3_window = true;
-		show_model_4_window = false;
-		break;
-	case 3:
-		show_model_1_window = false;
-		show_model_2_window = false;
-		show_model_3_window = false;
-		show_model_4_window = true;
 		break;
 	default:
 		break;
 	}
 }
 
-void SetParametersValueChangingModels(const std::shared_ptr<Scene>& scene)
-{
-	if (scene->GetModelCount() > 0)
-	{
-		//scale_factor_local = scene.GetActiveModel().GetScaleFactor();
-		//rotation_angle_local = scene.GetActiveModel().GetRotateAngle();
-		//transformation_local = scene.GetActiveModel().GetPosition();
-
-		//scale_factor_global = scene.GetScaleFactor();
-		//rotation_angle_global = scene.GetRotateAngle();
-		//transformation_global = scene.GetPosition();
-	}
-}
+//void SetParametersValueChangingModels(const std::shared_ptr<Scene>& scene)
+//{
+//	if (scene->GetModelCount() > 0)
+//	{
+//		//scale_factor_local = scene->GetActiveModel().GetScaleFactor();
+//		//rotation_angle_local = scene->GetActiveModel().GetRotateAngle();
+//		//transformation_local = scene->GetActiveModel().GetPosition();
+//
+//		//scale_factor_global = scene->GetScaleFactor();
+//		//rotation_angle_global = scene->GetRotateAngle();
+//		//transformation_global = scene->GetPosition();
+//	}
+//}
 
 void SetParametersValueChangingLights(const std::shared_ptr<Scene>& scene)
 {
@@ -960,9 +967,11 @@ void ResetParametersValue(const std::shared_ptr<Scene>& scene)
 		face_normal = false;
 		show_bounding_box = false;
 
-		//scene.GetActiveModel().SetScaleFactor(1);
-		//scene.GetActiveModel().SetRotateAngle(glm::vec3(0, 0, 0));
-		//scene.GetActiveModel().SetNewPosition(glm::vec3(0, 0, 0));
+		scene->GetActiveModel()->ScaleModel(0);
+		scene->GetActiveModel()->RotateXModel(0);
+		scene->GetActiveModel()->RotateYModel(0);
+		scene->GetActiveModel()->RotateZModel(0);
+		scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0, 0));
 
 		scale_factor_local = 1;
 		rotation_angle_local = glm::vec3(0);;
@@ -973,9 +982,11 @@ void ResetParametersValue(const std::shared_ptr<Scene>& scene)
 		transformation_global = glm::vec3(0);
 
 
-		//scene.SetScaleFactor(1);
-		//scene.SetRotateAngle(glm::vec3(0, 0, 0));
-		//scene.SetNewPosition(glm::vec3(0, 0, 0));
+		scene->GetActiveModel()->ScaleWorld(0);
+		scene->GetActiveModel()->RotateXWorld(0);
+		scene->GetActiveModel()->RotateYWorld(0);
+		scene->GetActiveModel()->RotateZWorld(0);
+		scene->GetActiveModel()->TranslateWorld(glm::vec3(0, 0, 0));
 	}
 }
 
@@ -996,37 +1007,31 @@ void ShowScaleRotateTranslationWindowsLocal(const std::shared_ptr<Scene>& scene)
 
 		if (ImGui::Button("Rotate Left X"))
 		{
-			rotation_angle_local.x += 0.392699082;
-			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			scene->GetActiveModel()->RotateXModel(0.392699082);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right X")) {
-			rotation_angle_local.x -= 0.392699082;
-			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			scene->GetActiveModel()->RotateXModel(-0.392699082);
 		}
 
 		if (ImGui::Button("Rotate Left Y"))
 		{
-			rotation_angle_local.y += 0.392699082;
-			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			scene->GetActiveModel()->RotateYModel(0.392699082);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right Y")) {
-			rotation_angle_local.y -= 0.392699082;
-			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			scene->GetActiveModel()->RotateYModel(-0.392699082);
 		}
 		if (ImGui::Button("Rotate Left Z"))
 		{
-			rotation_angle_local.z += 0.392699082;
-			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			scene->GetActiveModel()->RotateZModel(0.392699082);
 		}
 
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate Right Z")) {
-			rotation_angle_local.z -= 0.392699082;
-			//scene.GetActiveModel().SetRotateAngle(rotation_angle_local);
+			scene->GetActiveModel()->RotateZModel(-0.392699082);
 		}
 
 		if (ImGui::Button("Close Me")) {
@@ -1040,15 +1045,21 @@ void ShowScaleRotateTranslationWindowsLocal(const std::shared_ptr<Scene>& scene)
 		ImGui::Begin("Local Scale Window", &show_local_scale_window, ImGuiWindowFlags_None);
 		ImGui::Text("Scale Model");
 
-		ImGui::SliderFloat("Scale factor", &scale_factor_local, 0.0f, 2.0f);
-		if (scale_factor_local != 1)
+		if (ImGui::Button("+"))
 		{
-			//scene.GetActiveModel().SetScaleFactor(scale_factor_local);
+			scene->GetActiveModel()->ScaleModel(2.01);
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("-")) {
+			scene->GetActiveModel()->ScaleModel(1 / 2.01);
 		}
 
 		if (ImGui::Button("Close Me")) {
 			show_local_scale_window = false;
 		}
+
 		ImGui::End();
 	}
 
@@ -1056,27 +1067,43 @@ void ShowScaleRotateTranslationWindowsLocal(const std::shared_ptr<Scene>& scene)
 	{
 		ImGui::Begin("Local Translation Window", &show_local_translation_window);
 
-		ImGui::SliderFloat("Move X", &transformation_local.x, -10.0f, 10.0f);
-		if (transformation_local.x != 0)
+		if (ImGui::Button("Move X positive"))
 		{
-			//scene.GetActiveModel().SetNewPosition(transformation_local);
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0.5, 0, 0));
 		}
 
-		ImGui::SliderFloat("Move Y", &transformation_local.y, -10.0f, 10.0f);
-		if (transformation_local.y != 0)
-		{
-			//scene.GetActiveModel().SetNewPosition(transformation_local);
+		ImGui::SameLine();
+
+		if (ImGui::Button("Move X negetive")) {
+			scene->GetActiveModel()->TranslateModel(glm::vec3(-0.5, 0, 0));
 		}
 
-		ImGui::SliderFloat("Move Z", &transformation_local.z, -10.0f, 10.0f);
-		if (transformation_local.z != 0)
+		if (ImGui::Button("Move Y positive"))
 		{
-			//scene.GetActiveModel().SetNewPosition(transformation_local);
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0.5, 0));
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Move Y negetive")) {
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, -0.5, 0));
+		}
+
+		if (ImGui::Button("Move Z positive"))
+		{
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0, 0.5));
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Move Z negetive")) {
+			scene->GetActiveModel()->TranslateModel(glm::vec3(0, 0, -0.5));
 		}
 
 		if (ImGui::Button("Close Me")) {
 			show_local_translation_window = false;
 		}
+
 		ImGui::End();
 	}
 
@@ -1138,37 +1165,35 @@ void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene
 
 		if (ImGui::Button("Rotate Left X"))
 		{
-			rotation_angle_global.x += 0.392699082;
-			//scene.SetRotateAngle(rotation_angle_global);
+			scene->GetActiveModel()->RotateXWorld(0.392699082);
 		}
+
 		ImGui::SameLine();
-		if (ImGui::Button("Rotate Right X"))
-		{
-			rotation_angle_global.x -= 0.392699082;
-			//scene.SetRotateAngle(rotation_angle_global);
+		if (ImGui::Button("Rotate Right X")) {
+			scene->GetActiveModel()->RotateXWorld(-0.392699082);
 		}
+
 		if (ImGui::Button("Rotate Left Y"))
 		{
-			rotation_angle_global.y += 0.392699082;
-			//scene.SetRotateAngle(rotation_angle_global);
+			scene->GetActiveModel()->RotateYWorld(0.392699082);
 		}
+
 		ImGui::SameLine();
-		if (ImGui::Button("Rotate Right Y"))
-		{
-			rotation_angle_global.y -= 0.392699082;
-			//scene.SetRotateAngle(rotation_angle_global);
+
+		if (ImGui::Button("Rotate Right Y")) {
+			scene->GetActiveModel()->RotateYWorld(-0.392699082);
 		}
 		if (ImGui::Button("Rotate Left Z"))
 		{
-			rotation_angle_global.z += 0.392699082;
-			//scene.SetRotateAngle(rotation_angle_global);
+			scene->GetActiveModel()->RotateZWorld(0.392699082);
 		}
+
 		ImGui::SameLine();
-		if (ImGui::Button("Rotate Right Z"))
-		{
-			rotation_angle_global.z -= 0.392699082;
-			//scene.SetRotateAngle(rotation_angle_global);
+
+		if (ImGui::Button("Rotate Right Z")) {
+			scene->GetActiveModel()->RotateZWorld(-0.392699082);
 		}
+
 		if (ImGui::Button("Close Me")) {
 			show_global_rotation_window = false;
 		}
@@ -1180,15 +1205,21 @@ void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene
 		ImGui::Begin("Global Scale Window", &show_global_scale_window);
 		ImGui::Text("Scale Model");
 
-		ImGui::SliderFloat("Scale factor", &scale_factor_global, 0.0f, 2.0f);
-		if (scale_factor_global != 1)
+		if (ImGui::Button("+"))
 		{
-			//scene.SetScaleFactor(scale_factor_global);
+			scene->GetActiveModel()->ScaleWorld(2.01);
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("-")) {
+			scene->GetActiveModel()->ScaleWorld(1 / 2.01);
 		}
 
 		if (ImGui::Button("Close Me")) {
 			show_global_scale_window = false;
 		}
+
 		ImGui::End();
 	}
 
@@ -1196,27 +1227,43 @@ void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene
 	{
 		ImGui::Begin("Global Translation Window", &show_global_translation_window);
 
-		ImGui::SliderFloat("Move X", &transformation_global.x, -200.0f, 200.0f);
-		if (transformation_global.x != 0)
+		if (ImGui::Button("Move X positive"))
 		{
-			//scene.SetNewPosition(transformation_global);
+			scene->GetActiveModel()->TranslateWorld(glm::vec3(0.5, 0, 0));
 		}
 
-		ImGui::SliderFloat("Move Y", &transformation_global.y, -200.0f, 200.0f);
-		if (transformation_global.y != 0)
-		{
-			//scene.SetNewPosition(transformation_global);
+		ImGui::SameLine();
+
+		if (ImGui::Button("Move X negetive")) {
+			scene->GetActiveModel()->TranslateWorld(glm::vec3(-0.5, 0, 0));
 		}
 
-		ImGui::SliderFloat("Move Z", &transformation_global.z, -200.0f, 200.0f);
-		if (transformation_global.z != 0)
+		if (ImGui::Button("Move Y positive"))
 		{
-			//scene.SetNewPosition(transformation_global);
+			scene->GetActiveModel()->TranslateWorld(glm::vec3(0, 0.5, 0));
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Move Y negetive")) {
+			scene->GetActiveModel()->TranslateWorld(glm::vec3(0, -0.5, 0));
+		}
+
+		if (ImGui::Button("Move Z positive"))
+		{
+			scene->GetActiveModel()->TranslateWorld(glm::vec3(0, 0, 0.5));
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Move Z negetive")) {
+			scene->GetActiveModel()->TranslateWorld(glm::vec3(0, 0, -0.5));
 		}
 
 		if (ImGui::Button("Close Me")) {
 			show_global_translation_window = false;
 		}
+
 		ImGui::End();
 	}
 }
