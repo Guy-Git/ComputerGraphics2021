@@ -1,6 +1,8 @@
 #include "Scene.h"
 #include "MeshModel.h"
 #include <string>
+#include "Utils.h"
+#include <nfd.h>
 
 Scene::Scene() :
 	activeCameraIndex(0),
@@ -82,9 +84,10 @@ const std::shared_ptr<MeshModel>& Scene::GetActiveModel() const
 	return models[activeModelIndex];
 }
 
-void Scene::AddLight(const std::shared_ptr<PointLight>& light)
+void Scene::AddLight()
 {
-	lights.push_back(light);
+	nfdchar_t* outPath = "../Data/cube.obj";
+	lights.push_back(Utils::LoadMeshModel(outPath));
 }
 
 int Scene::GetLightCount() const
@@ -92,14 +95,14 @@ int Scene::GetLightCount() const
 	return lights.size();
 }
 
-std::shared_ptr<PointLight> Scene::GetLight(int index) const
+std::shared_ptr<MeshModel> Scene::GetLight(int index) const
 {
 	return lights[index];
 }
 
-const std::vector<std::shared_ptr<PointLight>>& Scene::GetActiveLights() const
+const std::shared_ptr<MeshModel>& Scene::GetActiveLight() const
 {
-	return lights;
+	return lights[0];
 }
 
 const AmbientLight& Scene::GetAmbientLight()

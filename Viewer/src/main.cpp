@@ -142,7 +142,7 @@ void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene
 bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
 void CameraWindowsLocal(const std::shared_ptr<Scene>& scene);
 void CameraWindowsWorld(const std::shared_ptr<Scene>& scene);
-void LightWindow(Scene& scene);
+void LightWindow(const std::shared_ptr<Scene>& scene);
 
 int main(int argc, char** argv)
 {
@@ -162,9 +162,9 @@ int main(int argc, char** argv)
 	scene->AddCamera(camera1);
 	scene->AddCamera(camera2);
 
-	scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 0, 15), glm::vec3(1, 1, 1)));
-	scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 5, 5), glm::vec3(0, 0, 0)));
-	scene->AddLight(std::make_shared<PointLight>(glm::vec3(-5, 0, 0), glm::vec3(0, 0, 0)));
+	scene->AddLight();
+	//scene->AddLight(std::make_shared<PointLight>(glm::vec3(0, 5, 5), glm::vec3(0, 0, 0)));
+	//scene->AddLight(std::make_shared<PointLight>(glm::vec3(-5, 0, 0), glm::vec3(0, 0, 0)));
 
 	Renderer renderer;
 	renderer.LoadShaders();
@@ -807,75 +807,6 @@ void DrawImguiMenus()
 	ImGui::SetNextWindowPos(ImVec2(660, windowHeight - 200));
 	ImGui::SetNextWindowSize(ImVec2(420, 200));
 
-	ImGui::Begin("Light selection", &show_model_selection_window, ImGuiWindowFlags_NoMove);
-
-	//ChangeLightSelection(scene);
-
-	if (ImGui::RadioButton("Point Of Light", &pointOrParallelLight, 0))
-	{
-
-		//scene->AddLight(Utils::LoadMeshModel("../Data/cube.obj"));
-
-		light_selection = scene->GetLightCount() - 1;
-
-		//scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
-
-		//scene.GetActiveLight().kindOfModel = 1; // point
-	}
-
-	if (ImGui::RadioButton("Parallel Light", &pointOrParallelLight, 1))
-	{
-		//scene.RemoveLight();
-
-		std::vector<Face> faces;
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::string string;
-
-		//scene.AddLight(std::make_shared<MeshModel>(faces, vertices, normals, string));
-		//scene.SetActiveLightIndex(0);
-		//scene.GetActiveLight().SetColorOfMesh(glm::vec3(1, 1, 1));
-		//scene.GetActiveLight().kindOfModel = 2; // parallel
-	}
-
-	if (pointOrParallelLight != -1)
-	{
-		ImGui::RadioButton("Flat", &light_type_selection, 0);
-		ImGui::SameLine();
-		ImGui::RadioButton("Phong", &light_type_selection, 1);
-		ImGui::SameLine();
-		ImGui::RadioButton("Gouraud", &light_type_selection, 2);
-
-		// Controls
-		ImGui::ColorEdit3("Light Color", (float*)&light_color);
-
-		if (pointOrParallelLight == 0)
-		{
-			ImGui::SliderFloat("Light X Position", &light_transformation.x, -50.0, 50.0);
-			ImGui::SliderFloat("Light Y Position", &light_transformation.y, -25.0, 25.0);
-			ImGui::SliderFloat("Light Z Position", &light_transformation.z, -100.0, 100.0);
-		}
-
-		else
-		{
-			ImGui::SliderFloat("Light X Direction", &light_direction.x, -1, 1);
-			ImGui::SliderFloat("Light Y Direction", &light_direction.y, -1, 1);
-			ImGui::SliderFloat("Light Z Direction", &light_direction.z, -1, 1);
-		}
-
-		if (scene->GetLightCount() > 0)
-		{
-			//scene.GetActiveLight().SetLightModel(light_type_selection);
-			//scene.GetActiveLight().SetColorOfMesh(light_color);
-			//scene.GetActiveLight().SetNewPosition(light_transformation);
-			//scene.GetActiveLight().SetNewLightDirection(light_direction);
-		}
-	}
-
-	if (ImGui::Button("Reset Current light"))
-	{
-		//ResetLightParametersValue(scene);
-	}
 
 	ImGui::End();
 
@@ -889,7 +820,7 @@ void DrawImguiMenus()
 
 	CameraWindowsWorld(scene);
 
-	//LightWindow(scene);
+	LightWindow(scene);
 
 	//SetNormalsAndBoundingBox(scene);
 
@@ -1371,46 +1302,48 @@ void CameraWindowsWorld(const std::shared_ptr<Scene>& scene)
 	}
 }
 
-void LightWindow(Scene& scene)
+void LightWindow(const std::shared_ptr<Scene>& scene)
 {
-	if (light_properties_window)
+	ImGui::Begin("Light Properties - Phong Shading", &light_properties_window, ImGuiWindowFlags_NoMove);
+
+	// Controls
+	ImGui::ColorEdit3("Light Color", (float*)&light_color);
+
+
+	if (ImGui::Button("Move X positive"))
 	{
-		ImGui::Begin("Light Properties", &light_properties_window);
-
-		ImGui::RadioButton("Flat", &light_type_selection, 0);
-		ImGui::SameLine();
-		ImGui::RadioButton("Phong", &light_type_selection, 1);
-		ImGui::SameLine();
-		ImGui::RadioButton("Gouraud", &light_type_selection, 2);
-
-		// Controls
-		ImGui::ColorEdit3("Light Color", (float*)&light_color);
-
-		if (pointOrParallelLight == 0)
-		{
-			ImGui::SliderFloat("Light X Pos", &light_transformation.x, -50.0, 50.0);
-			ImGui::SliderFloat("Light Y Pos", &light_transformation.y, -25.0, 25.0);
-			ImGui::SliderFloat("Light Z Pos", &light_transformation.z, -100.0, 100.0);
-		}
-
-		else
-		{
-			ImGui::SliderFloat("Light X Direction", &light_direction.x, -1, 1);
-			ImGui::SliderFloat("Light Y Direction", &light_direction.y, -1, 1);
-			ImGui::SliderFloat("Light Z Direction", &light_direction.z, -1, 1);
-		}
-
-		if (scene.GetLightCount() > 0)
-		{
-			/*scene.GetActiveLight().SetLightModel(light_type_selection);
-			scene.GetActiveLight().SetColorOfMesh(light_color);
-			scene.GetActiveLight().SetNewPosition(light_transformation);
-			scene.GetActiveLight().SetNewLightDirection(light_direction);*/
-		}
-
-		if (ImGui::Button("Close Me")) {
-			light_translation_window = false;
-		}
-		ImGui::End();
+		scene->GetActiveLight()->TranslateModel(glm::vec3(0.5, 0, 0));
 	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Move X negetive")) {
+		scene->GetActiveLight()->TranslateModel(glm::vec3(-0.5, 0, 0));
+	}
+
+	if (ImGui::Button("Move Y positive"))
+	{
+		scene->GetActiveLight()->TranslateModel(glm::vec3(0, 0.5, 0));
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Move Y negetive")) {
+		scene->GetActiveLight()->TranslateModel(glm::vec3(0, -0.5, 0));
+	}
+
+	if (ImGui::Button("Move Z positive"))
+	{
+		scene->GetActiveLight()->TranslateModel(glm::vec3(0, 0, 0.5));
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Move Z negetive")) {
+		scene->GetActiveLight()->TranslateModel(glm::vec3(0, 0, -0.5));
+	}
+
+	scene->GetActiveLight()->SetColor(light_color);
+
+	ImGui::End();
 }
