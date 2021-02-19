@@ -23,4 +23,5 @@ public:
 	void Render(const std::shared_ptr<Scene>& scene);
 	void LoadShaders();
 	void LoadTextures();
+	void FindMaxLightValues(const std::vector<glm::vec4>& triangle);
 };

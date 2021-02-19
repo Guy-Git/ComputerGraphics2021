@@ -50,6 +50,12 @@ public:
 
 	const std::vector<Vertex>& GetModelVertices();
 
+	Face& GetFace(int index);
+
+	int GetFacesCount() const;
+
+	const glm::vec3& GetVertex(int index) const;
+
 	void TranslateModel(const glm::vec3& translationVector);
 	void TranslateWorld(const glm::vec3& translationVector);
 

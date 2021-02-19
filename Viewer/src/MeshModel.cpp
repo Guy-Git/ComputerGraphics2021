@@ -194,3 +194,18 @@ const std::vector<Vertex>& MeshModel::GetModelVertices()
 {
 	return modelVertices;
 }
+
+Face& MeshModel::GetFace(int index)
+{
+	return faces[index];
+}
+
+int MeshModel::GetFacesCount() const
+{
+	return faces.size();
+}
+
+const glm::vec3& MeshModel::GetVertex(int index) const
+{
+	return vertices.at(index);
+}

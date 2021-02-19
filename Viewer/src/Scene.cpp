@@ -88,6 +88,7 @@ void Scene::AddLight()
 {
 	nfdchar_t* outPath = "../Data/cube.obj";
 	lights.push_back(Utils::LoadMeshModel(outPath));
+	this->GetActiveLight()->ScaleModel(0.5);
 }
 
 int Scene::GetLightCount() const
