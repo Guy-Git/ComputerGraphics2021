@@ -16,8 +16,8 @@ struct Vertex
 class MeshModel
 {
 protected:
-	std::vector<Face> faces;
-	std::vector<glm::vec3> vertices;
+	std::vector<Face> faces_;
+	std::vector<glm::vec3> vertices_;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec3> textureCoords;
 

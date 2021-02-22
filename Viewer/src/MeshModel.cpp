@@ -14,10 +14,10 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 	modelName(modelName)
 {
 	worldTransform = glm::mat4x4(1);
-	std::random_device rd;
+	/*std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<double> dist(0, 1);
-	color = glm::vec3(dist(mt), dist(mt), dist(mt));
+	color = glm::vec3(dist(mt), dist(mt), dist(mt));*/
 
 	modelVertices.reserve(3 * faces.size());
 	for (int i = 0; i < faces.size(); i++)
@@ -62,6 +62,9 @@ MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, s
 
 	// unbind to make sure other code does not change it somewhere else
 	glBindVertexArray(0);
+
+	faces_ = faces;
+	color = glm::vec3(0.2, 0.59, 1);
 }
 
 MeshModel::~MeshModel()
@@ -197,15 +200,16 @@ const std::vector<Vertex>& MeshModel::GetModelVertices()
 
 Face& MeshModel::GetFace(int index)
 {
-	return faces[index];
+	return faces_[index];
 }
 
 int MeshModel::GetFacesCount() const
 {
-	return faces.size();
+	return faces_.size();
 }
 
 const glm::vec3& MeshModel::GetVertex(int index) const
 {
-	return vertices.at(index);
+	glm::vec3 kaki = glm::vec3(modelVertices.at(index).position.x, modelVertices.at(index).position.y, modelVertices.at(index).position.z);
+	return kaki;
 }

@@ -13,7 +13,7 @@
 class Scene {
 private:
 	std::vector<std::shared_ptr<MeshModel>> models;
-	std::vector<std::shared_ptr<MeshModel>> lights;
+	Light light;
 	AmbientLight ambientLight;
 	std::vector<Camera> cameras;
 
@@ -33,9 +33,7 @@ public:
 	const Camera& GetCamera(int index) const;
 
 	void AddLight();
-	int GetLightCount() const;
-	std::shared_ptr<MeshModel> GetLight(int index) const;
-	const std::shared_ptr<MeshModel>& Scene::GetActiveLight() const;
+	Light& Scene::GetActiveLight();
 
 	const AmbientLight& GetAmbientLight();
 

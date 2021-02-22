@@ -86,24 +86,12 @@ const std::shared_ptr<MeshModel>& Scene::GetActiveModel() const
 
 void Scene::AddLight()
 {
-	nfdchar_t* outPath = "../Data/cube.obj";
-	lights.push_back(Utils::LoadMeshModel(outPath));
-	this->GetActiveLight()->ScaleModel(0.5);
+	light = Light();
 }
 
-int Scene::GetLightCount() const
+Light& Scene::GetActiveLight()
 {
-	return lights.size();
-}
-
-std::shared_ptr<MeshModel> Scene::GetLight(int index) const
-{
-	return lights[index];
-}
-
-const std::shared_ptr<MeshModel>& Scene::GetActiveLight() const
-{
-	return lights[0];
+	return light;
 }
 
 const AmbientLight& Scene::GetAmbientLight()

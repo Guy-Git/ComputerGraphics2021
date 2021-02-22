@@ -134,9 +134,7 @@ void ChangeCameraSelection(const std::shared_ptr<Scene>& scene);
 void ChangeLightSelection(const std::shared_ptr<Scene>& scene);
 void SwitchToDifferentModelView(int modelID);
 void ResetParametersValue(const std::shared_ptr<Scene>& scene);
-void ResetLightParametersValue(const std::shared_ptr<Scene>& scene);
 void SetParametersValueChangingModels(const std::shared_ptr<Scene>& scene);
-void SetParametersValueChangingLights(const std::shared_ptr<Scene>& scene);
 void ShowScaleRotateTranslationWindowsLocal(const std::shared_ptr<Scene>& scene);
 void ShowScaleRotateTranslationWindowsGlobal(const std::shared_ptr<Scene>& scene);
 bool IsPositionInBoundingBox(float xPos, float yPos, Scene& scene);
@@ -168,7 +166,7 @@ int main(int argc, char** argv)
 
 	Renderer renderer;
 	renderer.LoadShaders();
-	renderer.LoadTextures();
+	//renderer.LoadTextures();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -402,7 +400,7 @@ float GetAspectRatio()
 
 void DrawImguiMenus()
 {
-	ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Once);
+	/*ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Once);
 	{
 		ImGui::Begin("Scene Menu");
 		if (ImGui::ColorEdit3("Clear Color", (float*)&clearColor))
@@ -554,7 +552,7 @@ void DrawImguiMenus()
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::End();
-	}
+	}*/
 
 	{
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoFocusOnAppearing;
@@ -579,7 +577,6 @@ void DrawImguiMenus()
 				ImGui::EndMenu();
 
 			}
-			//ImGui::EndMainMenuBar();
 		}
 
 	}
@@ -653,12 +650,6 @@ void DrawImguiMenus()
 
 			ImGui::EndMenu();
 		}
-
-		/*if (ImGui::BeginMenu("Light"))
-		{
-			light_properties_window = true;
-			ImGui::EndMenu();
-		}*/
 
 		if (ImGui::BeginMenu("Post Processing"))
 		{
@@ -746,8 +737,6 @@ void DrawImguiMenus()
 	{
 		//scene.GetActiveCamera().ResetCameraPosition();
 	}
-
-	ImGui::End();
 
 	if (camera_selection != scene->GetActiveCameraIndex())
 	{
@@ -837,7 +826,6 @@ void DrawImguiMenus()
 	}
 
 	//SetParametersValueChangingModels(scene);
-	SetParametersValueChangingLights(scene);
 }
 
 void ChangeLightSelection(Scene& scene)
@@ -882,14 +870,6 @@ void SwitchToDifferentModelView(int modelID) {
 //	}
 //}
 
-void SetParametersValueChangingLights(const std::shared_ptr<Scene>& scene)
-{
-	if (scene->GetLightCount() > 0)
-	{
-		//light_transformation = scene.GetActiveLight().GetPosition();
-	}
-}
-
 void ResetParametersValue(const std::shared_ptr<Scene>& scene)
 {
 	if (scene->GetModelCount() > 0)
@@ -918,15 +898,6 @@ void ResetParametersValue(const std::shared_ptr<Scene>& scene)
 		scene->GetActiveModel()->RotateYWorld(0);
 		scene->GetActiveModel()->RotateZWorld(0);
 		scene->GetActiveModel()->TranslateWorld(glm::vec3(0, 0, 0));
-	}
-}
-
-void ResetLightParametersValue(const std::shared_ptr<Scene>& scene)
-{
-	if (scene->GetLightCount() > 0)
-	{
-		light_transformation = glm::vec3(0);
-		//scene.GetActiveLight().SetNewPosition(light_transformation);
 	}
 }
 
@@ -1312,38 +1283,39 @@ void LightWindow(const std::shared_ptr<Scene>& scene)
 
 	if (ImGui::Button("Move X positive"))
 	{
-		scene->GetActiveLight()->TranslateModel(glm::vec3(0.5, 0, 0));
+		scene->GetActiveLight().SetPos(glm::vec3(0.5, 0, 0));
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Move X negetive")) {
-		scene->GetActiveLight()->TranslateModel(glm::vec3(-0.5, 0, 0));
+		scene->GetActiveLight().SetPos(glm::vec3(-0.5, 0, 0));
 	}
 
 	if (ImGui::Button("Move Y positive"))
 	{
-		scene->GetActiveLight()->TranslateModel(glm::vec3(0, 0.5, 0));
+		scene->GetActiveLight().SetPos(glm::vec3(0, 0.5, 0));
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Move Y negetive")) {
-		scene->GetActiveLight()->TranslateModel(glm::vec3(0, -0.5, 0));
+		scene->GetActiveLight().SetPos(glm::vec3(0, -0.5, 0));
 	}
 
 	if (ImGui::Button("Move Z positive"))
 	{
-		scene->GetActiveLight()->TranslateModel(glm::vec3(0, 0, 0.5));
+		scene->GetActiveLight().SetPos(glm::vec3(0, 0, 0.5));
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Move Z negetive")) {
-		scene->GetActiveLight()->TranslateModel(glm::vec3(0, 0, -0.5));
+		scene->GetActiveLight().SetPos(glm::vec3(0, 0, -0.5));
 	}
 
-	scene->GetActiveLight()->SetColor(light_color);
+	scene->GetActiveLight().SetColor(light_color);
 
 	ImGui::End();
+
 }

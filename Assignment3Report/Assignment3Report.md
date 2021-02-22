@@ -15,4 +15,14 @@ allocate and bind this buffer using `glGenBuffers`, `glBindBuffer` and `glBuffer
 * Enables those variables using `glEnableVertexAttribArray` and `glEnableVertexAttribArray`.  
 * Setting uniform variables using `glUniform1i`.   
 
-# 2. 
+# 2. Done that :)  
+
+# 3.  
+<img src=./vshaderCode.jpg width=60%>  
+
+# 4.  
+<img src=./4B.jpg width=60%>  
+<img src=./4A.jpg width=60%>  
+
+# 5.  
+<img src=./5.jpg width=60%>
