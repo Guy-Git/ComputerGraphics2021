@@ -58,6 +58,10 @@ public:
 
 	void PlanarTexture();
 
+	void SphericalTexture();
+
+	void CylindricalTexture();
+
 	void TranslateModel(const glm::vec3& translationVector);
 	void TranslateWorld(const glm::vec3& translationVector);
 

@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 
 	Renderer renderer;
 	renderer.LoadShaders();
-	//renderer.LoadTextures();
+	renderer.LoadTextures();
 
 	while (!glfwWindowShouldClose(window))
 	{

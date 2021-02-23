@@ -35,4 +35,21 @@ allocate and bind this buffer using `glGenBuffers`, `glBindBuffer` and `glBuffer
 <img src=./6B.jpg width=60%>  
 
 * ambient = 0, diffuse = 0.1, specular = 1
-<img src=./6C.jpg width=60%> 
+<img src=./6C.jpg width=60%>  
+
+# 7.  
+* Plane:
+<img src=./7Plane.jpg width=60%>  
+
+* Cylindrical:  
+<img src=./7Cylind.jpg width=60%>  
+
+* Spherical:  
+<img src=./7Sphere.jpg width=60%>  
+
+# 8.
+
+
+
+
+

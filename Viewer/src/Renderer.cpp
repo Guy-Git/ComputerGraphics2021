@@ -34,14 +34,18 @@ void Renderer::Render(const std::shared_ptr<Scene>& scene)
 		const Camera& camera = scene->GetActiveCamera();
 
 		//Light:
-		Light currentLight = scene->GetActiveLight();
-		glm::vec3 lightPos = currentLight.GetPos();
-		glm::vec3 lightColor = currentLight.GetColor();
+		//Light currentLight = scene->GetActiveLight();
+		//glm::vec3 lightPos = currentLight.GetPos();
+		//glm::vec3 lightColor = currentLight.GetColor();
 
 		//Model:
 		for (int currentModelIndex = 0; currentModelIndex < modelCount; currentModelIndex++)
 		{
 			std::shared_ptr<MeshModel> currentModel = scene->GetModel(currentModelIndex);
+		//	currentModel->PlanarTexture();
+		//	currentModel->CylindricalTexture();
+		//	currentModel->SphericalTexture();
+
 
 			// Activate the 'colorShader' program (vertex and fragment shaders)
 			colorShader.use();
@@ -50,7 +54,7 @@ void Renderer::Render(const std::shared_ptr<Scene>& scene)
 			colorShader.setUniform("model", currentModel->GetWorldTransformation() * currentModel->GetModelTransformation());
 			colorShader.setUniform("view", camera.GetViewTransformation());
 			colorShader.setUniform("projection", camera.GetProjectionTransformation());
-			colorShader.setUniform("lightPos", lightPos);
+			//colorShader.setUniform("lightPos", lightPos);
 			colorShader.setUniform("material.textureMap", 0);
 
 			// Set 'texture1' as the active texture at slot #0
@@ -65,7 +69,7 @@ void Renderer::Render(const std::shared_ptr<Scene>& scene)
 			// Unset 'texture1' as the active texture at slot #0
 			texture1.unbind(0);
 
-			colorShader.setUniform("lightColor", lightColor);	
+			//colorShader.setUniform("lightColor", lightColor);	
 			colorShader.setUniform("modelColor", currentModel->GetColor());
 		}
 	}
@@ -78,8 +82,8 @@ void Renderer::LoadShaders()
 
 void Renderer::LoadTextures()
 {
-	/*if (!texture1.loadTexture("bin\\Debug\\crate.jpg", true))
+	if (!texture1.loadTexture("bin\\Debug\\crate.jpg", true))
 	{
-		texture1.loadTexture("bin\\Release\\crate.jpg", true);
-	}*/
+		texture1.loadTexture("bin\\Release\\alien_texture.jpg", true);
+	}
 }

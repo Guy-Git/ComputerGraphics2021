@@ -8,6 +8,9 @@
 #include <random>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define M_PI 3.14159265358979323846
+
+
 MeshModel::MeshModel(std::vector<Face> faces, std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<glm::vec2> textureCoords, const std::string& modelName) :
 	modelTransform(1),
 	worldTransform(1),
@@ -223,7 +226,37 @@ void MeshModel::PlanarTexture()
 {
 	for (Vertex& vertex : modelVertices)
 	{
-		vertex.textureCoords = glm::vec2(vertex.position[0], vertex.textureCoords[1]);
+		vertex.textureCoords = glm::vec2(vertex.position[0], vertex.position[1]);
+	}
+
+	glBindVertexArray(GetVAO());
+	glBindBuffer(GL_VERTEX_ARRAY, GetVBO());
+	glBufferSubData(GL_ARRAY_BUFFER, 0, modelVertices.size() * sizeof(Vertex), &modelVertices[0]);
+	glBindVertexArray(0);
+}
+
+void MeshModel::SphericalTexture()
+{
+	for (Vertex& vertex : modelVertices)
+	{
+		vertex.textureCoords = glm::vec2(vertex.position[0] / (1 - vertex.position[2]), vertex.position[1] / (1 - vertex.position[2]));
+	}
+
+	glBindVertexArray(GetVAO());
+	glBindBuffer(GL_VERTEX_ARRAY, GetVBO());
+	glBufferSubData(GL_ARRAY_BUFFER, 0, modelVertices.size() * sizeof(Vertex), &modelVertices[0]);
+	glBindVertexArray(0);
+}
+
+void MeshModel::CylindricalTexture()
+{
+	float t, p;
+
+	for (Vertex& vertex : modelVertices)
+	{
+		t = std::atan2(vertex.position[2], vertex.position[0]) + M_PI;
+		p = vertex.position[1];
+		vertex.textureCoords = glm::vec2(t, p);
 	}
 
 	glBindVertexArray(GetVAO());
