@@ -25,4 +25,14 @@ allocate and bind this buffer using `glGenBuffers`, `glBindBuffer` and `glBuffer
 <img src=./4A.jpg width=60%>  
 
 # 5.  
-<img src=./5.jpg width=60%>
+<img src=./5.jpg width=60%>  
+
+# 6. Phong Shading:
+* ambient = 0.1, diffuse = 1, specular = 0.5  
+<img src=./6A.jpg width=60%>   
+
+* ambient = 0.5, diffuse = 1, specular = 0.3  
+<img src=./6B.jpg width=60%>  
+
+* ambient = 0, diffuse = 0.1, specular = 1
+<img src=./6C.jpg width=60%> 

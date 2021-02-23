@@ -56,6 +56,8 @@ public:
 
 	const glm::vec3& GetVertex(int index) const;
 
+	void PlanarTexture();
+
 	void TranslateModel(const glm::vec3& translationVector);
 	void TranslateWorld(const glm::vec3& translationVector);
 
@@ -76,4 +78,5 @@ public:
 	void ScaleWorld(double factor);
 
 	GLuint GetVAO() const;
+	GLuint GetVBO() const;
 };

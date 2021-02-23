@@ -65,9 +65,7 @@ void Renderer::Render(const std::shared_ptr<Scene>& scene)
 			// Unset 'texture1' as the active texture at slot #0
 			texture1.unbind(0);
 
-			colorShader.setUniform("lightColor", lightColor);
-
-			colorShader.setUniform("modelOrLight", 1);
+			colorShader.setUniform("lightColor", lightColor);	
 			colorShader.setUniform("modelColor", currentModel->GetColor());
 		}
 	}
@@ -84,36 +82,4 @@ void Renderer::LoadTextures()
 	{
 		texture1.loadTexture("bin\\Release\\crate.jpg", true);
 	}*/
-}
-
-void Renderer::FindMaxLightValues(const std::vector<glm::vec4>& triangle)
-{
-	for (int i = 0; i < triangle.size(); i++)
-	{
-		if (triangle.at(i).x > maxLightXValue)
-		{
-			maxLightXValue = triangle.at(i).x;
-		}
-		if (triangle.at(i).y > maxLightYValue)
-		{
-			maxLightYValue = triangle.at(i).y;
-		}
-		if (triangle.at(i).z > maxLightZValue)
-		{
-			maxLightZValue = triangle.at(i).z;
-		}
-
-		if (triangle.at(i).x < minLightXValue)
-		{
-			minLightXValue = triangle.at(i).x;
-		}
-		if (triangle.at(i).y < minLightYValue)
-		{
-			minLightYValue = triangle.at(i).y;
-		}
-		if (triangle.at(i).z < minLightZValue)
-		{
-			minLightZValue = triangle.at(i).z;
-		}
-	}
 }

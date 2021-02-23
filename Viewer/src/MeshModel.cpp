@@ -193,6 +193,11 @@ GLuint MeshModel::GetVAO() const
 	return vao;
 }
 
+GLuint MeshModel::GetVBO() const
+{
+	return vbo;
+}
+
 const std::vector<Vertex>& MeshModel::GetModelVertices()
 {
 	return modelVertices;
@@ -212,4 +217,17 @@ const glm::vec3& MeshModel::GetVertex(int index) const
 {
 	glm::vec3 kaki = glm::vec3(modelVertices.at(index).position.x, modelVertices.at(index).position.y, modelVertices.at(index).position.z);
 	return kaki;
+}
+
+void MeshModel::PlanarTexture()
+{
+	for (Vertex& vertex : modelVertices)
+	{
+		vertex.textureCoords = glm::vec2(vertex.position[0], vertex.textureCoords[1]);
+	}
+
+	glBindVertexArray(GetVAO());
+	glBindBuffer(GL_VERTEX_ARRAY, GetVBO());
+	glBufferSubData(GL_ARRAY_BUFFER, 0, modelVertices.size() * sizeof(Vertex), &modelVertices[0]);
+	glBindVertexArray(0);
 }
