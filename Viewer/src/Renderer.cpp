@@ -82,8 +82,8 @@ void Renderer::LoadShaders()
 
 void Renderer::LoadTextures()
 {
-	if (!texture1.loadTexture("bin\\Debug\\crate.jpg", true))
+	if (!texture1.loadTexture("bin\\Debug\\spot_texture.png", true))
 	{
-		texture1.loadTexture("bin\\Release\\alien_texture.jpg", true);
+		texture1.loadTexture("bin\\Release\\spot_texture.png", true);
 	}
 }

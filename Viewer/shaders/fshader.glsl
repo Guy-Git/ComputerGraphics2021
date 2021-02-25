@@ -24,7 +24,7 @@ out vec4 frag_color;
 void main()
 {
 
-	int numOfBits = 16;
+	int numOfBits = 128;
 
 	// Sample the texture-map at the UV coordinates given by 'fragTexCoords'
 	vec3 textureColor = vec3(texture(material.textureMap, fragTexCoords));
