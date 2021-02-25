@@ -62,16 +62,18 @@ allocate and bind this buffer using `glGenBuffers`, `glBindBuffer` and `glBuffer
 * 48-Bit:  
 <img src=./8C.jpg width=60%>  
 
-### עשינו קוונטיזציה לגווני הצבעים של המודל ועיגלנו את סביבת הצבע כך שתהיה כמות קטנה יותר של צבעים
-### בעזרת הפונקציה הבאה: frag_color = (round(frag_color * 255 / numOfBits) * numOfBits) / 255
+### We quantized the color shades of the model and rounded the color environment so that there would be a smaller amount of colors
+### Using the following function: frag_color = (round (frag_color * 255 / numOfBits) * numOfBits) / 255
 
 
-###	לצערנו זה מה שהספקנו לעשות ואנחנו יודעים שזה לא מושלם, 
-### לשנינו לחוד הייתה תקופה אקסטרה מאתגרת (בנוסף לאתגר הקבוע שהקורונה מציבה),
-### עבדנו עד הרגע האחרון בניסיון לסיים את התרגיל כפי
-### שעשינו בתרגילים הקודמים
-### :( מקווים שזה לא יפגע בנו יותר מידי, היה קצת גדול עלינו הפעם
 
-### עם זאת, הקורס היה מאוד מעניין והתוצרים מגניבים (אחד מאיתנו יקח גם את המעבדה בסמסטר הבא)
-### תודה בכל מקרה, גיא ויובל
+## Epilogue:
+### Unfortunately this is what we managed to do and we know it's not perfect,
+### The two of us separately had an extra challenging period (in addition to the regular challenge the Corona poses).
+### We worked until the last moment trying to finish the exercise as
+### we did in the previous exercises, we hope it does not hurt us too much. :(
+
+### However, the course was very interesting and the results were cool!
+### (One of us will also take the lab next semester)
+### Thanks, Guy and Yuval
 
